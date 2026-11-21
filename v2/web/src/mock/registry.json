@@ -105,6 +105,7 @@
         1
       ],
       "symbol": "T",
+      "desc": "Lama periode perencanaan yang ditinjau (K15: 20 tahun). Semua proyeksi, biaya, dan NPV dihitung sepanjang periode ini.",
       "deps": [],
       "dependents": [
         "demand.base",
@@ -129,6 +130,7 @@
         1,
         8
       ],
+      "desc": "Pembagian periode menjadi tahap pendek, menengah, dan panjang; dipakai bila fasilitas dibangun per tahap.",
       "deps": [],
       "dependents": [
         "invest.berth"
@@ -151,6 +153,7 @@
         1,
         8
       ],
+      "desc": "Berapa tahun sebelum dipakai sebuah fasilitas (dermaga, alat, penyimpanan) harus mulai dibangun.",
       "deps": [],
       "dependents": [
         "terminal.n_berth"
@@ -173,6 +176,7 @@
         1,
         8
       ],
+      "desc": "Dermaga dibangun sekaligus untuk kebutuhan terbesar N tahun ke depan, agar tidak membangun sedikit-sedikit tiap tahun.",
       "deps": [],
       "dependents": [
         "terminal.n_berth"
@@ -194,6 +198,7 @@
       "screens": [
         1
       ],
+      "desc": "Sama seperti lookahead dermaga, tetapi untuk lapangan, gudang, silo, dan tangki.",
       "deps": [],
       "dependents": [
         "invest.storage"
@@ -217,6 +222,7 @@
         1
       ],
       "symbol": "AT",
+      "desc": "Waktu kapal mendekat dari ambang luar sampai sandar (approach time), per kunjungan.",
       "deps": [],
       "dependents": [
         "voyage.t_fix"
@@ -240,6 +246,7 @@
         1
       ],
       "symbol": "WT",
+      "desc": "Waktu kapal menunggu giliran sandar atau pandu (waiting time), per kunjungan.",
       "deps": [],
       "dependents": [
         "voyage.t_fix"
@@ -263,6 +270,7 @@
         1
       ],
       "symbol": "IT",
+      "desc": "Waktu kapal diam di dermaga tanpa bongkar muat (idle time: dokumen, persiapan), per kunjungan.",
       "deps": [],
       "dependents": [
         "voyage.t_fix"
@@ -286,6 +294,7 @@
         8
       ],
       "symbol": "WD",
+      "desc": "Jumlah hari terminal KEK beroperasi dalam setahun; pembagi kapasitas tambatan.",
       "deps": [],
       "dependents": [
         "terminal.n_berth",
@@ -309,6 +318,7 @@
       "screens": [
         1
       ],
+      "desc": "Jam kerja terminal per hari; dipakai untuk kapasitas alat lapangan.",
       "deps": [],
       "dependents": [
         "storage.yard_equipment"
@@ -331,6 +341,7 @@
         1
       ],
       "symbol": "CD",
+      "desc": "Hari kapal benar-benar beroperasi per tahun (di luar docking/perawatan); menentukan berapa round trip yang muat dalam setahun dan lama sewa TCH.",
       "deps": [],
       "dependents": [
         "voyage.f_max",
@@ -355,6 +366,7 @@
         8
       ],
       "symbol": "BOR_max",
+      "desc": "Batas tingkat pemakaian tambatan (Berth Occupancy Ratio) yang masih diterima. Lewat dari ini, antrean kapal dianggap terlalu panjang sehingga tambatan harus ditambah.",
       "deps": [],
       "dependents": [
         "terminal.n_berth"
@@ -377,6 +389,7 @@
         1
       ],
       "symbol": "MCR",
+      "desc": "Persentase daya mesin induk yang dipakai saat berlayar (Maximum Continuous Rating), dasar hitung konsumsi BBM.",
       "deps": [],
       "dependents": [
         "shipcost.fuel_me_l"
@@ -398,6 +411,7 @@
       "screens": [
         1
       ],
+      "desc": "Porsi waktu mesin induk menyala saat di laut dan saat di pelabuhan.",
       "deps": [],
       "dependents": [
         "shipcost.fuel_me_l"
@@ -419,6 +433,7 @@
       "screens": [
         1
       ],
+      "desc": "Porsi waktu mesin bantu (genset) menyala saat di laut dan saat di pelabuhan.",
       "deps": [],
       "dependents": [
         "shipcost.fuel_ae_l"
@@ -442,6 +457,7 @@
         1,
         7
       ],
+      "desc": "Harga BBM per liter (HSD/MFO). Salah satu pendorong biaya pelayaran terbesar (I7).",
       "deps": [],
       "dependents": [
         "shipcost.fuel_me",
@@ -465,6 +481,7 @@
         1
       ],
       "note": "A6: default HSD untuk keduanya",
+      "desc": "Jenis BBM yang dipakai mesin induk dan mesin bantu (default keduanya HSD, temuan A6).",
       "deps": [],
       "dependents": [
         "shipcost.fuel_me_l",
@@ -489,6 +506,7 @@
       "screens": [
         1
       ],
+      "desc": "Tabel konsumsi BBM spesifik mesin (gram per kWh) menurut rentang daya, dipakai bila kapal tidak punya data SFOC sendiri.",
       "deps": [],
       "dependents": [
         "vessel.sfoc"
@@ -510,6 +528,7 @@
       "screens": [
         1
       ],
+      "desc": "Perkiraan daya mesin bantu sebagai fraksi daya mesin induk, bila data kapal kosong.",
       "deps": [],
       "dependents": [
         "vessel.ae_kw"
@@ -533,6 +552,7 @@
         1,
         7
       ],
+      "desc": "Kurs rupiah per dolar AS, untuk mengubah tarif TCH, harga alat, dan tarif luar negeri ke rupiah (I7).",
       "deps": [],
       "dependents": [
         "shipcost.tch",
@@ -559,6 +579,7 @@
         9
       ],
       "symbol": "r",
+      "desc": "Tingkat diskonto (WACC) untuk menarik biaya masa depan ke nilai sekarang. Makin tinggi, makin menarik menunda investasi (I9).",
       "deps": [],
       "dependents": [
         "agg.pv_uc",
@@ -583,6 +604,7 @@
         1,
         9
       ],
+      "desc": "Kenaikan harga satuan infrastruktur per tahun (dermaga, trestle, penyimpanan).",
       "deps": [],
       "dependents": [
         "invest.berth",
@@ -605,6 +627,7 @@
       "screens": [
         1
       ],
+      "desc": "Kenaikan harga alat bongkar muat dan alat lapangan per tahun.",
       "deps": [],
       "dependents": [
         "invest.handling",
@@ -628,6 +651,7 @@
         1
       ],
       "note": "A5",
+      "desc": "Kecepatan kapal saat kosong (ballast) relatif terhadap kecepatan dinas; Excel memakai 130 %, v2 default 100 % (A5).",
       "deps": [],
       "dependents": [
         "vessel.ballast_speed"
@@ -650,6 +674,7 @@
         1
       ],
       "symbol": "α",
+      "desc": "Fraksi DWT yang benar-benar bisa diisi muatan (sisanya BBM, air tawar, perbekalan); default 0,85 (A8).",
       "deps": [],
       "dependents": [
         "vessel.payload"
@@ -671,6 +696,7 @@
       "screens": [
         1
       ],
+      "desc": "Fraksi DWT yang boleh dipakai untuk berat muatan kontainer saat menghitung batas berat per TEU (A8).",
       "deps": [],
       "dependents": [
         "cargo.netmax"
@@ -692,6 +718,7 @@
       "screens": [
         1
       ],
+      "desc": "Dipakai menaksir kapasitas TEU kapal petikemas yang datanya kosong, dari DWT.",
       "deps": [],
       "dependents": [
         "vessel.teu_cap"
@@ -713,6 +740,7 @@
       "screens": [
         1
       ],
+      "desc": "Berat rata-rata satu TEU terisi untuk menaksir kapasitas TEU dari DWT.",
       "deps": [],
       "dependents": [
         "vessel.teu_cap"
@@ -736,6 +764,7 @@
         3,
         6
       ],
+      "desc": "Syarat kelayakan sandar: dermaga terpanjang pelabuhan harus minimal rasio ini × LOA kapal (K15: 0,85).",
       "deps": [],
       "dependents": [
         "vessel.feasible"
@@ -757,6 +786,7 @@
       "screens": [
         1
       ],
+      "desc": "Cara menentukan muatan per kunjungan: dibagi rata sepanjang tahun (interval) atau selalu penuh (full-load).",
       "deps": [],
       "dependents": [
         "voyage.q"
@@ -779,6 +809,7 @@
         2
       ],
       "symbol": "Lc·Wc·Hc",
+      "desc": "Ukuran ruang dalam kontainer 20 kaki; menentukan berapa kemasan yang muat per TEU.",
       "deps": [],
       "dependents": [
         "cargo.box_per_teu",
@@ -801,6 +832,7 @@
       "screens": [
         2
       ],
+      "desc": "Berat kosong kontainer 20 kaki.",
       "deps": [],
       "dependents": [
         "cargo.netmax"
@@ -822,6 +854,7 @@
       "screens": [
         2
       ],
+      "desc": "Berat muatan maksimum yang diizinkan dalam satu kontainer 20 kaki.",
       "deps": [],
       "dependents": [
         "cargo.netmax"
@@ -845,6 +878,7 @@
         2
       ],
       "symbol": "l·w·h, w_box",
+      "desc": "Ukuran dan berat satu kemasan (karung, kardus, pelat, …), untuk menghitung isi per TEU.",
       "deps": [],
       "dependents": [
         "cargo.box_per_teu",
@@ -868,6 +902,7 @@
         2
       ],
       "symbol": "SF",
+      "desc": "Volume ruang yang dibutuhkan per ton muatan (stowage factor); muatan ringan-ruah butuh ruang besar.",
       "deps": [],
       "dependents": [
         "cargo.ton_per_teu"
@@ -890,6 +925,7 @@
         2
       ],
       "symbol": "ρ",
+      "desc": "Berat jenis muatan (ton/m³), untuk luas/volume penyimpanan curah dan tangki.",
       "deps": [],
       "dependents": [
         "storage.gc",
@@ -915,6 +951,7 @@
         2
       ],
       "symbol": "t₀",
+      "desc": "Tahun ke berapa tenant mulai mengirim/menerima muatan ini.",
       "deps": [],
       "dependents": [
         "demand.base"
@@ -938,6 +975,7 @@
         2
       ],
       "symbol": "V₀",
+      "desc": "Volume muatan di tahun pertama flow berjalan.",
       "deps": [],
       "dependents": [
         "demand.base"
@@ -961,6 +999,7 @@
         2
       ],
       "symbol": "Dmax",
+      "desc": "Batas atas volume; pertumbuhan berhenti setelah angka ini tercapai (kapasitas pabrik).",
       "deps": [],
       "dependents": [
         "demand.base"
@@ -984,6 +1023,7 @@
         2
       ],
       "symbol": "g",
+      "desc": "Laju pertumbuhan volume per tahun sampai menyentuh volume maksimum (I4).",
       "deps": [],
       "dependents": [
         "demand.base"
@@ -1007,6 +1047,7 @@
         2
       ],
       "symbol": "r",
+      "desc": "Untuk flow outbound: volume = rasio × volume inbound tenant yang sama (mis. 85 % bahan baku jadi produk) (I5).",
       "deps": [],
       "dependents": [
         "demand.ratio"
@@ -1028,6 +1069,7 @@
       "screens": [
         2
       ],
+      "desc": "Satuan volume flow: ton atau TEU.",
       "deps": [],
       "dependents": [
         "cargo.demand_unit",
@@ -1051,6 +1093,7 @@
         2,
         6
       ],
+      "desc": "Bentuk muatan flow (CC curah cair, CK curah kering, PK petikemas, GC general cargo); menentukan tipe kapal, alat, dan penyimpanan.",
       "deps": [],
       "dependents": [
         "cargo.demand_unit",
@@ -1075,6 +1118,7 @@
         2,
         6
       ],
+      "desc": "Rute pelayaran flow ini: pelabuhan asal/tujuan dan kaki pelayarannya.",
       "deps": [],
       "dependents": [
         "vessel.feasible",
@@ -1098,6 +1142,7 @@
       "screens": [
         4
       ],
+      "desc": "Tabel tipe kapal mana yang boleh membawa bentuk muatan mana (mis. CK → bulk carrier).",
       "deps": [],
       "dependents": [
         "vessel.compatible"
@@ -1121,6 +1166,7 @@
         3,
         6
       ],
+      "desc": "Kedalaman/sarat maksimum yang diizinkan di pelabuhan asal/tujuan; kapal bersarat lebih dalam gugur.",
       "deps": [],
       "dependents": [
         "vessel.feasible"
@@ -1142,6 +1188,7 @@
       "screens": [
         3
       ],
+      "desc": "Batas panjang kapal yang eksplisit diberlakukan pelabuhan, bila ada.",
       "deps": [],
       "dependents": [
         "vessel.feasible"
@@ -1164,6 +1211,7 @@
         3,
         6
       ],
+      "desc": "Panjang dermaga terpanjang di pelabuhan asal/tujuan; membatasi LOA kapal yang bisa sandar.",
       "deps": [],
       "dependents": [
         "vessel.feasible"
@@ -1187,6 +1235,7 @@
         3
       ],
       "note": "A3: total per kapal atau per alat × jumlah alat",
+      "desc": "Kecepatan bongkar muat di pelabuhan asal/tujuan (total per kapal atau per alat × jumlah alat, A3).",
       "deps": [],
       "dependents": [
         "voyage.t_port_ext"
@@ -1208,6 +1257,7 @@
       "screens": [
         3
       ],
+      "desc": "Kelas pelabuhan menurut tarif jasa kepelabuhanan (utama, kelas 1–5).",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1229,6 +1279,7 @@
       "screens": [
         3
       ],
+      "desc": "Pelabuhan domestik (tarif rupiah) atau luar negeri (tarif dolar).",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1250,6 +1301,7 @@
       "screens": [
         3
       ],
+      "desc": "Konstruksi dermaga (beton atau dolphin); tarif tambat berbeda.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1273,6 +1325,7 @@
         3,
         6
       ],
+      "desc": "Jarak tiap kaki pelayaran rute, dalam mil laut.",
       "deps": [],
       "dependents": [
         "voyage.t_sea"
@@ -1294,6 +1347,7 @@
       "screens": [
         3
       ],
+      "desc": "Kaki mana yang berlayar bermuatan dan mana yang kosong (ballast); memengaruhi kecepatan.",
       "deps": [],
       "dependents": [
         "voyage.t_sea"
@@ -1315,6 +1369,7 @@
       "screens": [
         8
       ],
+      "desc": "Bentuk muatan yang dilayani tiap terminal KEK (MP multipurpose: PK/GC/CK; CC: curah cair).",
       "deps": [],
       "dependents": [
         "voyage.t_port_kek",
@@ -1338,6 +1393,7 @@
         8
       ],
       "symbol": "L_unit",
+      "desc": "Panjang satu unit tambatan di terminal KEK; pembagi berth-days dan dasar panjang dermaga.",
       "deps": [],
       "dependents": [
         "terminal.berth_days",
@@ -1360,6 +1416,7 @@
       "screens": [
         8
       ],
+      "desc": "Lebar dermaga, untuk luas dan biaya konstruksi.",
       "deps": [],
       "dependents": [
         "invest.berth"
@@ -1383,6 +1440,7 @@
         3,
         8
       ],
+      "desc": "Profil kedalaman laut dari garis pantai ke arah laut di tapak KEK; menentukan seberapa jauh dermaga harus menjorok (I8).",
       "deps": [],
       "dependents": [
         "waterside.x_star",
@@ -1406,6 +1464,7 @@
       "screens": [
         3
       ],
+      "desc": "Kondisi perairan (angin, arus, gelombang, keterlindungan, alat bantu navigasi) yang menentukan lebar alur dan kolam.",
       "deps": [],
       "dependents": [
         "waterside.channel",
@@ -1429,6 +1488,7 @@
         3,
         8
       ],
+      "desc": "Kedalaman perairan yang dibutuhkan = faktor ini × sarat kapal penentu (K15: 1,5; ruang bebas lunas).",
       "deps": [],
       "dependents": [
         "waterside.depth_req"
@@ -1452,6 +1512,7 @@
         3,
         8
       ],
+      "desc": "Batas panjang, lebar, dan tinggi trestle (jembatan penghubung darat–dermaga).",
       "deps": [],
       "dependents": [
         "waterside.trestle_len",
@@ -1475,6 +1536,7 @@
       "screens": [
         8
       ],
+      "desc": "Opsi trestle lebih pendek ditambah pengerukan: panjang trestle dan kedalaman eksisting di ujungnya.",
       "deps": [],
       "dependents": [
         "waterside.trestle_len",
@@ -1497,6 +1559,7 @@
       "screens": [
         3
       ],
+      "desc": "Apakah kapal dikenai jasa kepelabuhanan di TERSUS KEK; TERSUS milik sendiri biasanya tidak.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1520,6 +1583,7 @@
         4,
         6
       ],
+      "desc": "Tipe kapal (general cargo, bulk carrier, tanker, kapal petikemas, LCT).",
       "deps": [],
       "dependents": [
         "vessel.compatible",
@@ -1545,6 +1609,7 @@
         6
       ],
       "symbol": "DWT",
+      "desc": "Bobot mati kapal: total berat yang bisa dibawa (muatan + BBM + perbekalan).",
       "deps": [],
       "dependents": [
         "cargo.netmax",
@@ -1569,6 +1634,7 @@
       "screens": [
         4
       ],
+      "desc": "Muatan bersih per pelayaran bila diketahui dari data kapal; bila kosong ditaksir α × DWT.",
       "deps": [],
       "dependents": [
         "vessel.payload"
@@ -1591,6 +1657,7 @@
         4
       ],
       "symbol": "TEU_k",
+      "desc": "Kapasitas petikemas kapal dalam TEU.",
       "deps": [],
       "dependents": [
         "vessel.teu_cap"
@@ -1614,6 +1681,7 @@
         6
       ],
       "symbol": "LOA_k",
+      "desc": "Panjang keseluruhan kapal; menentukan kelayakan sandar, panjang tambatan, jumlah alat, dan dimensi kolam.",
       "deps": [],
       "dependents": [
         "vessel.feasible",
@@ -1639,6 +1707,7 @@
         4
       ],
       "symbol": "B",
+      "desc": "Lebar kapal; menentukan jangkauan alat dan lebar alur/kolam.",
       "deps": [],
       "dependents": [
         "vessel.reach_ok",
@@ -1663,6 +1732,7 @@
         6
       ],
       "symbol": "T_k",
+      "desc": "Sarat kapal bermuatan penuh; dibandingkan dengan kedalaman pelabuhan dan menentukan kedalaman KEK.",
       "deps": [],
       "dependents": [
         "vessel.feasible",
@@ -1687,6 +1757,7 @@
         6
       ],
       "symbol": "Vs",
+      "desc": "Kecepatan dinas kapal bermuatan; makin cepat, makin pendek sea time tetapi makin boros BBM (I2).",
       "deps": [],
       "dependents": [
         "dv.speed",
@@ -1709,6 +1780,7 @@
       "screens": [
         4
       ],
+      "desc": "Kecepatan saat kosong bila diketahui; bila kosong ditaksir dari rasio global.",
       "deps": [],
       "dependents": [
         "vessel.ballast_speed"
@@ -1730,6 +1802,7 @@
       "screens": [
         4
       ],
+      "desc": "Tonase kotor; dasar hampir semua tarif jasa kepelabuhanan (labuh, pandu, tambat, tunda).",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1753,6 +1826,7 @@
         6
       ],
       "symbol": "P_ME",
+      "desc": "Daya mesin induk; dasar konsumsi BBM saat berlayar.",
       "deps": [],
       "dependents": [
         "vessel.ae_kw",
@@ -1777,6 +1851,7 @@
         4
       ],
       "symbol": "P_AE",
+      "desc": "Daya mesin bantu (genset); dasar konsumsi BBM saat di pelabuhan.",
       "deps": [],
       "dependents": [
         "vessel.ae_kw"
@@ -1798,6 +1873,7 @@
       "screens": [
         4
       ],
+      "desc": "Konsumsi BBM spesifik mesin kapal ini bila diketahui; bila kosong diambil dari tabel rentang daya.",
       "deps": [],
       "dependents": [
         "vessel.sfoc"
@@ -1820,6 +1896,7 @@
       "screens": [
         4
       ],
+      "desc": "Data tarif sewa kapal (time charter) pasar per ukuran, untuk membuat garis regresi tarif per tipe kapal.",
       "deps": [],
       "dependents": [
         "shipcost.tch_rate"
@@ -1844,6 +1921,7 @@
         8
       ],
       "symbol": "prod_e",
+      "desc": "Kecepatan bongkar muat satu alat di KEK untuk tiap bentuk muatan (t/jam atau box/jam) (I3).",
       "deps": [],
       "dependents": [
         "voyage.t_port_kek"
@@ -1867,6 +1945,7 @@
         5,
         8
       ],
+      "desc": "Harga beli satu alat bongkar muat.",
       "deps": [],
       "dependents": [
         "invest.handling"
@@ -1888,6 +1967,7 @@
       "screens": [
         5
       ],
+      "desc": "Jangkauan lengan alat; harus cukup menjangkau seluruh lebar kapal.",
       "deps": [],
       "dependents": [
         "vessel.reach_ok"
@@ -1911,6 +1991,7 @@
         5,
         8
       ],
+      "desc": "Aturan jumlah alat per tambatan menurut panjang kapal (kapal lebih panjang dilayani lebih banyak alat).",
       "deps": [],
       "dependents": [
         "vessel.neq"
@@ -1933,6 +2014,7 @@
         5,
         8
       ],
+      "desc": "Batas jumlah alat yang muat bekerja di satu tambatan per terminal.",
       "deps": [],
       "dependents": [
         "vessel.neq"
@@ -1955,6 +2037,7 @@
       "screens": [
         1
       ],
+      "desc": "Tarif jasa labuh per GT per kunjungan.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1977,6 +2060,7 @@
       "screens": [
         1
       ],
+      "desc": "Tarif jasa pandu per gerakan (tetap + per GT).",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -1999,6 +2083,7 @@
       "screens": [
         1
       ],
+      "desc": "Tarif jasa tambat per GT per etmal (24 jam) di dermaga.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -2021,6 +2106,7 @@
       "screens": [
         1
       ],
+      "desc": "Tarif kapal tunda per gerakan menurut rentang GT.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -2043,6 +2129,7 @@
       "screens": [
         1
       ],
+      "desc": "Tarif bongkar muat di pelabuhan per ton atau per TEU.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -2065,6 +2152,7 @@
       "screens": [
         1
       ],
+      "desc": "Rentang GT yang menentukan baris tarif tunda.",
       "deps": [],
       "dependents": [
         "shipcost.port_call"
@@ -2087,6 +2175,7 @@
       "screens": [
         8
       ],
+      "desc": "Cara menentukan lama muatan menginap di penyimpanan: dari lama konsumsi, atau angka tetap per komoditas.",
       "deps": [],
       "dependents": [
         "storage.dwell"
@@ -2108,6 +2197,7 @@
       "screens": [
         8
       ],
+      "desc": "Porsi muatan yang singgah di penyimpanan KEK (sisanya langsung ke pabrik/kapal).",
       "deps": [],
       "dependents": [
         "storage.throughput"
@@ -2130,6 +2220,7 @@
       "screens": [
         8
       ],
+      "desc": "Parameter lapangan petikemas: luas per TEU, tinggi tumpukan, YOR maksimum, porsi kontainer kosong.",
       "deps": [],
       "dependents": [
         "storage.cy"
@@ -2152,6 +2243,7 @@
       "screens": [
         8
       ],
+      "desc": "Parameter lapangan/gudang general cargo: faktor luas, tinggi tumpukan, tingkat isi maksimum.",
       "deps": [],
       "dependents": [
         "storage.gc"
@@ -2174,6 +2266,7 @@
       "screens": [
         8
       ],
+      "desc": "Parameter curah kering: faktor luas, tinggi tumpukan, kapasitas dan harga silo.",
       "deps": [],
       "dependents": [
         "storage.bulk",
@@ -2197,6 +2290,7 @@
       "screens": [
         8
       ],
+      "desc": "Parameter tangki timbun: kapasitas satu tangki dan tingkat isi.",
       "deps": [],
       "dependents": [
         "storage.liquid"
@@ -2219,6 +2313,7 @@
       "screens": [
         8
       ],
+      "desc": "Data alat lapangan (RTG, reach stacker, forklift, …): produktivitas dan utilisasi per bentuk muatan.",
       "deps": [],
       "dependents": [
         "storage.yard_equipment"
@@ -2241,6 +2336,7 @@
       "screens": [
         9
       ],
+      "desc": "Harga konstruksi dermaga/jetty per m² (sheet Investasi).",
       "deps": [],
       "dependents": [
         "invest.berth"
@@ -2263,6 +2359,7 @@
       "screens": [
         9
       ],
+      "desc": "Harga konstruksi trestle per m².",
       "deps": [],
       "dependents": [
         "invest.waterside"
@@ -2285,6 +2382,7 @@
       "screens": [
         9
       ],
+      "desc": "Harga pengerukan per m³.",
       "deps": [],
       "dependents": [
         "invest.waterside"
@@ -2307,6 +2405,7 @@
       "screens": [
         9
       ],
+      "desc": "Harga satuan lapangan penumpukan, gudang, silo, dan tangki.",
       "deps": [],
       "dependents": [
         "invest.storage"
@@ -2329,6 +2428,7 @@
       "screens": [
         9
       ],
+      "desc": "Harga satuan alat lapangan.",
       "deps": [],
       "dependents": [
         "invest.yard_equipment"
@@ -2355,6 +2455,7 @@
         10
       ],
       "symbol": "y[f,k]",
+      "desc": "Kapal yang dipilih untuk melayani tiap flow; satu kapal per flow, hanya dari kandidat yang layak. Dipilih manual di layar 6 atau oleh optimizer (I1).",
       "dependents": [
         "cargo.demand_unit",
         "voyage.freq",
@@ -2384,6 +2485,7 @@
         10
       ],
       "symbol": "z[τ,e]",
+      "desc": "Jenis alat bongkar muat yang dipakai di tiap terminal KEK (I3).",
       "dependents": [
         "voyage.t_port_kek",
         "terminal.n_equip",
@@ -2407,6 +2509,7 @@
         10
       ],
       "symbol": "w, θ",
+      "desc": "Cara mencapai kedalaman di KEK: trestle panjang, trestle pendek + keruk, atau campuran (I8).",
       "deps": [],
       "dependents": [
         "waterside.trestle_len",
@@ -2433,6 +2536,7 @@
         10
       ],
       "symbol": "V",
+      "desc": "Kecepatan operasi yang dipilih (≤ kecepatan dinas); slow steaming menghemat BBM tetapi menambah kapal (I2).",
       "dependents": [
         "vessel.ballast_speed",
         "voyage.t_sea"
@@ -2465,6 +2569,7 @@
         6
       ],
       "symbol": "D[f,t]",
+      "desc": "Volume muatan per tahun untuk flow yang berdiri sendiri: mulai di tahun mulai, tumbuh tiap tahun, dibatasi volume maksimum.",
       "dependents": [
         "demand.ratio",
         "cargo.demand_unit"
@@ -2489,6 +2594,7 @@
       "screens": [
         2
       ],
+      "desc": "Volume muatan per tahun untuk flow outbound yang mengikuti inbound tenant yang sama dengan rasio konversi.",
       "dependents": [
         "cargo.demand_unit"
       ],
@@ -2519,6 +2625,7 @@
         2
       ],
       "symbol": "NetMax",
+      "desc": "Berat muatan maksimum per TEU yang masih aman, dibatasi kontainer maupun kemampuan angkut kapal.",
       "dependents": [
         "cargo.box_per_teu",
         "cargo.ton_per_teu"
@@ -2545,6 +2652,7 @@
         2
       ],
       "symbol": "nBox",
+      "desc": "Berapa kemasan muat dalam satu kontainer 20 kaki, dibatasi ruang dan berat.",
       "dependents": [
         "cargo.ton_per_teu"
       ],
@@ -2572,6 +2680,7 @@
         2
       ],
       "symbol": "tonPerTEU",
+      "desc": "Berat muatan rata-rata per TEU; jembatan konversi ton ↔ TEU untuk muatan petikemas.",
       "dependents": [
         "cargo.demand_unit",
         "vessel.payload"
@@ -2602,6 +2711,7 @@
         6
       ],
       "symbol": "D",
+      "desc": "Demand dalam satuan yang dipakai kapal: TEU untuk petikemas, ton untuk lainnya. Inilah volume yang harus diangkut armada.",
       "dependents": [
         "voyage.freq",
         "voyage.q",
@@ -2631,6 +2741,7 @@
       "screens": [
         4
       ],
+      "desc": "Kapasitas TEU kapal yang dipakai hitungan: dari data kapal, atau ditaksir dari DWT bila kosong.",
       "dependents": [
         "cargo.netmax",
         "vessel.payload",
@@ -2665,6 +2776,7 @@
         6
       ],
       "symbol": "payload[k]",
+      "desc": "Muatan per pelayaran yang bisa dibawa kapal (ton atau TEU). Kapal lebih besar → payload naik → frekuensi turun (I1).",
       "dependents": [
         "voyage.freq",
         "voyage.q"
@@ -2690,6 +2802,7 @@
         4,
         6
       ],
+      "desc": "Apakah tipe kapal boleh membawa bentuk muatan flow ini (dari matriks kompatibilitas).",
       "dependents": [
         "vessel.feasible"
       ],
@@ -2721,6 +2834,7 @@
         6
       ],
       "symbol": "feasible[f,k]",
+      "desc": "Apakah kapal lolos semua syarat: tipe cocok, sarat ≤ kedalaman pelabuhan, dan LOA muat di dermaga. Kapal gugur tidak bisa dipilih.",
       "dependents": [
         "dv.ship"
       ],
@@ -2751,6 +2865,7 @@
         8
       ],
       "symbol": "nEq[k]",
+      "desc": "Jumlah alat bongkar muat yang melayani satu kapal di tambatan KEK, ditentukan dari panjang kapal (A10).",
       "dependents": [
         "voyage.t_port_kek",
         "terminal.n_equip"
@@ -2775,6 +2890,7 @@
         5
       ],
       "symbol": "reach_ok[k,e]",
+      "desc": "Apakah jangkauan alat cukup untuk lebar kapal ini.",
       "dependents": [
         "dv.equip"
       ],
@@ -2801,6 +2917,7 @@
       "screens": [
         4
       ],
+      "desc": "Kecepatan yang dipakai saat kapal berlayar kosong.",
       "dependents": [
         "voyage.t_sea"
       ],
@@ -2824,6 +2941,7 @@
       "screens": [
         4
       ],
+      "desc": "Daya mesin bantu yang dipakai hitungan (data kapal atau taksiran dari daya mesin induk).",
       "dependents": [
         "vessel.sfoc",
         "shipcost.fuel_ae_l"
@@ -2849,6 +2967,7 @@
       "screens": [
         4
       ],
+      "desc": "Konsumsi BBM spesifik mesin induk dan bantu yang dipakai hitungan (gram per kWh).",
       "dependents": [
         "shipcost.fuel_me_l",
         "shipcost.fuel_ae_l"
@@ -2876,6 +2995,7 @@
         7
       ],
       "symbol": "F_req",
+      "desc": "Berapa kali kapal harus datang per tahun untuk mengangkut seluruh demand flow.",
       "dependents": [
         "voyage.q",
         "voyage.n_ship",
@@ -2908,6 +3028,7 @@
         6
       ],
       "symbol": "q",
+      "desc": "Muatan yang dibawa per kunjungan (rata-rata, atau penuh pada mode full-load).",
       "dependents": [
         "voyage.t_port_kek",
         "voyage.t_port_ext",
@@ -2942,6 +3063,7 @@
         6
       ],
       "symbol": "tPortKEK",
+      "desc": "Lama kapal bongkar/muat di dermaga KEK per kunjungan, tergantung produktivitas dan jumlah alat.",
       "dependents": [
         "voyage.t_port",
         "shipcost.port_call",
@@ -2972,6 +3094,7 @@
         6
       ],
       "symbol": "tPortExt",
+      "desc": "Lama kapal bongkar/muat di pelabuhan asal/tujuan per kunjungan.",
       "dependents": [
         "voyage.t_port",
         "shipcost.port_call"
@@ -2996,6 +3119,7 @@
       "screens": [
         6
       ],
+      "desc": "Total waktu bongkar muat di kedua ujung rute per kunjungan.",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3022,6 +3146,7 @@
         6
       ],
       "symbol": "tFix",
+      "desc": "Waktu tetap per kunjungan di luar bongkar muat: mendekat, menunggu, dan diam (AT + WT + IT).",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3057,6 +3182,7 @@
         6
       ],
       "symbol": "tSea",
+      "desc": "Lama berlayar satu putaran (berangkat bermuatan, pulang kosong).",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3084,6 +3210,7 @@
         6
       ],
       "symbol": "RTD",
+      "desc": "Round trip days: lama satu putaran penuh kapal = berlayar + bongkar muat di kedua ujung + waktu tetap.",
       "dependents": [
         "voyage.f_max"
       ],
@@ -3111,6 +3238,7 @@
         6
       ],
       "symbol": "F_max",
+      "desc": "Berapa putaran yang sanggup dilakukan satu kapal dalam setahun (dibulatkan ke bawah, A1).",
       "dependents": [
         "voyage.n_ship",
         "voyage.utilization"
@@ -3137,6 +3265,7 @@
         7
       ],
       "symbol": "N_ship",
+      "desc": "Jumlah kapal yang dibutuhkan agar frekuensi tercapai. Dasar biaya sewa (TCH).",
       "dependents": [
         "voyage.utilization",
         "shipcost.tch"
@@ -3161,6 +3290,7 @@
       "screens": [
         6
       ],
+      "desc": "Seberapa penuh jadwal armada terpakai; 100 % = tidak ada kapasitas putaran yang menganggur.",
       "dependents": [],
       "lane": 4,
       "depth": 13,
@@ -3183,6 +3313,7 @@
         8
       ],
       "symbol": "lamaKonsumsi",
+      "desc": "Berapa hari stok satu kali pengapalan cukup untuk kebutuhan tenant; dasar lama muatan menginap di penyimpanan.",
       "dependents": [
         "storage.dwell"
       ],
@@ -3216,6 +3347,7 @@
       "screens": [
         7
       ],
+      "desc": "Liter BBM mesin induk per tahun untuk semua kunjungan flow ini.",
       "dependents": [
         "shipcost.fuel_me"
       ],
@@ -3248,6 +3380,7 @@
       "screens": [
         7
       ],
+      "desc": "Liter BBM mesin bantu per tahun untuk semua kunjungan flow ini.",
       "dependents": [
         "shipcost.fuel_ae"
       ],
@@ -3275,6 +3408,7 @@
       "screens": [
         7
       ],
+      "desc": "Biaya BBM mesin induk per tahun (liter × harga).",
       "dependents": [
         "shipcost.voyage"
       ],
@@ -3302,6 +3436,7 @@
       "screens": [
         7
       ],
+      "desc": "Biaya BBM mesin bantu per tahun (liter × harga).",
       "dependents": [
         "shipcost.voyage"
       ],
@@ -3325,6 +3460,7 @@
       "screens": [
         7
       ],
+      "desc": "Voyage cost: total biaya BBM per tahun.",
       "dependents": [
         "shipcost.total"
       ],
@@ -3351,6 +3487,7 @@
         4,
         7
       ],
+      "desc": "Tarif sewa kapal per hari menurut ukuran dan tipenya (dari regresi tarif pasar).",
       "dependents": [
         "shipcost.tch"
       ],
@@ -3376,6 +3513,7 @@
       "screens": [
         7
       ],
+      "desc": "Biaya sewa (time charter) seluruh kapal flow ini per tahun.",
       "dependents": [
         "shipcost.total"
       ],
@@ -3412,6 +3550,7 @@
       "screens": [
         7
       ],
+      "desc": "Biaya jasa kepelabuhanan (labuh, pandu, tambat, tunda, B/M) untuk satu kunjungan, di kedua ujung rute.",
       "dependents": [
         "shipcost.port"
       ],
@@ -3438,6 +3577,7 @@
       "screens": [
         7
       ],
+      "desc": "Biaya pelabuhan per tahun = biaya per kunjungan × frekuensi aktual (A11).",
       "dependents": [
         "shipcost.total"
       ],
@@ -3463,6 +3603,7 @@
         6,
         7
       ],
+      "desc": "Shipping cost: total biaya pelayaran flow per tahun = BBM + sewa kapal + biaya pelabuhan.",
       "dependents": [
         "shipcost.unit",
         "agg.tc"
@@ -3490,6 +3631,7 @@
         6,
         7
       ],
+      "desc": "Biaya pelayaran per ton atau per TEU yang diangkut; pembanding antarkapal di layar 6.",
       "dependents": [],
       "lane": 5,
       "depth": 15,
@@ -3513,6 +3655,7 @@
         8
       ],
       "symbol": "shipDays[f]",
+      "desc": "Total hari kapal flow ini berada di dermaga KEK dalam setahun.",
       "dependents": [
         "terminal.berth_days",
         "terminal.bor"
@@ -3542,6 +3685,7 @@
         8
       ],
       "symbol": "berthDaysReq[f]",
+      "desc": "Hari pemakaian tambatan yang dibutuhkan, dikoreksi panjang kapal relatif terhadap panjang satu tambatan.",
       "dependents": [
         "terminal.n_berth",
         "terminal.bor"
@@ -3571,6 +3715,7 @@
         9
       ],
       "symbol": "nBerth[τ]",
+      "desc": "Jumlah tambatan yang harus tersedia di tiap terminal agar BOR tidak melewati batas (I6).",
       "dependents": [
         "terminal.bor",
         "terminal.berth_length",
@@ -3599,6 +3744,7 @@
         8
       ],
       "symbol": "BOR[τ]",
+      "desc": "Tingkat pemakaian tambatan sebenarnya setelah jumlah tambatan ditetapkan.",
       "dependents": [],
       "lane": 6,
       "depth": 12,
@@ -3620,6 +3766,7 @@
         8,
         9
       ],
+      "desc": "Panjang dermaga total yang perlu dibangun = jumlah tambatan × panjang satu tambatan.",
       "dependents": [
         "invest.berth"
       ],
@@ -3650,6 +3797,7 @@
         9
       ],
       "symbol": "nAlat[τ]",
+      "desc": "Jumlah alat bongkar muat di tiap terminal = tambatan × alat per tambatan.",
       "dependents": [
         "invest.handling"
       ],
@@ -3674,6 +3822,7 @@
         8
       ],
       "symbol": "Tdw",
+      "desc": "Lama rata-rata muatan menginap di penyimpanan KEK.",
       "dependents": [
         "storage.cy",
         "storage.gc",
@@ -3700,6 +3849,7 @@
         8
       ],
       "symbol": "Q",
+      "desc": "Volume muatan per tahun yang melewati penyimpanan KEK.",
       "dependents": [
         "storage.cy",
         "storage.gc",
@@ -3728,6 +3878,7 @@
       "screens": [
         8
       ],
+      "desc": "Luas lapangan penumpukan petikemas (dan jumlah ground slot) yang dibutuhkan.",
       "dependents": [
         "invest.storage"
       ],
@@ -3753,6 +3904,7 @@
       "screens": [
         8
       ],
+      "desc": "Luas gudang/lapangan general cargo yang dibutuhkan.",
       "dependents": [
         "invest.storage"
       ],
@@ -3778,6 +3930,7 @@
       "screens": [
         8
       ],
+      "desc": "Kebutuhan penyimpanan curah kering: luas lapangan atau jumlah silo.",
       "dependents": [
         "invest.storage"
       ],
@@ -3803,6 +3956,7 @@
       "screens": [
         8
       ],
+      "desc": "Kebutuhan tangki timbun curah cair: volume dan jumlah tangki.",
       "dependents": [
         "invest.storage"
       ],
@@ -3828,6 +3982,7 @@
       "screens": [
         8
       ],
+      "desc": "Jumlah alat lapangan (RTG, reach stacker, forklift, …) yang dibutuhkan per bentuk muatan.",
       "dependents": [
         "invest.yard_equipment"
       ],
@@ -3853,6 +4008,7 @@
       "screens": [
         8
       ],
+      "desc": "Kapal penentu: kapal terpilih terbesar (sarat, LOA, lebar) yang singgah KEK; semua dimensi perairan mengikuti kapal ini.",
       "dependents": [
         "waterside.depth_req",
         "waterside.channel",
@@ -3878,6 +4034,7 @@
       "screens": [
         8
       ],
+      "desc": "Kedalaman air minimum di dermaga dan alur KEK agar kapal penentu aman.",
       "dependents": [
         "waterside.x_star",
         "waterside.dredge_vol"
@@ -3902,6 +4059,7 @@
       "screens": [
         8
       ],
+      "desc": "Lebar dan panjang alur pelayaran masuk KEK.",
       "dependents": [
         "waterside.dredge_vol"
       ],
@@ -3925,6 +4083,7 @@
       "screens": [
         8
       ],
+      "desc": "Dimensi kolam putar, pintu masuk, area sandar, jarak henti, dan radius labuh.",
       "dependents": [
         "waterside.dredge_vol"
       ],
@@ -3949,6 +4108,7 @@
         8
       ],
       "symbol": "x*",
+      "desc": "Jarak dari pantai ke titik pertama yang kedalamannya sudah mencukupi.",
       "dependents": [
         "waterside.trestle_len"
       ],
@@ -3974,6 +4134,7 @@
       "screens": [
         8
       ],
+      "desc": "Panjang trestle yang dibangun untuk mencapai perairan dalam.",
       "dependents": [
         "invest.waterside"
       ],
@@ -4001,6 +4162,7 @@
       "screens": [
         8
       ],
+      "desc": "Volume pengerukan agar kolam dan alur mencapai kedalaman perlu.",
       "dependents": [
         "invest.waterside"
       ],
@@ -4027,6 +4189,7 @@
       "screens": [
         9
       ],
+      "desc": "Biaya membangun dermaga MP dan jetty CC, dicatat di tahun pembangunan.",
       "dependents": [
         "invest.total"
       ],
@@ -4053,6 +4216,7 @@
       "screens": [
         9
       ],
+      "desc": "Biaya membeli alat bongkar muat KEK, dicatat di tahun pengadaan.",
       "dependents": [
         "invest.total"
       ],
@@ -4083,6 +4247,7 @@
         8,
         9
       ],
+      "desc": "Biaya membangun lapangan, gudang, silo, dan tangki.",
       "dependents": [
         "invest.total"
       ],
@@ -4107,6 +4272,7 @@
       "screens": [
         9
       ],
+      "desc": "Biaya membeli alat lapangan.",
       "dependents": [
         "invest.total"
       ],
@@ -4135,6 +4301,7 @@
         8,
         9
       ],
+      "desc": "Biaya trestle dan/atau pengerukan.",
       "dependents": [
         "invest.total"
       ],
@@ -4160,6 +4327,7 @@
       "screens": [
         9
       ],
+      "desc": "Total belanja investasi di tahun tersebut.",
       "dependents": [
         "agg.tc"
       ],
@@ -4185,6 +4353,7 @@
       ],
       "note": "K15 membagi investasi awal 20 lalu menambahkannya tiap tahun (Model!K400)",
       "symbol": "TC[t]",
+      "desc": "Total cost per tahun: biaya pelayaran seluruh flow + investasi tahun itu.",
       "dependents": [
         "agg.uc",
         "obj.npv"
@@ -4214,6 +4383,7 @@
         9
       ],
       "symbol": "UC[t]",
+      "desc": "Biaya total per ton dan per TEU yang ditangani (dipisah per satuan, A7).",
       "dependents": [
         "agg.pv_uc"
       ],
@@ -4237,6 +4407,7 @@
       "screens": [
         9
       ],
+      "desc": "Unit cost tahun t yang sudah didiskonto ke nilai sekarang.",
       "dependents": [
         "agg.annuity"
       ],
@@ -4262,6 +4433,7 @@
         9,
         11
       ],
+      "desc": "Unit cost rata-rata setara per tahun selama periode tinjauan (metrik laporan cara K15).",
       "dependents": [],
       "lane": 8,
       "depth": 18,
@@ -4286,6 +4458,7 @@
         11
       ],
       "note": "K15/Evolver meminimumkan anuitas (Model!K407); v2 memakai NPV total cost sebagai objektif default",
+      "desc": "Nilai sekarang seluruh biaya selama periode tinjauan. Angka inilah yang diminimalkan optimizer v2.",
       "dependents": [],
       "lane": 8,
       "depth": 16,

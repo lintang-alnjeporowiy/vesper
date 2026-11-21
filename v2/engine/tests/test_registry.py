@@ -28,6 +28,15 @@ def test_ids_unique_and_well_formed():
             assert v.id.startswith("dv."), v.id
 
 
+def test_every_variable_has_description():
+    ids = {v.id for v in R.REGISTRY}
+    from tpt_engine.registry_desc import DESC
+
+    assert not (set(DESC) - ids), f"keterangan untuk id yang tidak ada: {sorted(set(DESC) - ids)}"
+    for v in R.REGISTRY:
+        assert len(v.desc) >= 20, f"{v.id}: keterangan kosong/terlalu pendek"
+
+
 def test_deps_exist():
     ids = R.by_id()
     for v in R.REGISTRY:

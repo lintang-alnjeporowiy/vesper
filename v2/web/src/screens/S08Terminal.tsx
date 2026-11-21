@@ -1,8 +1,8 @@
-import { Bathymetry } from '../charts/charts'
+import { BathyProfile } from '../charts/charts'
 import { Tv } from '../components/trace'
 import { Badge, InputMark, Note, PH, ScreenHeader, Section, Slider, Table } from '../components/ui'
 import { num, pct } from '../lib/format'
-import { STAGING, STORAGE_Y13, TERMINAL_Y13, WATERSIDE_OPTIONS } from '../mock/placeholders'
+import { REQUIRED_DEPTH_PH, STAGING, STORAGE_Y13, TERMINAL_Y13, WATERSIDE_OPTIONS } from '../mock/placeholders'
 import { usePlanner } from '../store'
 
 export default function S08Terminal() {
@@ -13,7 +13,7 @@ export default function S08Terminal() {
   const eqName = (id?: string) => c.equipment.find((e) => e.id === id)
   const phase = c.horizon.phases.find((p) => year >= p.start_year && year <= p.end_year)
   const td = site.trestle_dredge
-  const req = 21.3
+  const req = REQUIRED_DEPTH_PH
 
   return (
     <>
@@ -106,14 +106,19 @@ export default function S08Terminal() {
       </Section>
 
       <Section title="Trestle atau keruk (I8)" aside={site.bathymetry_source === 'dummy' ? <Badge kind="asumsi">asumsi · batimetri dummy</Badge> : undefined}>
-        <Bathymetry points={site.bathymetry} marks={[td?.trestle_length_m ?? 250, site.trestle?.max_length_m ?? 500]} required={req} />
+        <BathyProfile
+          points={site.bathymetry}
+          required={{ depth: req, label: `kedalaman perlu ${num(req, 1)} m · placeholder` }}
+          marks={[{ at: td?.trestle_length_m ?? 250, label: `${num(td?.trestle_length_m ?? 250)} m` }, { at: site.trestle?.max_length_m ?? 500, label: `${num(site.trestle?.max_length_m ?? 500)} m` }]}
+          width={860}
+        />
         <div className="flex w-full justify-between font-mono text-[13px] text-abu">
           <span>0 m</span>
           <Tv v="in.site.trestle_dredge" className="font-medium text-hitam">{`${num(td?.trestle_length_m ?? 0)} m · ${num(td?.existing_depth_m ?? 0, 1)}`}</Tv>
           <span className="font-medium text-hitam"><Tv v="in.site.trestle">{`${num(site.trestle?.max_length_m ?? 0)} m`}</Tv> · <Tv v="waterside.depth_req">{num(req, 1)}</Tv></span>
           <Tv v="in.site.bathymetry">{`${num(site.bathymetry[site.bathymetry.length - 1].distance_m)} m · ${num(site.bathymetry[site.bathymetry.length - 1].depth_m, 1)}`}</Tv>
         </div>
-        <Note>Kedalaman ke bawah. Batang hitam: ujung trestle {num(td?.trestle_length_m ?? 0)} m dan {num(site.trestle?.max_length_m ?? 0)} m. <Tv v="waterside.depth_req">Kedalaman perlu {num(req, 1)} m</Tv> = <Tv v="in.site.depth_factor">1,5</Tv> × draft <Tv v="waterside.governing">kapal penentu</Tv> (placeholder).</Note>
+        <Note>Profil diedit di layar 3. Garis hitam: ujung trestle {num(td?.trestle_length_m ?? 0)} m dan {num(site.trestle?.max_length_m ?? 0)} m. <Tv v="waterside.depth_req">Kedalaman perlu {num(req, 1)} m</Tv> = <Tv v="in.site.depth_factor">1,5</Tv> × draft <Tv v="waterside.governing">kapal penentu</Tv> (placeholder).</Note>
         <div className="flex w-full border-y border-garis">
           {WATERSIDE_OPTIONS.map((o, i) => {
             const on = plan?.waterside_mode === o.id

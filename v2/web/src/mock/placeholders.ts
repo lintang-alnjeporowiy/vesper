@@ -122,6 +122,9 @@ export const WATERSIDE_OPTIONS = [
   { id: 'trestle_dredge', name: 'Trestle 250 m + keruk', spec: '250 × 50 m · keruk 10,0 → 21,3 m', cost: 'Rp 2,1 T · PV Rp 1,8 T', delta: '+12 %' },
 ]
 
+/** Kedalaman perlu (m LWS) placeholder = 1,5 × draft terbesar K15; dihitung engine di Tahap 8. */
+export const REQUIRED_DEPTH_PH = 21.3
+
 // ── Layar 9: investasi & ringkasan ──────────────────────────────────────────
 export const KPI_SUMMARY = [
   { label: 'Total biaya 20 th', value: 'Rp 256 T', v: 'agg.tc' },

@@ -8,6 +8,38 @@ export const MAP_SCREEN = 12
 
 type Path = (string | number)[]
 
+/** Pengaturan tampilan per pengguna (disimpan di localStorage browser ini). */
+export interface Settings {
+  /** Catatan "tidak ada temuan audit langsung" di laci jejak. */
+  showNoAuditNote: boolean
+  /** Catatan ≠ Excel · A# bila variabel punya temuan audit. */
+  showAuditNotes: boolean
+  /** Keterangan singkat variabel di laci jejak. */
+  showDesc: boolean
+  /** Catatan bahwa nilai turunan placeholder hanya ada untuk contoh in.damai. */
+  showPlaceholderNote: boolean
+}
+
+export const DEFAULT_SETTINGS: Settings = { showNoAuditNote: false, showAuditNotes: true, showDesc: true, showPlaceholderNote: true }
+const SETTINGS_KEY = 'tpt-planner.settings'
+
+function loadSettings(): Settings {
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_KEY)
+    return raw ? { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<Settings>) } : DEFAULT_SETTINGS
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
+function saveSettings(s: Settings) {
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(s))
+  } catch {
+    /* penyimpanan diblokir: pengaturan berlaku sampai halaman dimuat ulang */
+  }
+}
+
 function setAt<T>(obj: T, path: Path, value: unknown): T {
   const copy = structuredClone(obj) as Record<string | number, unknown>
   let cur = copy as Record<string | number, unknown>
@@ -29,6 +61,9 @@ interface PlannerState {
   trace: TraceRef
   /** Riwayat jejak untuk tombol kembali di laci. */
   traceHistory: TraceRef[]
+  /** Tab aktif di laci kanan. */
+  drawerTab: 'jejak' | 'pengaturan'
+  settings: Settings
   setScreen: (n: number) => void
   setYear: (y: number) => void
   setFlow: (id: string) => void
@@ -38,6 +73,9 @@ interface PlannerState {
   showTrace: (id: string, ctx?: TraceCtx, value?: string) => void
   traceBack: () => void
   toggleTrace: () => void
+  setDrawerTab: (t: 'jejak' | 'pengaturan') => void
+  setSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => void
+  resetSettings: () => void
 }
 
 function screenFromHash(): number {
@@ -58,6 +96,8 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   traceOpen: true,
   trace: { id: 'voyage.rtd', ctx: { flow: 'in.damai', ship: 'ship.aetos', year: 10 } },
   traceHistory: [],
+  drawerTab: 'jejak',
+  settings: loadSettings(),
   setScreen: (n) => {
     window.location.hash = `#/${n}`
     set({ screen: n })
@@ -83,6 +123,7 @@ export const usePlanner = create<PlannerState>((set, get) => ({
     set({
       trace: { id, ctx, value },
       traceOpen: true,
+      drawerTab: 'jejak',
       traceHistory: same ? traceHistory : [...traceHistory, trace].slice(-30),
     })
   },
@@ -91,6 +132,16 @@ export const usePlanner = create<PlannerState>((set, get) => ({
     if (h.length) set({ trace: h[h.length - 1], traceHistory: h.slice(0, -1) })
   },
   toggleTrace: () => set({ traceOpen: !get().traceOpen }),
+  setDrawerTab: (t) => set({ drawerTab: t, traceOpen: true }),
+  setSetting: (key, value) => {
+    const settings = { ...get().settings, [key]: value }
+    saveSettings(settings)
+    set({ settings })
+  },
+  resetSettings: () => {
+    saveSettings(DEFAULT_SETTINGS)
+    set({ settings: DEFAULT_SETTINGS })
+  },
 }))
 
 window.addEventListener('hashchange', () => usePlanner.setState({ screen: screenFromHash() }))

@@ -1,5 +1,6 @@
 import type { ExternalPort } from '../api/case'
 import { BarRows, C } from '../charts/charts'
+import { BathyEditor } from '../components/BathyEditor'
 import { Badge, DefRow, EditNum, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
 import { portOfRoute, shortPortName } from '../lib/case'
 import { num } from '../lib/format'
@@ -92,10 +93,14 @@ export default function S03Pelabuhan() {
                 <DefRow label="Kedalaman perlu" justify last><span className="font-mono">{num(w.depth_factor_of_draft, 1)} × draft</span></DefRow>
               </>
             )}
-            <span className="pt-2"><Note>Profil batimetri lengkap dan pilihan trestle/keruk ada di layar 8 (I8).</Note></span>
+            <span className="pt-2"><Note>Pilihan trestle atau keruk berdasarkan profil ini ada di layar 8 (I8).</Note></span>
           </>
         }
       />
+
+      <Section title="Profil batimetri tapak (I8)" aside={<span className="text-[13px] text-abu">kedalaman diukur dari LWS, positif ke bawah</span>}>
+        <BathyEditor />
+      </Section>
     </>
   )
 }

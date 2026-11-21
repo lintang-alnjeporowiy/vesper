@@ -23,6 +23,7 @@ export interface VarDef {
   screens?: number[]
   note?: string
   symbol?: string
+  desc: string
   lane: number
   depth: number
   topo: number

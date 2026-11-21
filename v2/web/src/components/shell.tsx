@@ -1,4 +1,4 @@
-import { MAP_SCREEN, usePlanner } from '../store'
+import { MAP_SCREEN, usePlanner, type Settings } from '../store'
 import { AUDIT, KIND_LABEL, VAR, contextLabel, sameCtx, downstream, getVar, inputValue, upstream, type VarDef } from '../lib/registry'
 import { PH_SAMPLE, PH_SAMPLE_CTX } from '../mock/placeholders'
 import { Badge, Button, InputMark, PH, StatusDot } from './ui'
@@ -99,7 +99,7 @@ export function TopBar() {
       )}
       <Button variant="utama" onClick={recalc} disabled={n === 0}>Hitung ulang</Button>
       <Button onClick={() => setScreen(10)}>Jalankan optimasi</Button>
-      <Button variant="tipis" onClick={toggleTrace}>{traceOpen ? 'Tutup jejak' : 'ƒx Jejak'}</Button>
+      <Button variant="tipis" onClick={toggleTrace}>{traceOpen ? 'Tutup laci' : 'ƒx Jejak'}</Button>
     </header>
   )
 }
@@ -120,9 +120,68 @@ function KindBadge({ v }: { v: VarDef }) {
   return <PH />
 }
 
+const SETTING_ROWS: { key: keyof Settings; label: string; hint: string }[] = [
+  { key: 'showDesc', label: 'Keterangan variabel', hint: 'Satu-dua kalimat "variabel ini apa" di bawah nama variabel.' },
+  { key: 'showAuditNotes', label: 'Catatan selisih Excel (≠ Excel · A#)', hint: 'Penjelasan temuan audit bila variabel ini berbeda dari Excel K15.' },
+  { key: 'showNoAuditNote', label: 'Catatan "tidak ada temuan audit"', hint: 'Kalimat pengingat saat variabel tidak punya temuan audit langsung.' },
+  { key: 'showPlaceholderNote', label: 'Catatan nilai placeholder', hint: 'Pengingat bahwa nilai turunan hanya tersedia untuk contoh in.damai · AETOS · tahun 10.' },
+]
+
+function SettingsPanel() {
+  const { settings, setSetting, resetSettings } = usePlanner()
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col">
+        <span className="pb-1.5 text-[13px] font-medium text-abu">Laci jejak</span>
+        {SETTING_ROWS.map((r) => (
+          <label key={r.key} className="flex cursor-pointer items-start gap-2.5 border-t border-garis py-2.5">
+            <input type="checkbox" className="mt-0.5 [accent-color:#000]" checked={settings[r.key]} onChange={(e) => setSetting(r.key, e.target.checked)} />
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm">{r.label}</span>
+              <span className="text-[13px] text-abu">{r.hint}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+      <Button size="sm" variant="tipis" onClick={resetSettings}>Kembalikan bawaan</Button>
+      <p className="m-0 text-[13px] text-abu">Pengaturan disimpan di browser ini saja. Pengaturan lain menyusul di tab ini.</p>
+    </div>
+  )
+}
+
 export function TraceDrawer() {
-  const { trace, traceOpen, toggleTrace, showTrace, traceBack, traceHistory, caseData, shipByFlow, setScreen, screen } = usePlanner()
+  const { trace, traceOpen, toggleTrace, showTrace, traceBack, traceHistory, caseData, shipByFlow, setScreen, screen, drawerTab, setDrawerTab, settings } = usePlanner()
   if (!traceOpen) return null
+  const tabs = (
+    <div className="flex items-center gap-2">
+      {drawerTab === 'jejak' && traceHistory.length > 0 && (
+        <button type="button" aria-label="Jejak sebelumnya" onClick={traceBack} className="cursor-pointer border-0 bg-transparent p-0 font-mono text-base text-abu hover:text-hitam">←</button>
+      )}
+      <div role="tablist" className="flex grow items-center border-b border-garis">
+        {(['jejak', 'pengaturan'] as const).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            type="button"
+            aria-selected={drawerTab === t}
+            onClick={() => setDrawerTab(t)}
+            className={`-mb-px h-9 cursor-pointer border-0 bg-transparent px-2 text-sm ${drawerTab === t ? 'border-b-2 border-solid border-hitam font-medium text-hitam' : 'text-abu'}`}
+          >
+            {t === 'jejak' ? 'Jejak variabel' : 'Pengaturan'}
+          </button>
+        ))}
+      </div>
+      <button type="button" aria-label="Tutup laci" onClick={toggleTrace} className="cursor-pointer border-0 bg-transparent text-base text-abu">×</button>
+    </div>
+  )
+  if (drawerTab === 'pengaturan') {
+    return (
+      <aside aria-label="Pengaturan" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
+        {tabs}
+        <SettingsPanel />
+      </aside>
+    )
+  }
   const v = VAR[trace.id] ?? getVar('voyage.rtd')
   const ctx = trace.ctx ?? {}
   const shipCtx = { ...ctx, ship: ctx.ship ?? (ctx.flow ? shipByFlow[ctx.flow] : undefined) }
@@ -130,13 +189,7 @@ export function TraceDrawer() {
   const depValue = (d: VarDef) => (d.kind === 'input' ? inputValue(caseData, d, shipCtx, shipByFlow) : phValue(d.id, shipCtx)) ?? '–'
   return (
     <aside aria-label="Jejak variabel" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
-      <div className="flex items-center gap-2">
-        {traceHistory.length > 0 && (
-          <button type="button" aria-label="Jejak sebelumnya" onClick={traceBack} className="cursor-pointer border-0 bg-transparent p-0 font-mono text-base text-abu hover:text-hitam">←</button>
-        )}
-        <h2 className="m-0 grow text-base font-medium">Jejak variabel</h2>
-        <button type="button" aria-label="Tutup jejak" onClick={toggleTrace} className="cursor-pointer border-0 bg-transparent text-base text-abu">×</button>
-      </div>
+      {tabs}
       <div className="flex flex-col gap-1.5">
         <span className="text-[13px] text-abu">{contextLabel(caseData, v, ctx, shipByFlow)}</span>
         <span className="text-base">{v.label}</span>
@@ -149,7 +202,25 @@ export function TraceDrawer() {
           {v.symbol && <span className="font-mono text-[13px]">{v.symbol}</span>}
           <span className="font-mono text-[13px] text-abu">{v.id}</span>
         </span>
+        {settings.showDesc && <p className="m-0 pt-1 text-sm leading-5">{v.desc}</p>}
       </div>
+      {v.screens && v.screens.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[13px] font-medium text-abu">{v.kind === 'input' ? 'Diisi / tampil di layar' : 'Tampil di layar'}</span>
+          <span className="flex flex-wrap gap-1.5">
+            {v.screens.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setScreen(n)}
+                className={`h-7 cursor-pointer rounded-badge border px-2 text-[13px] ${n === screen ? 'border-hitam bg-hitam text-white' : 'border-garis bg-white hover:border-hitam'}`}
+              >
+                <span className="font-mono">{String(n).padStart(2, '0')}</span> {STEPS[n]?.title}
+              </button>
+            ))}
+          </span>
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
         <span className="text-[13px] font-medium text-abu">
           {v.kind === 'input' ? 'Sumber' : 'Rumus'} · SPEC §{v.section}
@@ -159,13 +230,14 @@ export function TraceDrawer() {
       </div>
       {v.deps.length > 0 && (
         <div className="flex flex-col">
-          <span className="pb-1.5 text-[13px] font-medium text-abu">Masukan · {v.deps.length}</span>
+          <span className="pb-1.5 text-[13px] font-medium text-abu">Dihitung dari · {v.deps.length}</span>
           {v.deps.map((id) => {
             const d = getVar(id)
             return (
               <button
                 key={id}
                 type="button"
+                title={d.desc}
                 onClick={() => showTrace(id, trace.ctx)}
                 className="flex cursor-pointer items-center gap-1.5 border-0 border-t border-solid border-garis bg-transparent px-0 py-2 text-left hover:bg-permukaan"
               >
@@ -178,11 +250,11 @@ export function TraceDrawer() {
         </div>
       )}
       <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-medium text-abu">Dipakai oleh · {v.dependents.length}</span>
+        <span className="text-[13px] font-medium text-abu">Dipakai untuk menghitung · {v.dependents.length}</span>
         <span className="flex flex-wrap gap-1.5">
           {v.dependents.length === 0 && <span className="text-[13px] text-abu">ujung rantai ({KIND_LABEL[v.kind]})</span>}
           {v.dependents.map((id) => (
-            <button key={id} type="button" onClick={() => showTrace(id, trace.ctx)} className="h-7 cursor-pointer rounded-badge border border-hitam bg-white px-2 text-[13px] hover:bg-permukaan">
+            <button key={id} type="button" title={getVar(id).desc} onClick={() => showTrace(id, trace.ctx)} className="h-7 cursor-pointer rounded-badge border border-hitam bg-white px-2 text-[13px] hover:bg-permukaan">
               {getVar(id).label}
             </button>
           ))}
@@ -193,20 +265,22 @@ export function TraceDrawer() {
         {screen !== MAP_SCREEN && <Button size="sm" variant="tipis" onClick={() => setScreen(MAP_SCREEN)}>Buka di peta</Button>}
       </div>
       {v.note && <p className="m-0 text-[13px] text-abu">{v.note}</p>}
-      {v.kind !== 'input' && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
+      {settings.showPlaceholderNote && v.kind !== 'input' && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
       <span className="grow" />
-      <div className="flex gap-2 pt-3">
-        <span className="w-0.5 shrink-0 bg-hitam" />
-        <span className="flex flex-col gap-1.5 text-[13px] text-abu">
-          {v.audit?.length
-            ? v.audit.map((a) => (
-                <span key={a}>
-                  <Badge kind="audit">≠ Excel · {a}</Badge> {AUDIT[a]}
-                </span>
-              ))
-            : 'Tidak ada temuan audit langsung pada variabel ini. Selisih vs Excel K15 bisa diwarisi dari masukannya (lihat hulu).'}
-        </span>
-      </div>
+      {(v.audit?.length ? settings.showAuditNotes : settings.showNoAuditNote) && (
+        <div className="flex gap-2 pt-3">
+          <span className="w-0.5 shrink-0 bg-hitam" />
+          <span className="flex flex-col gap-1.5 text-[13px] text-abu">
+            {v.audit?.length
+              ? v.audit.map((a) => (
+                  <span key={a}>
+                    <Badge kind="audit">≠ Excel · {a}</Badge> {AUDIT[a]}
+                  </span>
+                ))
+              : 'Tidak ada temuan audit langsung pada variabel ini. Selisih vs Excel K15 bisa diwarisi dari masukannya (lihat hulu).'}
+          </span>
+        </div>
+      )}
     </aside>
   )
 }

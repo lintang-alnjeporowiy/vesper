@@ -124,23 +124,72 @@ export function Tornado(props: { rows: { label: string; down: number; up: number
   )
 }
 
-/** Profil kedalaman: batang turun dari garis pantai. */
-export function Bathymetry(props: { points: { distance_m: number; depth_m: number }[]; marks: number[]; required: number }) {
-  const maxD = Math.max(...props.points.map((p) => p.depth_m))
-  const h = 110
+/**
+ * Profil batimetri berskala: sumbu x = jarak dari garis pantai (proporsional), kedalaman ke bawah.
+ * `required` = garis kedalaman perlu (putus-putus merah); `marks` = garis tegak (mis. ujung trestle).
+ */
+export function BathyProfile(props: {
+  points: { distance_m: number; depth_m: number }[]
+  required?: { depth: number; label: string }
+  marks?: { at: number; label: string }[]
+  highlight?: number
+  width?: number
+  height?: number
+}) {
+  const W = props.width ?? 520
+  const H = props.height ?? 220
+  const L = 44
+  const R = 12
+  const T = 22
+  const B = 26
+  const pts = [...props.points].filter((p) => Number.isFinite(p.distance_m) && Number.isFinite(p.depth_m)).sort((a, b) => a.distance_m - b.distance_m)
+  if (pts.length < 2) return <p className="m-0 text-[13px] text-abu">Isi minimal 2 titik untuk menggambar profil.</p>
+  const maxX = Math.max(...pts.map((p) => p.distance_m), ...(props.marks ?? []).map((m) => m.at))
+  const maxY = Math.max(...pts.map((p) => p.depth_m), props.required?.depth ?? 0) * 1.1 || 1
+  const x = (d: number) => L + (d / (maxX || 1)) * (W - L - R)
+  const y = (z: number) => T + (z / maxY) * (H - T - B)
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.distance_m).toFixed(1)},${y(p.depth_m).toFixed(1)}`).join(' ')
+  const area = `${line} L${x(pts[pts.length - 1].distance_m).toFixed(1)},${H - B} L${x(pts[0].distance_m).toFixed(1)},${H - B} Z`
+  const yTicks = [0, maxY / 2, maxY / 1.1].map((v) => Math.round(v))
+  const xTicks = [0, maxX / 2, maxX].map((v) => Math.round(v))
+  const fmt = (v: number) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 1 }).format(v)
   return (
-    <div className="flex w-full flex-col gap-2">
-      <div className="h-px w-full bg-hitam" />
-      <div className="flex w-full items-start gap-0.5">
-        {props.points.map((p) => (
-          <span
-            key={p.distance_m}
-            title={`${p.distance_m} m · ${p.depth_m} m`}
-            className="grow basis-0"
-            style={{ height: Math.max(2, (p.depth_m / maxD) * h), background: props.marks.includes(p.distance_m) ? C.hitam : C.biru }}
-          />
-        ))}
-      </div>
-    </div>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Profil batimetri tapak" className="font-mono" style={{ maxWidth: W }}>
+      {/* muka air & sumbu */}
+      <line x1={L} x2={W - R} y1={T} y2={T} stroke={C.hitam} />
+      <text x={L} y={T - 7} fontSize={13} fill={C.abu}>muka air · 0 m LWS</text>
+      {yTicks.map((v) => (
+        <g key={`y${v}`}>
+          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke={C.garis} strokeDasharray={v === 0 ? undefined : '2 3'} />
+          <text x={L - 6} y={y(v) + 4} fontSize={13} fill={C.abu} textAnchor="end">{fmt(v)}</text>
+        </g>
+      ))}
+      {xTicks.map((v, i) => (
+        <text key={`x${v}`} x={x(v)} y={H - 8} fontSize={13} fill={C.abu} textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}>{`${fmt(v)} m`}</text>
+      ))}
+      {/* air di atas dasar laut */}
+      <path d={area} fill={C.biru} opacity={0.25} />
+      <path d={line} fill="none" stroke={C.biru} strokeWidth={2} />
+      {pts.map((p, i) => (
+        <circle key={i} cx={x(p.distance_m)} cy={y(p.depth_m)} r={i === props.highlight ? 5 : 3} fill={i === props.highlight ? C.hitam : C.biru}>
+          <title>{`${fmt(p.distance_m)} m dari pantai · kedalaman ${fmt(p.depth_m)} m`}</title>
+        </circle>
+      ))}
+      {props.required && (
+        <g>
+          <line x1={L} x2={W - R} y1={y(props.required.depth)} y2={y(props.required.depth)} stroke={C.merah} strokeDasharray="6 4" strokeWidth={1.5} />
+          <text x={L + 6} y={y(props.required.depth) - 6} fontSize={13} fill={C.merah}>{props.required.label}</text>
+        </g>
+      )}
+      {(props.marks ?? []).map((m, i) => {
+        const right = x(m.at) > W * 0.6
+        return (
+          <g key={m.label}>
+            <line x1={x(m.at)} x2={x(m.at)} y1={T} y2={H - B} stroke={C.hitam} strokeWidth={1.5} />
+            <text x={x(m.at) + (right ? -4 : 4)} y={T + 16 + i * 16} fontSize={13} fill={C.hitam} textAnchor={right ? 'end' : 'start'}>{m.label}</text>
+          </g>
+        )
+      })}
+    </svg>
   )
 }

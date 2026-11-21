@@ -21,7 +21,7 @@ export function Tv(props: { v: string; ctx?: TraceCtx; value?: string; children:
     <button
       type="button"
       data-var={props.v}
-      title={def ? `ƒx ${def.label} — klik untuk jejak` : props.v}
+      title={def ? `ƒx ${def.label}: ${def.desc}` : props.v}
       onClick={(e) => {
         e.stopPropagation()
         show(props.v, props.ctx, props.value ?? textOf(props.children))

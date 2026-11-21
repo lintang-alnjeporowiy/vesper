@@ -19,8 +19,10 @@ Jalankan `uv run --project engine python tools/dump_registry.py` (dari v2/) sete
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Literal
+
+from .registry_desc import DESC
 
 Kind = Literal["input", "decision", "derived", "metric", "objective"]
 KINDS: tuple[str, ...] = ("input", "decision", "derived", "metric", "objective")
@@ -42,6 +44,7 @@ class VarDef:
     screens: tuple[int, ...] = ()  # layar tempat angka/inputnya tampil
     note: str | None = None
     symbol: str | None = None  # notasi singkat di rumus, mis. "RTD", "F_req"
+    desc: str = ""  # keterangan singkat & gamblang (registry_desc.py)
 
 
 def _in(id: str, label: str, unit: str, path: str, *, excel: str | None = None, scope: str = "global",
@@ -378,7 +381,7 @@ DERIVED: tuple[VarDef, ...] = (
        note="K15/Evolver meminimumkan anuitas (Model!K407); v2 memakai NPV total cost sebagai objektif default"),
 )
 
-REGISTRY: tuple[VarDef, ...] = INPUTS + DECISIONS + DERIVED
+REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, "")) for v in INPUTS + DECISIONS + DERIVED)
 
 # Interaksi wajib SPEC §7: titik awal penelusuran di peta variabel.
 INTERACTIONS: tuple[tuple[str, str, str], ...] = (

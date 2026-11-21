@@ -20,6 +20,7 @@ interface GNode {
   id: string
   label: string
   sub: string
+  desc: string
   kind: VarDef['kind'] | 'group'
   members: string[]
   x: number
@@ -38,7 +39,7 @@ function buildLayout(mode: Mode, visible: Set<string> | null) {
   const nodeOf: Record<string, string> = {}
   if (mode === 'rinci') {
     for (const v of inputs) {
-      inNodes.push({ id: v.id, label: v.label, sub: v.id, kind: 'input', members: [v.id], x: 0, y: 0, w: W_IN, h: H_IN })
+      inNodes.push({ id: v.id, label: v.label, sub: v.id, kind: 'input', desc: v.desc, members: [v.id], x: 0, y: 0, w: W_IN, h: H_IN })
       nodeOf[v.id] = v.id
     }
   } else {
@@ -47,7 +48,7 @@ function buildLayout(mode: Mode, visible: Set<string> | null) {
     for (const g of Object.keys(INPUT_GROUPS)) {
       const m = groups.get(g)
       if (!m) continue
-      inNodes.push({ id: groupId(g), label: INPUT_GROUPS[g], sub: `${m.length} input`, kind: 'group', members: m, x: 0, y: 0, w: W_IN, h: H_IN })
+      inNodes.push({ id: groupId(g), label: INPUT_GROUPS[g], sub: `${m.length} input`, kind: 'group', desc: `${m.length} input: ${m.map((id) => VAR[id].label).join(', ')}`, members: m, x: 0, y: 0, w: W_IN, h: H_IN })
       for (const id of m) nodeOf[id] = groupId(g)
     }
   }
@@ -68,7 +69,7 @@ function buildLayout(mode: Mode, visible: Set<string> | null) {
     const laneH = LANE_HEAD + rows * (H + GAP_Y) + LANE_PAD
     for (const [d, list] of cells) {
       list.forEach((v, i) => {
-        nodes.push({ id: v.id, label: v.label, sub: v.symbol ?? v.id, kind: v.kind, members: [v.id], x: x0 + xIndex[d] * (W + GAP_X), y: y + LANE_HEAD + i * (H + GAP_Y), w: W, h: H })
+        nodes.push({ id: v.id, label: v.label, sub: v.symbol ?? v.id, kind: v.kind, desc: v.desc, members: [v.id], x: x0 + xIndex[d] * (W + GAP_X), y: y + LANE_HEAD + i * (H + GAP_Y), w: W, h: H })
         nodeOf[v.id] = v.id
       })
     }
@@ -257,7 +258,7 @@ export default function S12PetaVariabel() {
                   key={n.id}
                   type="button"
                   data-node={n.id}
-                  title={n.kind === 'group' ? `${n.label}: ${n.members.length} input — klik untuk tampilan rinci` : `${n.label} · ${n.kind === 'input' ? 'input kasus' : KIND_LABEL[n.kind]}`}
+                  title={n.kind === 'group' ? `${n.label} — ${n.desc}. Klik untuk tampilan rinci.` : `${n.label} (${n.kind === 'input' ? 'input kasus' : KIND_LABEL[n.kind]}): ${n.desc}`}
                   onClick={() => (n.kind === 'group' ? setMode('rinci') : select(n.id))}
                   className={`absolute flex cursor-pointer flex-col justify-center gap-0.5 overflow-hidden rounded-badge border px-2 text-left ${base} ${hl} ${r === 'dim' ? 'opacity-30' : ''} ${r === 'sel' ? 'outline-2 outline-offset-1 outline-biru' : ''}`}
                   style={{ left: n.x, top: n.y, width: n.w, height: n.h }}
