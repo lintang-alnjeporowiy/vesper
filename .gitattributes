@@ -1,0 +1,14 @@
+# Semua teks disimpan LF di repo dan di working copy (konsisten dengan .editorconfig).
+* text=auto eol=lf
+
+# Skrip Windows tetap CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Biner
+*.fig binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary

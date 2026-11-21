@@ -19,4 +19,23 @@ build-backend = "uv_build"
 dev = [
     "openpyxl>=3.1.5",
     "pytest>=9.2.0",
+    "ruff>=0.17.6",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-include = ["../tools/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B905"]  # baris panjang diserahkan ke formatter; zip strict diputuskan per kasus
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tools/*.py" = ["E702", "E741", "B007"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tpt_engine"]

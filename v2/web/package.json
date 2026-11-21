@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "typecheck": "tsc -b",
+    "check": "tsc -b && oxlint && vite build",
+    "gen:types": "json2ts -i ../cases/case.schema.json -o src/api/case.ts --no-additionalProperties",
     "preview": "vite preview"
   },
   "dependencies": {

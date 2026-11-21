@@ -12,7 +12,7 @@ Lihat docs/01_SPEC.md §4 (kontrak data) dan §11/§13 (keputusan).
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -190,7 +190,7 @@ class VolumeRatio(Rec):
     ratio: Pos = F(desc="volume = ratio × volume flow acuan (awal & maks); growth & tahun mulai ikut acuan")
 
 
-Volume = Annotated[Union[VolumeIndependent, VolumeRatio], Field(discriminator="mode")]
+Volume = Annotated[VolumeIndependent | VolumeRatio, Field(discriminator="mode")]
 
 
 class CargoFlow(Rec):
@@ -527,7 +527,7 @@ class Case(Rec):
 
     # ---- integrity ----
     @model_validator(mode="after")
-    def _integrity(self) -> "Case":
+    def _integrity(self) -> Case:
         errors: list[str] = []
         err = errors.append
 

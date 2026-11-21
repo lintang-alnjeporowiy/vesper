@@ -306,9 +306,9 @@ def build_case(b: Book, xlsx: Path) -> dict:
         if sf:
             d["stowage_factor_m3_t"] = r("stowage_factor_m3_t", "muatan", sf) * sf_scale
         if pack:
-            kind, l, w, h, wt, pcs = pack
+            kind, ln, w, h, wt, pcs = pack
             rp = Rd(b)
-            d["packaging"] = dict(kind=kind, length_m=rp("length_m", "muatan", l), width_m=rp("width_m", "muatan", w),
+            d["packaging"] = dict(kind=kind, length_m=rp("length_m", "muatan", ln), width_m=rp("width_m", "muatan", w),
                                   height_m=rp("height_m", "muatan", h), weight_kg=rp("weight_kg", "muatan", wt),
                                   pieces_per_pack=rp("pieces_per_pack", "muatan", pcs, int) if pcs else None)
             d["packaging"]["refs"] = rp.take()
@@ -482,28 +482,31 @@ def build_case(b: Book, xlsx: Path) -> dict:
             if drow:
                 imo = b.raw("kapal", f"C{drow}")
                 if isinstance(imo, (int, float)):
-                    s["imo"] = str(int(imo)); r.note_ref("imo", Book.ref("kapal", f"C{drow}"))
+                    s["imo"] = str(int(imo))
+                    r.note_ref("imo", Book.ref("kapal", f"C{drow}"))
                 cls = b.raw("kapal", f"E{drow}")
                 if isinstance(cls, str) and cls.strip():
-                    s["classification"] = cls.strip(); r.note_ref("classification", Book.ref("kapal", f"E{drow}"))
+                    s["classification"] = cls.strip()
+                    r.note_ref("classification", Book.ref("kapal", f"E{drow}"))
                 lpp = b.raw("kapal", f"F{drow}")
                 if isinstance(lpp, (int, float)) and lpp > 0:
-                    s["lpp_m"] = float(lpp); r.note_ref("lpp_m", Book.ref("kapal", f"F{drow}"))
+                    s["lpp_m"] = float(lpp)
+                    r.note_ref("lpp_m", Book.ref("kapal", f"F{drow}"))
             s["refs"] = r.take()
             s["refs"]["model_id"] = f"{mid} (Model!{col}24)"
             ships.append(s)
 
     # --- alat B/M
     equipment, equip_by_alat = [], {}
-    for idx, (name_cell, r0) in enumerate(HMC):
+    for idx, (_name_cell, r0) in enumerate(HMC):
         name = r("name", "alat", f"C{r0}", str)
         un_t, un_b = r("prod_unload_t", "alat", f"C{r0+1}"), r("prod_unload_box", "alat", f"C{r0+2}")
         ld_t, ld_b = r("prod_load_t", "alat", f"C{r0+3}"), r("prod_load_box", "alat", f"C{r0+4}")
         e = dict(id="eq." + slug(name), name=name, kind="HMC", terminal_id="MP",
                  price_usd=r("price_usd", "alat", f"C{r0+7}"),
-                 productivity={k: dict(unload=u, load=l, unit=un,
+                 productivity={k: dict(unload=u, load=ld, unit=un,
                                        refs={"unload": Book.ref("alat", cu), "load": Book.ref("alat", cl)})
-                               for k, u, l, un, cu, cl in (
+                               for k, u, ld, un, cu, cl in (
                                    ("GC", un_t, ld_t, "t/h", f"C{r0+1}", f"C{r0+3}"),
                                    ("CK", un_t, ld_t, "t/h", f"C{r0+1}", f"C{r0+3}"),
                                    ("PK", un_b, ld_b, "box/h", f"C{r0+2}", f"C{r0+4}"))},
@@ -812,7 +815,7 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
         tch_reg[code] = dict(intercept=num(b.raw("tch", ic)), slope=num(b.raw("tch", sc)),
                              ref=f"TCH!{ic}:{sc}")
     ships = {}
-    for stype, c0, c1 in SHIP_TYPE_COLS:
+    for _stype, c0, c1 in SHIP_TYPE_COLS:
         for ci in range(column_index_from_string(c0), column_index_from_string(c1) + 1):
             col = get_column_letter(ci)
             mid = str(b.raw("model", f"{col}24")).strip()
@@ -854,10 +857,10 @@ def main():
     case = Case.model_validate(raw_case)  # gagal keras bila tidak valid
     OUT_CASE.parent.mkdir(parents=True, exist_ok=True)
     OUT_CASE.write_text(json.dumps(case.model_dump(mode="json", exclude_none=True), ensure_ascii=False, indent=2),
-                        encoding="utf-8")
+                        encoding="utf-8", newline="\n")
     golden = build_golden(b, xlsx, raw_case)
     OUT_GOLDEN.parent.mkdir(parents=True, exist_ok=True)
-    OUT_GOLDEN.write_text(json.dumps(golden, ensure_ascii=False, indent=1), encoding="utf-8")
+    OUT_GOLDEN.write_text(json.dumps(golden, ensure_ascii=False, indent=1), encoding="utf-8", newline="\n")
     print(f"case   -> {OUT_CASE.relative_to(V2)}  ({len(case.flows)} flow, {len(case.ships)} kapal, "
           f"{len(case.equipment)} alat, {len(case.ports)} pelabuhan)")
     print(f"golden -> {OUT_GOLDEN.relative_to(V2)}")

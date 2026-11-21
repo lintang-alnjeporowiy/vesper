@@ -10,13 +10,18 @@ Pengguna adalah alumni TPT dan menguasai domainnya. **Jawab dalam Bahasa Indones
 
 ## Struktur
 - `v2/cases/k15-batam.json` — input kasus utama (K15, KI Batam); skema `v2/cases/case.schema.json`. Celah data & asumsi ada di field `assumptions`.
-- `v2/engine/` — engine Python (uv + Pydantic). Dari folder `v2/`: `uv run --project engine pytest engine/tests -q`. Python tidak ada di PATH; pakai `~/.local/bin/uv`.
+- `v2/engine/` — engine Python 3.13 (uv + Pydantic, lint ruff). Dari folder `v2/`: `uv run --project engine pytest engine/tests -q`. Pakai `uv` (sudah di PATH); `python` di PATH hanya stub Windows Store.
 - `v2/tools/extract_k15.py` — membuat ulang kasus & data pembanding dari Excel K15; `v2/tools/export_schema.py` — JSON Schema.
 - `v2/web/` — UI React + Vite + Tailwind + Zustand (Tahap 2b). Jalankan: `npm --prefix v2/web run dev` (atau konfigurasi "web" di `.claude/launch.json`); cek: `npm --prefix v2/web run build`. Semua angka hasil dummy ada di `v2/web/src/mock/placeholders.ts`.
 - `apps/` — v1, **hanya referensi**; jangan diubah kecuali diminta. Repo git tersendiri; di-gitignore.
 - `referensi/K15|K21|K24|K7/` — bahan asli TPT milik kelompok lain (xlsx/pdf/pptx): K15 (utama), K21 & K24 (uji lanjutan), K7 (varian hub-spoke, di luar cakupan). **Di-gitignore; jangan pernah di-commit.**
 - `arsip/` — catatan lama era v1 (21 Juli) dan file lepas; di-gitignore.
 - Repo git di root (`main`); `.gitignore` juga mengecualikan semua `*.xlsx/*.pdf/*.pptx`, `.claude/skills/`, `node_modules/`, `.venv/`.
+
+## Lingkungan dev
+- Butuh: Node (npm), `uv`, git. Instalasi bersih + semua cek: `powershell -File v2\tools\check.ps1 -Install`; tanpa `-Install` hanya menjalankan cek (ruff, pytest, tsc, oxlint, vite build). **Jalankan sebelum menyelesaikan tugas yang mengubah kode.**
+- Tipe TS kasus dibuat ulang setelah skema berubah: `uv run --project engine python tools/export_schema.py` lalu `npm --prefix web run gen:types` (dari `v2/`).
+- Line ending LF (`.gitattributes`, `.editorconfig`); skrip `.ps1` CRLF. Penulis file Python memakai `newline="\n"`.
 
 ## Aturan kerja
 1. Keputusan baru → perbarui `01_SPEC.md` dan Progres di `02_ROADMAP.md`. Jangan membuat dokumen baru.

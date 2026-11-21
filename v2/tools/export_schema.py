@@ -9,5 +9,5 @@ from pathlib import Path
 from tpt_engine.domain import case_json_schema
 
 out = Path(__file__).resolve().parents[1] / "cases" / "case.schema.json"
-out.write_text(json.dumps(case_json_schema(), ensure_ascii=False, indent=2), encoding="utf-8")
+out.write_text(json.dumps(case_json_schema(), ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
 print(f"schema -> {out}")
