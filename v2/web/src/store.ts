@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import type { Case } from './api/case'
 import { K15 } from './mock/case'
-import { TRACES, type TraceKey } from './mock/placeholders'
+import type { TraceCtx, TraceRef } from './lib/registry'
 
-export const SCREEN_COUNT = 12
+export const SCREEN_COUNT = 13
+export const MAP_SCREEN = 12
 
 type Path = (string | number)[]
 
@@ -25,14 +26,17 @@ interface PlannerState {
   flowId: string
   shipByFlow: Record<string, string>
   traceOpen: boolean
-  trace: TraceKey
+  trace: TraceRef
+  /** Riwayat jejak untuk tombol kembali di laci. */
+  traceHistory: TraceRef[]
   setScreen: (n: number) => void
   setYear: (y: number) => void
   setFlow: (id: string) => void
   setShip: (flowId: string, shipId: string) => void
   setInput: (path: Path, value: unknown, label: string) => void
   recalc: () => void
-  showTrace: (key: TraceKey) => void
+  showTrace: (id: string, ctx?: TraceCtx, value?: string) => void
+  traceBack: () => void
   toggleTrace: () => void
 }
 
@@ -52,7 +56,8 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   flowId: 'in.damai',
   shipByFlow: { ...(plan?.ship_by_flow ?? {}) },
   traceOpen: true,
-  trace: 'rtd',
+  trace: { id: 'voyage.rtd', ctx: { flow: 'in.damai', ship: 'ship.aetos', year: 10 } },
+  traceHistory: [],
   setScreen: (n) => {
     window.location.hash = `#/${n}`
     set({ screen: n })
@@ -72,10 +77,21 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   },
   // Engine belum tersambung (Tahap 4+): hitung ulang hanya menandai input sebagai baseline baru.
   recalc: () => set({ baseline: get().caseData, dirty: {} }),
-  showTrace: (key) => set({ trace: key, traceOpen: true }),
+  showTrace: (id, ctx, value) => {
+    const { trace, traceHistory } = get()
+    const same = trace.id === id && JSON.stringify(trace.ctx) === JSON.stringify(ctx)
+    set({
+      trace: { id, ctx, value },
+      traceOpen: true,
+      traceHistory: same ? traceHistory : [...traceHistory, trace].slice(-30),
+    })
+  },
+  traceBack: () => {
+    const h = get().traceHistory
+    if (h.length) set({ trace: h[h.length - 1], traceHistory: h.slice(0, -1) })
+  },
   toggleTrace: () => set({ traceOpen: !get().traceOpen }),
 }))
 
 window.addEventListener('hashchange', () => usePlanner.setState({ screen: screenFromHash() }))
 
-export const currentTrace = (key: TraceKey) => TRACES[key]

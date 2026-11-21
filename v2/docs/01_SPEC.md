@@ -158,6 +158,8 @@ per komoditas: dwelling time (hari), tinggi tumpukan/ratio, YOR/occupancy, f_are
 
 ## 5. Rantai kalkulasi (kanonis)
 
+Setiap baris tabel di bawah = satu variabel di registry (`engine/src/tpt_engine/registry.py`, §9.3); id registry dipakai UI untuk jejak.
+
 Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Semua output per tahun kecuali disebut lain. ⌈·⌉ = ROUNDUP, ⌊·⌋ = ROUNDDOWN.
 
 ### 5.1 Demand & konversi muatan
@@ -192,6 +194,7 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 | `F_max` per kapal | `⌊CD / RTD⌋` (K15 memakai ⌈⌉ — temuan audit) | call/kapal/th |
 | `N_ship` | `⌈F_req / F_max⌉` | unit |
 | `lamaKonsumsi` | `q / (D/365)` | hari stok per pengapalan |
+| utilisasi kapal (metrik) | `F_req / (N_ship · F_max)` | – |
 
 ### 5.4 Biaya pelayaran — sheet `Model` 246–338, `TCH`, `Biaya Pelabuhan`
 | Variabel | Rumus |
@@ -202,6 +205,7 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 | TCH | `(a_tipe·ukuran_k + b_tipe) · kurs · CD · N_ship` |
 | Biaya pelabuhan | `F · Σ_{pelabuhan∈{ext, KEK}} [labuh(GT) + pandu(GT, gerakan) + tambat(GT, etmal) + tunda(GT) + B/M(q)]` |
 | **Shipping cost** | voyage + TCH + biaya pelabuhan (+ CHC bila dipisah) |
+| biaya pelayaran per satuan (metrik) | `shipping cost / D`, satuan flow (A7) — kolom Rp/t layar 6–7 |
 
 ### 5.5 Terminal KEK: tambatan, BOR, alat — sheet `Model` 104–152, 361–377
 | Variabel | Rumus |
@@ -220,6 +224,7 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 | Gudang/lapangan GC | `A = Q · Tdw · f_area · f_bulk / (365 · ρ · H · YOR)` |
 | Curah kering (lapangan/silo) | `A = Q · Tdw · f_area / (365 · ρ · H · YOR) · Rc`; `V_silo = Q·Tdw·Rc / (365·ρ·YOR)`, `nSilo = ⌈V/cap⌉` |
 | Curah cair (tangki) | `V = Q · Tdw / (365 · ρ · occupancy)`, `nTangki = ⌈V/cap⌉` |
+| Alat lapangan | `⌈Q / (produktivitas · utilisasi · jam kerja)⌉` per bentuk muatan (golden `Model!K370:K373`) |
 
 ### 5.7 Fasilitas perairan & trestle vs keruk — sheet `Fasilitas Perairan`, `Trestle`
 **Kapal penentu (governing vessel)** = kapal terpilih dengan T/LOA/B terbesar yang singgah KEK.
@@ -317,6 +322,7 @@ Shell: sidebar kiri = langkah pengerjaan (1–10, dengan status ✓/⚠/placehol
 | 9 | **Investasi & Ringkasan Biaya** | jadwal investasi per tahun; total cost; unit cost; PV; anuitas | I9 |
 | 10 | **Optimasi** | objektif, variabel yang dioptimasi, batasan on/off → jalankan → hasil vs manual, penjelasan per flow | P6 |
 | 11 | **Skenario & Laporan** | bandingkan skenario (KPI berdampingan), sensitivitas (tornado), rangkuman ala sheet `Rangkuman`, export Excel/PDF | |
+| 12 | **Peta variabel** (grup sidebar *Telusur*) | graf seluruh registry: kolom input kiri, lajur per modul, posisi horizontal = tingkat dependensi; input ringkas (per entitas) / rinci (per atribut); filter *hanya rantai terpilih*, cari, zoom; tombol I1–I9 | klik simpul → sorot hulu/hilir + laci jejak |
 
 **Konvensi visual (wireframe 2a, `design/wireframe-2a.fig`, draf menunggu review):**
 - Kanvas 1440 px: bar atas 56 px · sidebar 240 px · konten 880 px · laci jejak 320 px (selalu terbuka di wireframe). Sidebar, bar atas, laci jejak = komponen OpenPencil.
@@ -328,6 +334,11 @@ Shell: sidebar kiri = langkah pengerjaan (1–10, dengan status ✓/⚠/placehol
 - Layar 0: kasus aktif + daftar kasus (K21/K24 "belum diekstrak") + import JSON/Excel. Layar 1: identitas, horizon & fase, parameter global dua kolom, contoh status "diubah", tabel asumsi. Layar 3: tabel 10 pelabuhan (LOA maks = dermaga ÷ 0,85 sebagai turunan), batang jarak rute, tapak & kondisi perairan. Layar 4: matriks bentuk muatan × tipe kapal, regresi TCH, tab per tipe kapal dengan kelayakan per pelabuhan. Layar 5: tabel HMC & MLA, aturan alat/tambatan dari LOA, what-if produktivitas (I3).
 - Layar 7: slider I7, KPI, batang komposisi TCH/BBM/pelabuhan per flow, rincian per tahun (badge A11). Layar 9: KPI (NPV biaya total = objektif bawaan), slider discount (I9), jadwal investasi bertumpuk, tabel item investasi. Layar 10: objektif, variabel keputusan (§6.1), sakelar batasan, tombol jalankan, tabel hasil vs manual + batasan aktif, tiga kandidat terbaik per flow. Layar 11: tabel skenario berdampingan, tornado sensitivitas, isi ekspor.
 - Layar 8: kartu per terminal (MP, CC) + grid staging per tahun (kotak hitam = tahun bangun) + tabel penyimpanan + profil batimetri dengan opsi trestle vs trestle+keruk.
+
+**Jejak & peta variabel (Tahap 3, 2026-11-21):**
+- Angka yang bisa ditelusuri = garis bawah titik-titik abu (`Tv` di `web/src/components/trace.tsx`); klik → laci jejak. Angka aktif dibingkai biru 2 px. Semua angka hasil dan input yang tampil di layar 6–9 bisa diklik.
+- Laci jejak (dari registry): konteks (flow · kapal · tahun / terminal), label, nilai (input = nilai kasus aktif, hitam; turunan = placeholder abu), badge jenis, simbol + id, rumus atau `case_path`, SPEC §, sel Excel; daftar **Masukan** (klik = telusuri ke hulu, konteks tetap), chip **Dipakai oleh**, jumlah hulu/hilir, tombol "Buka di peta", tombol ← riwayat; catatan `≠ Excel · A#` dari ringkasan audit di registry.
+- Peta variabel: simpul input = penanda kotak biru; keputusan = bingkai putus-putus hitam; turunan/metrik = bingkai garis rambut; objektif = bidang hitam. Sorot: **hulu = bidang biru** (sisi biru 2 px), **hilir = bidang `#EEEEEE` + bingkai hitam** (sisi hitam), terpilih = bingkai biru 2 px, lainnya redup 30 %.
 
 Setiap layar di tahap UI-first menampilkan data K15 (dari JSON contoh) dan angka hasil berlabel **`placeholder`** sampai engine modul itu tersambung (lalu label berubah jadi **`dihitung`** + bisa dilacak).
 
@@ -368,9 +379,10 @@ v2/
 │  ├─ src/tpt_engine/optimizer/  candidates, enumerate, milp (highspy)
 │  ├─ src/tpt_api/               FastAPI
 │  └─ tests/                     unit + golden K15
-├─ web/             (Vite) src/api (tipe; sementara json2ts dari case.schema.json, nanti openapi-typescript), src/screens/S00..S11,
-│                   src/components (ui, shell), src/charts, src/mock (case + placeholders), src/store.ts (Zustand)
-└─ tools/           extract_k15.py (pemetaan sel khusus K15), export_schema.py
+├─ web/             (Vite) src/api (tipe; sementara json2ts dari case.schema.json, nanti openapi-typescript), src/screens/S00..S12,
+│                   src/components (ui, shell, trace), src/charts, src/lib (case, format, registry),
+│                   src/mock (case + placeholders + registry.json), src/store.ts (Zustand)
+└─ tools/           extract_k15.py (pemetaan sel khusus K15), export_schema.py, dump_registry.py (registry → web/src/mock/registry.json)
 ```
 
 ### 9.3 Registry & jejak (inti "interaksi variabel")
@@ -387,6 +399,15 @@ class VarDef:
     excel_ref: str | None = None   # "Model!M195"
 ```
 Registry diekspos lewat `/registry`; hasil `/calculate` membawa nilai + `deps` aktual → UI menggambar graf, menyorot hulu/hilir, dan menampilkan "kenapa angka ini".
+
+**Implementasi Tahap 3 (2026-11-21)** — `engine/src/tpt_engine/registry.py`, 173 variabel (100 input, 4 keputusan, 64 turunan, 4 metrik, 1 objektif):
+- `VarDef` ditambah: `section` (§ SPEC), `audit` (ID A1–A11), `case_path` (input), `screens` (layar tempat tampil), `symbol`, `note`. `kind` ditambah **`metric`** = angka laporan yang tidak dipakai variabel lain (utilisasi, Rp/t pelayaran, BOR realisasi, anuitas).
+- Id: input `in.<entitas>.<atribut>`, keputusan `dv.*`, objektif `obj.npv`; turunan `<modul>.<nama>` dengan modul = file `calc/` (demand, cargo, vessel, voyage, shipcost, terminal, storage, waterside, invest, agg).
+- **Input per atribut** (keputusan pengguna): satu simpul per field `Case` yang dipakai rumus; `case_path` memakai `nama[kunci]` untuk elemen list yang dipilih konteks (flow, ship, port, route, terminal, equip, …). Tampilan graf bisa meringkasnya per entitas (17 kelompok).
+- Turunan = satu per baris rumus §5; beberapa baris dipecah agar jejak berguna (BBM liter vs Rp, port time KEK/ext/total, biaya pelabuhan per call vs per tahun, V ballast/daya AE/SFOC/kapasitas TEU efektif) dan beberapa ditambah: utilisasi, Rp/t pelayaran, alat lapangan, investasi total.
+- Ringkasan temuan audit (`AUDIT`) dan interaksi I1–I9 (`INTERACTIONS`, titik awal penelusuran) ikut di registry.
+- Test (`engine/tests/test_registry.py`): id unik, deps ada, **tanpa siklus** (Kahn + test deteksi), **tanpa simpul yatim** (input selalu dipakai, turunan selalu punya masukan, hanya metric/objective boleh jadi ujung), semua simpul mencapai metric/objective, objektif dipengaruhi keempat keputusan, §4.1–4.9 & §5.1–5.9 tercakup, `case_path` ada di model `Case`, `web/src/mock/registry.json` sinkron.
+- Web membaca `registry.json` (hasil `tools/dump_registry.py`) sebagai mock sampai `/registry` ada. Graf: **SVG custom** (keputusan pengguna; tanpa dependensi baru). Tata letak = lajur per modul (baris) × tingkat dependensi (kolom, `depth`), karena ±70 dependensi berada di dalam modul yang sama sehingga kolom-per-modul tidak bisa mengalir kiri→kanan.
 
 ---
 

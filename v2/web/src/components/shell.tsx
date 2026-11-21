@@ -1,7 +1,9 @@
-import { usePlanner, currentTrace } from '../store'
+import { MAP_SCREEN, usePlanner } from '../store'
+import { AUDIT, KIND_LABEL, VAR, contextLabel, sameCtx, downstream, getVar, inputValue, upstream, type VarDef } from '../lib/registry'
+import { PH_SAMPLE, PH_SAMPLE_CTX } from '../mock/placeholders'
 import { Badge, Button, InputMark, PH, StatusDot } from './ui'
 
-export const STEPS: { n: number; title: string; group: 'Input' | 'Hasil'; status?: 'lengkap' | 'asumsi' | 'placeholder' }[] = [
+export const STEPS: { n: number; title: string; group: 'Input' | 'Hasil' | 'Telusur'; status?: 'lengkap' | 'asumsi' | 'placeholder' }[] = [
   { n: 0, title: 'Beranda', group: 'Input' },
   { n: 1, title: 'Soal & asumsi', group: 'Input', status: 'lengkap' },
   { n: 2, title: 'Tenant & muatan', group: 'Input', status: 'lengkap' },
@@ -14,6 +16,7 @@ export const STEPS: { n: number; title: string; group: 'Input' | 'Hasil'; status
   { n: 9, title: 'Investasi & biaya', group: 'Hasil', status: 'placeholder' },
   { n: 10, title: 'Optimasi', group: 'Hasil', status: 'placeholder' },
   { n: 11, title: 'Skenario & laporan', group: 'Hasil', status: 'placeholder' },
+  { n: 12, title: 'Peta variabel', group: 'Telusur' },
 ]
 
 export function Sidebar() {
@@ -29,7 +32,7 @@ export function Sidebar() {
           <span className="text-[13px] text-abu">{meta.name.replace('—', '·')}</span>
         </span>
       </div>
-      {(['Input', 'Hasil'] as const).map((g) => (
+      {(['Input', 'Hasil', 'Telusur'] as const).map((g) => (
         <div key={g} className="flex flex-col gap-0.5 pb-4">
           <span className="px-2 pb-1 text-[13px] font-medium text-abu">{g}</span>
           {STEPS.filter((s) => s.group === g).map((s) => {
@@ -101,66 +104,107 @@ export function TopBar() {
   )
 }
 
+/** Nilai placeholder sebuah variabel turunan pada konteks contoh (in.damai · AETOS · th 10), selain itu undefined. */
+function phValue(id: string, ctx?: { flow?: string; ship?: string; year?: number }): string | undefined {
+  if (!(id in PH_SAMPLE)) return undefined
+  const s = VAR[id]?.scope ?? ''
+  if (/flow/.test(s) && ctx?.flow !== PH_SAMPLE_CTX.flow) return undefined
+  if (/flow|ship/.test(s) && ctx?.ship && ctx.ship !== PH_SAMPLE_CTX.ship) return undefined
+  if (/year/.test(s) && ctx?.year !== PH_SAMPLE_CTX.year) return undefined
+  return PH_SAMPLE[id]
+}
+
+function KindBadge({ v }: { v: VarDef }) {
+  if (v.kind === 'input') return <Badge kind="input">input</Badge>
+  if (v.kind === 'decision') return <Badge kind="kode">keputusan</Badge>
+  return <PH />
+}
+
 export function TraceDrawer() {
-  const key = usePlanner((s) => s.trace)
-  const open = usePlanner((s) => s.traceOpen)
-  const toggle = usePlanner((s) => s.toggleTrace)
-  const showTrace = usePlanner((s) => s.showTrace)
-  if (!open) return null
-  const t = currentTrace(key)
+  const { trace, traceOpen, toggleTrace, showTrace, traceBack, traceHistory, caseData, shipByFlow, setScreen, screen } = usePlanner()
+  if (!traceOpen) return null
+  const v = VAR[trace.id] ?? getVar('voyage.rtd')
+  const ctx = trace.ctx ?? {}
+  const shipCtx = { ...ctx, ship: ctx.ship ?? (ctx.flow ? shipByFlow[ctx.flow] : undefined) }
+  const value = v.kind === 'input' ? (inputValue(caseData, v, shipCtx, shipByFlow) ?? trace.value) : (trace.value ?? phValue(v.id, shipCtx))
+  const depValue = (d: VarDef) => (d.kind === 'input' ? inputValue(caseData, d, shipCtx, shipByFlow) : phValue(d.id, shipCtx)) ?? '–'
   return (
     <aside aria-label="Jejak variabel" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
+        {traceHistory.length > 0 && (
+          <button type="button" aria-label="Jejak sebelumnya" onClick={traceBack} className="cursor-pointer border-0 bg-transparent p-0 font-mono text-base text-abu hover:text-hitam">←</button>
+        )}
         <h2 className="m-0 grow text-base font-medium">Jejak variabel</h2>
-        <button type="button" aria-label="Tutup jejak" onClick={toggle} className="cursor-pointer border-0 bg-transparent text-base text-abu">×</button>
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-[13px] text-abu">{t.context}</span>
-        <span className="flex items-end gap-2">
-          <span className="text-base">{t.name}</span>
-          <span className="font-mono text-[28px] leading-none text-abu">{t.value}</span>
-          <span className="text-sm text-abu">{t.unit}</span>
-        </span>
-        <span><PH /></span>
+        <button type="button" aria-label="Tutup jejak" onClick={toggleTrace} className="cursor-pointer border-0 bg-transparent text-base text-abu">×</button>
       </div>
       <div className="flex flex-col gap-1.5">
-        <span className="text-[13px] font-medium text-abu">Rumus · {t.spec}</span>
-        <code className="block rounded-badge bg-permukaan p-3 font-mono text-[13px] whitespace-normal">{t.formula}</code>
+        <span className="text-[13px] text-abu">{contextLabel(caseData, v, ctx, shipByFlow)}</span>
+        <span className="text-base">{v.label}</span>
+        <span className="flex items-end gap-2">
+          <span className={`font-mono text-[28px] leading-none ${v.kind === 'input' ? 'text-hitam' : 'text-abu'}`}>{value ?? '–'}</span>
+          {value === undefined && <span className="text-sm text-abu">{v.unit}</span>}
+        </span>
+        <span className="flex flex-wrap items-center gap-1.5">
+          <KindBadge v={v} />
+          {v.symbol && <span className="font-mono text-[13px]">{v.symbol}</span>}
+          <span className="font-mono text-[13px] text-abu">{v.id}</span>
+        </span>
       </div>
-      <div className="flex flex-col">
-        <span className="pb-1.5 text-[13px] font-medium text-abu">Masukan</span>
-        {t.inputs.map((inp) => (
-          <div key={inp.label} className={`flex items-center gap-1.5 py-2 ${inp.sub ? 'pl-4' : 'border-t border-garis'}`}>
-            <span className={`grow text-sm ${inp.sub ? 'text-abu' : ''}`}>{inp.label}</span>
-            {inp.input && <InputMark />}
-            <span className={`font-mono text-sm ${inp.input ? 'text-hitam' : 'text-abu'}`}>{inp.value}</span>
-          </div>
-        ))}
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-medium text-abu">
+          {v.kind === 'input' ? 'Sumber' : 'Rumus'} · SPEC §{v.section}
+        </span>
+        <code className="block rounded-badge bg-permukaan p-3 font-mono text-[13px] whitespace-normal">{v.kind === 'input' ? v.case_path : v.formula}</code>
+        <span className="font-mono text-[13px] text-abu">Excel {v.excel_ref ?? '–'} · {KIND_LABEL[v.kind]} · {v.unit}</span>
       </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-[13px] font-medium text-abu">Dipakai oleh</span>
-        <span className="flex flex-wrap gap-1.5">
-          {t.usedBy.map((u) => {
-            const target = u === 'Jumlah kapal' ? 'kapal' : u === 'RTD' ? 'rtd' : u === 'Frekuensi' ? 'frekuensi' : null
+      {v.deps.length > 0 && (
+        <div className="flex flex-col">
+          <span className="pb-1.5 text-[13px] font-medium text-abu">Masukan · {v.deps.length}</span>
+          {v.deps.map((id) => {
+            const d = getVar(id)
             return (
               <button
-                key={u}
+                key={id}
                 type="button"
-                disabled={!target}
-                onClick={() => target && showTrace(target)}
-                className="h-7 cursor-pointer rounded-badge border border-hitam bg-white px-2 text-[13px] disabled:cursor-default disabled:border-garis"
+                onClick={() => showTrace(id, trace.ctx)}
+                className="flex cursor-pointer items-center gap-1.5 border-0 border-t border-solid border-garis bg-transparent px-0 py-2 text-left hover:bg-permukaan"
               >
-                {u}
+                <span className="grow text-sm">{d.label}</span>
+                {d.kind === 'input' && <InputMark />}
+                <span className={`max-w-[120px] truncate font-mono text-[13px] ${d.kind === 'input' ? 'text-hitam' : 'text-abu'}`}>{depValue(d)}</span>
               </button>
             )
           })}
+        </div>
+      )}
+      <div className="flex flex-col gap-2">
+        <span className="text-[13px] font-medium text-abu">Dipakai oleh · {v.dependents.length}</span>
+        <span className="flex flex-wrap gap-1.5">
+          {v.dependents.length === 0 && <span className="text-[13px] text-abu">ujung rantai ({KIND_LABEL[v.kind]})</span>}
+          {v.dependents.map((id) => (
+            <button key={id} type="button" onClick={() => showTrace(id, trace.ctx)} className="h-7 cursor-pointer rounded-badge border border-hitam bg-white px-2 text-[13px] hover:bg-permukaan">
+              {getVar(id).label}
+            </button>
+          ))}
         </span>
       </div>
+      <div className="flex items-center gap-2 border-t border-garis pt-3">
+        <span className="grow font-mono text-[13px] text-abu">hulu {upstream(v.id).size} · hilir {downstream(v.id).size}</span>
+        {screen !== MAP_SCREEN && <Button size="sm" variant="tipis" onClick={() => setScreen(MAP_SCREEN)}>Buka di peta</Button>}
+      </div>
+      {v.note && <p className="m-0 text-[13px] text-abu">{v.note}</p>}
+      {v.kind !== 'input' && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
       <span className="grow" />
       <div className="flex gap-2 pt-3">
         <span className="w-0.5 shrink-0 bg-hitam" />
-        <span className="text-[13px] text-abu">
-          {'audit' in t && t.audit ? <><Badge kind="audit">≠ Excel</Badge> {t.audit}</> : 'Bila angka ini berbeda dari Excel K15, ID temuan audit (A1–A11) dan alasannya tampil di sini.'}
+        <span className="flex flex-col gap-1.5 text-[13px] text-abu">
+          {v.audit?.length
+            ? v.audit.map((a) => (
+                <span key={a}>
+                  <Badge kind="audit">≠ Excel · {a}</Badge> {AUDIT[a]}
+                </span>
+              ))
+            : 'Tidak ada temuan audit langsung pada variabel ini. Selisih vs Excel K15 bisa diwarisi dari masukannya (lihat hulu).'}
         </span>
       </div>
     </aside>

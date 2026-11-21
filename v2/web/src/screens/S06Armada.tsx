@@ -1,5 +1,6 @@
 import type { Ship } from '../api/case'
 import { C, DotPlot } from '../charts/charts'
+import { Tv } from '../components/trace'
 import { Badge, DefRow, KpiStrip, Legend, Note, PH, ScreenHeader, Section, Slider, Split, Table, Tabs } from '../components/ui'
 import { commodityName, isRatio, portOfRoute, routeDistance, shipTypesForForm, shortPortName, tenantName } from '../lib/case'
 import { num } from '../lib/format'
@@ -8,6 +9,7 @@ import { usePlanner } from '../store'
 
 export default function S06Armada() {
   const { caseData: c, flowId, setFlow, shipByFlow, setShip, year, setYear, showTrace, trace } = usePlanner()
+  const ctx = { flow: flowId, ship: shipByFlow[flowId], year }
   const flow = c.flows.find((f) => f.id === flowId) ?? c.flows[0]
   const port = portOfRoute(c, flow.route_id)
   const ratio = c.params.berth_loa_min_ratio
@@ -34,19 +36,19 @@ export default function S06Armada() {
               <Badge kind="kode">{flow.cargo_form}</Badge>
             </div>
             <DefRow label="Komoditas">{commodityName(c, flow.commodity_id)}</DefRow>
-            <DefRow label="Rute">{shortPortName(port?.name ?? '')} ⇄ Batu Ampar · <span className="font-mono">{num(routeDistance(c, flow.route_id), 1)} nm</span></DefRow>
+            <DefRow label="Rute">{shortPortName(port?.name ?? '')} ⇄ Batu Ampar · <Tv v="in.route.distance" ctx={ctx} className="font-mono">{num(routeDistance(c, flow.route_id), 1)} nm</Tv></DefRow>
             <DefRow label="Pelabuhan">
-              <span className="font-mono">draft {num(port?.max_draft_m ?? 0, 1)} m · dermaga {port?.longest_berth_m ? `${num(port.longest_berth_m)} m` : '?'}</span>
+              <span className="font-mono">draft <Tv v="in.port.max_draft" ctx={ctx}>{num(port?.max_draft_m ?? 0, 1)} m</Tv> · dermaga <Tv v="in.port.longest_berth" ctx={ctx}>{port?.longest_berth_m ? `${num(port.longest_berth_m)} m` : '?'}</Tv></span>
             </DefRow>
             <DefRow label="Volume">
               {isRatio(vol) ? (
-                <span className="font-mono">× {num(vol.ratio, 2)} dari {vol.basis_flow_id}</span>
+                <span className="font-mono">× <Tv v="in.flow.ratio" ctx={ctx}>{num(vol.ratio, 2)}</Tv> dari {vol.basis_flow_id}</span>
               ) : (
-                <span className="font-mono">{num(vol.initial)} → maks {num(vol.maximum)} {flow.unit} · {num(vol.growth_rate * 100, 1)} %/th</span>
+                <span className="font-mono"><Tv v="in.flow.initial" ctx={ctx}>{num(vol.initial)}</Tv> → maks <Tv v="in.flow.maximum" ctx={ctx}>{num(vol.maximum)}</Tv> {flow.unit} · <Tv v="in.flow.growth" ctx={ctx}>{num(vol.growth_rate * 100, 1)} %/th</Tv></span>
               )}
             </DefRow>
             <DefRow label={`Demand th-${year}`} last>
-              <span className="font-mono text-abu">{isDamai && year === 10 ? '4,65 jt t' : '–'}</span>
+              <Tv v="demand.base" ctx={ctx} className="font-mono text-abu">{isDamai && year === 10 ? '4,65 jt t' : '–'}</Tv>
               <PH />
             </DefRow>
           </>
@@ -61,7 +63,11 @@ export default function S06Armada() {
                 </option>
               ))}
             </select>
-            {ship && <span className="font-mono text-[13px] text-abu">{num(ship.dwt_t)} DWT · LOA {num(ship.loa_m, 2)} m · draft {num(ship.draft_m, 2)} m · ME {num(ship.me_kw)} kW</span>}
+            {ship && (
+              <span className="font-mono text-[13px] text-abu">
+                <Tv v="in.ship.dwt" ctx={ctx}>{num(ship.dwt_t)} DWT</Tv> · LOA <Tv v="in.ship.loa" ctx={ctx}>{num(ship.loa_m, 2)} m</Tv> · draft <Tv v="in.ship.draft" ctx={ctx}>{num(ship.draft_m, 2)} m</Tv> · ME <Tv v="in.ship.me_kw" ctx={ctx}>{num(ship.me_kw)} kW</Tv>
+              </span>
+            )}
             <Slider label="Kecepatan (I2)" value={ship?.speed_kn ?? 0} min={8} max={26} step={0.1} display={`${num(ship?.speed_kn ?? 0, 1)} kn`} />
             <Slider label="Tahun tinjau" value={year} min={1} max={(c.horizon.years ?? 20)} step={1} display={`${year} / ${(c.horizon.years ?? 20)}`} onChange={setYear} input={false} dark />
             <span className="flex items-center gap-2">
@@ -77,10 +83,11 @@ export default function S06Armada() {
           <div className="flex w-full">
             {CHAIN_DAMAI.map((n) => (
               <button
-                key={n.key}
+                key={n.id}
                 type="button"
-                onClick={() => showTrace(n.key)}
-                className={`flex grow basis-0 cursor-pointer flex-col gap-1.5 p-3 text-left ${n.final ? 'border-0 bg-hitam text-white' : 'border border-garis bg-white'} ${trace === n.key ? 'outline-2 outline-biru' : ''}`}
+                data-var={n.id}
+                onClick={() => showTrace(n.id, ctx, n.value)}
+                className={`flex grow basis-0 cursor-pointer flex-col gap-1.5 p-3 text-left ${n.final ? 'border-0 bg-hitam text-white' : 'border border-garis bg-white'} ${trace.id === n.id ? 'outline-2 outline-biru' : ''}`}
               >
                 <span className={`h-[3px] w-4 ${n.input ? 'bg-biru' : 'bg-transparent'}`} />
                 <span className={`text-[13px] ${n.final ? 'text-white' : 'text-abu'}`}>{n.label}</span>
@@ -91,12 +98,12 @@ export default function S06Armada() {
         ) : (
           <Note>Contoh rantai placeholder hanya tersedia untuk in.damai · AETOS · tahun 10. Rantai lain muncul setelah engine tahap 4–5 tersambung.</Note>
         )}
-        <Note>Garis biru = turunan langsung dari input K15. Semua nilai masih placeholder (estimasi kasar).</Note>
+        <Note>Garis biru = turunan langsung dari input K15. Semua nilai masih placeholder (estimasi kasar). Angka bergaris bawah titik-titik di layar ini bisa diklik untuk jejaknya.</Note>
       </Section>
 
-      <KpiStrip items={isDamai ? KPI_FLEET : KPI_FLEET.map((k) => ({ ...k, value: '–' }))} />
+      <KpiStrip ctx={ctx} items={isDamai && year === 10 && shipId === 'ship.aetos' ? KPI_FLEET : KPI_FLEET.map((k) => ({ ...k, value: '–' }))} />
 
-      <Section title={`Bandingkan kandidat ${flow.cargo_form} (I1)`} aside={<span className="font-mono text-[13px] text-abu">{candidates.length} kandidat · {nGugur} gugur</span>}>
+      <Section title={`Bandingkan kandidat ${flow.cargo_form} (I1)`} aside={<span className="font-mono text-[13px] text-abu">{candidates.length} kandidat · <Tv v="vessel.feasible" ctx={ctx}>{`${nGugur} gugur`}</Tv></span>}>
         <Table<Ship>
           rowKey={(s) => s.id}
           rows={candidates}
@@ -105,19 +112,19 @@ export default function S06Armada() {
           onRowClick={(s) => feas(s).ok !== false && setShip(flow.id, s.id)}
           columns={[
             { key: 'n', head: 'Kapal', width: 164, render: (s) => s.name },
-            { key: 'dwt', head: 'DWT', width: 72, mono: true, render: (s) => num(s.dwt_t) },
-            { key: 'loa', head: 'LOA', width: 60, mono: true, render: (s) => <span className={feas(s).reasons.includes('LOA') ? 'text-merah' : ''}>{num(s.loa_m, 1)}</span> },
-            { key: 'dr', head: 'Draft', width: 56, mono: true, render: (s) => <span className={feas(s).reasons.includes('draft') ? 'text-merah' : ''}>{num(s.draft_m, 2)}</span> },
-            { key: 'kn', head: 'Kn', width: 48, mono: true, render: (s) => num(s.speed_kn, 1) },
-            { key: 'rtd', head: 'RTD', width: 52, mono: true, render: (s) => <span className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? num(FLEET_CANDIDATES[s.id].rtd, 1) : '–'}</span> },
-            { key: 'k', head: 'Kapal', width: 52, mono: true, render: (s) => <span className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? FLEET_CANDIDATES[s.id].ships : '–'}</span> },
-            { key: 'u', head: 'Rp/t', width: 72, mono: true, render: (s) => <span className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? `${FLEET_CANDIDATES[s.id].unitCostRb} rb` : '–'}</span> },
+            { key: 'dwt', head: 'DWT', width: 72, mono: true, render: (s) => <Tv v="in.ship.dwt" ctx={{ ...ctx, ship: s.id }}>{num(s.dwt_t)}</Tv> },
+            { key: 'loa', head: 'LOA', width: 60, mono: true, render: (s) => <Tv v="in.ship.loa" ctx={{ ...ctx, ship: s.id }} className={feas(s).reasons.includes('LOA') ? 'text-merah' : ''}>{num(s.loa_m, 1)}</Tv> },
+            { key: 'dr', head: 'Draft', width: 56, mono: true, render: (s) => <Tv v="in.ship.draft" ctx={{ ...ctx, ship: s.id }} className={feas(s).reasons.includes('draft') ? 'text-merah' : ''}>{num(s.draft_m, 2)}</Tv> },
+            { key: 'kn', head: 'Kn', width: 48, mono: true, render: (s) => <Tv v="in.ship.speed" ctx={{ ...ctx, ship: s.id }}>{num(s.speed_kn, 1)}</Tv> },
+            { key: 'rtd', head: 'RTD', width: 52, mono: true, render: (s) => <Tv v="voyage.rtd" ctx={{ ...ctx, ship: s.id }} className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? num(FLEET_CANDIDATES[s.id].rtd, 1) : '–'}</Tv> },
+            { key: 'k', head: 'Kapal', width: 52, mono: true, render: (s) => <Tv v="voyage.n_ship" ctx={{ ...ctx, ship: s.id }} className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? String(FLEET_CANDIDATES[s.id].ships) : '–'}</Tv> },
+            { key: 'u', head: 'Rp/t', width: 72, mono: true, render: (s) => <Tv v="shipcost.unit" ctx={{ ...ctx, ship: s.id }} className="text-abu">{isDamai && FLEET_CANDIDATES[s.id] ? `${FLEET_CANDIDATES[s.id].unitCostRb} rb` : '–'}</Tv> },
             {
               key: 'st',
               head: 'Status',
               render: (s) => {
                 const f = feas(s)
-                if (f.ok === false) return <Badge kind="gugur">gugur · {f.reasons.join(', ')}</Badge>
+                if (f.ok === false) return <Tv v="vessel.feasible" ctx={{ ...ctx, ship: s.id }} className="no-underline"><Badge kind="gugur">gugur · {f.reasons.join(', ')}</Badge></Tv>
                 if (s.id === shipId) return <span className="text-[13px] font-medium">terpilih</span>
                 return <span className="text-[13px] text-abu">{f.ok === null ? 'LOA ?' : 'layak'}</span>
               },
@@ -125,12 +132,12 @@ export default function S06Armada() {
           ]}
         />
         <Note>
-          RTD, jumlah kapal, dan Rp/t placeholder. Kelayakan: draft ≤ draft maks pelabuhan; LOA ≤ dermaga ÷ {num(ratio, 2)}
-          {port?.longest_berth_m ? ` (${shortPortName(port.name)} ${num(port.longest_berth_m)} m → ${num(port.longest_berth_m / ratio)} m)` : ''}. Angka merah = yang melanggar batas.
+          RTD, jumlah kapal, dan Rp/t placeholder. Kelayakan: draft ≤ draft maks pelabuhan; LOA ≤ dermaga ÷ <Tv v="in.param.berth_loa_ratio">{num(ratio, 2)}</Tv>
+          {port?.longest_berth_m ? <> ({shortPortName(port.name)} <Tv v="in.port.longest_berth" ctx={ctx}>{`${num(port.longest_berth_m)} m`}</Tv> → {num(port.longest_berth_m / ratio)} m)</> : ''}. Angka merah = yang melanggar batas.
         </Note>
       </Section>
 
-      <Section title="Unit cost terhadap ukuran kapal" aside={<PH />}>
+      <Section title="Unit cost terhadap ukuran kapal" aside={<span className="flex items-center gap-2"><Tv v="shipcost.unit" ctx={ctx} className="font-mono text-[13px]">ƒx Rp/t</Tv><PH /></span>}>
         {isDamai ? (
           <>
             <DotPlot

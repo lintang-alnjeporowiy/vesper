@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { num, parseNum } from '../lib/format'
+import type { TraceCtx } from '../lib/registry'
+import { Tv } from './trace'
 
 // ── Badge status (SPEC §8) ──────────────────────────────────────────────────
 export type BadgeKind = 'placeholder' | 'dihitung' | 'input' | 'asumsi' | 'gugur' | 'audit' | 'baik' | 'buruk' | 'tetap' | 'kode' | 'aktif'
@@ -37,7 +39,7 @@ export function StatusDot({ kind }: { kind: 'lengkap' | 'asumsi' | 'placeholder'
 }
 
 // ── Kepala layar & bagian ───────────────────────────────────────────────────
-export function ScreenHeader(props: { step: number; kind: 'input' | 'hasil' | 'beranda'; title: string; lead: string; badge?: ReactNode; actions?: ReactNode }) {
+export function ScreenHeader(props: { step: number; kind: 'input' | 'hasil' | 'beranda' | 'telusur'; title: string; lead: string; badge?: ReactNode; actions?: ReactNode }) {
   return (
     <header className="flex flex-col gap-2">
       <span className="font-mono text-[13px] text-abu">
@@ -205,7 +207,7 @@ export function Slider(props: { label: string; value: number; min: number; max: 
 }
 
 // ── KPI strip ───────────────────────────────────────────────────────────────
-export function KpiStrip(props: { items: { label: string; value: string; final?: boolean; delta?: ReactNode }[] }) {
+export function KpiStrip(props: { items: { label: string; value: string; final?: boolean; delta?: ReactNode; v?: string }[]; ctx?: TraceCtx }) {
   return (
     <div className="flex w-full border-y border-garis">
       {props.items.map((k, i) => (
@@ -215,7 +217,9 @@ export function KpiStrip(props: { items: { label: string; value: string; final?:
         >
           <span className={`text-[13px] ${k.final ? 'text-white' : 'text-abu'}`}>{k.label}</span>
           <span className="flex items-center gap-2">
-            <span className={`font-mono text-[28px] leading-none ${k.final ? 'text-white' : 'text-abu'}`}>{k.value}</span>
+            <span className={`font-mono text-[28px] leading-none ${k.final ? 'text-white' : 'text-abu'}`}>
+              {k.v && k.value !== '–' ? <Tv v={k.v} ctx={props.ctx}>{k.value}</Tv> : k.value}
+            </span>
             {k.delta}
           </span>
         </div>

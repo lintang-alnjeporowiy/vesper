@@ -1,0 +1,4295 @@
+{
+  "note": "Dibuat oleh tools/dump_registry.py dari tpt_engine/registry.py — jangan diedit manual.",
+  "lanes": [
+    "Input kasus",
+    "Keputusan",
+    "Muatan & konversi",
+    "Kapal",
+    "Operasi",
+    "Biaya pelayaran",
+    "Terminal & penyimpanan",
+    "Perairan",
+    "Investasi & objektif"
+  ],
+  "input_groups": {
+    "horizon": "Periode & staging",
+    "param": "Parameter global",
+    "container": "Kontainer",
+    "cmdty": "Komoditas",
+    "flow": "Flow muatan",
+    "compat": "Kompatibilitas",
+    "port": "Pelabuhan",
+    "route": "Rute",
+    "term": "Terminal KEK",
+    "site": "Tapak & perairan",
+    "ship": "Kapal",
+    "stype": "Tipe kapal (TCH)",
+    "equip": "Alat B/M",
+    "rule": "Aturan alat",
+    "tariff": "Tarif pelabuhan",
+    "storage": "Penyimpanan",
+    "price": "Harga satuan"
+  },
+  "audit": {
+    "A1": "Excel: F_max = ROUNDUP(365/RTD). v2: ⌊CD/RTD⌋ — jumlah kapal bisa bertambah 1.",
+    "A2": "Excel (non-PK): waktu muat dikali jumlah alat. v2: dibagi jumlah alat.",
+    "A3": "Excel memakai jumlah alat KEK untuk pelabuhan asal. v2: mode produktivitas per pelabuhan (total / per alat).",
+    "A4": "Excel: batas volume maks dicek ke sel tetap. v2: min(Dmax, D[t−1]·(1+g)); K15 tidak terdampak.",
+    "A5": "Excel: V ballast = 130 % Vs. v2: rasio parameter, default 100 %.",
+    "A6": "Excel: ME = HSD, AE = MFO. v2: jenis BBM per mesin = parameter, default keduanya HSD.",
+    "A7": "Excel membagi biaya dengan muatan campuran ton & TEU. v2: unit cost dipisah Rp/ton dan Rp/TEU.",
+    "A8": "Excel: payload 85 % DWT di satu tempat, 90 % di tempat lain. v2: dua parameter α.",
+    "A9": "Excel: BBM dari F_max · N_ship voyage. v2: dari frekuensi aktual F.",
+    "A10": "Excel: alat per tambatan selalu 4 (XLOOKUP nama alat). v2: dari tabel rentang LOA.",
+    "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa."
+  },
+  "interactions": [
+    {
+      "id": "I1",
+      "label": "Kapal lebih besar",
+      "start": "dv.ship"
+    },
+    {
+      "id": "I2",
+      "label": "Kecepatan",
+      "start": "dv.speed"
+    },
+    {
+      "id": "I3",
+      "label": "Alat B/M lebih produktif",
+      "start": "in.equip.productivity"
+    },
+    {
+      "id": "I4",
+      "label": "Growth, volume maks, tahun mulai",
+      "start": "in.flow.growth"
+    },
+    {
+      "id": "I5",
+      "label": "Rasio konversi in→out, ton/TEU",
+      "start": "in.flow.ratio"
+    },
+    {
+      "id": "I6",
+      "label": "BOR maks, hari kerja",
+      "start": "in.param.bor_max"
+    },
+    {
+      "id": "I7",
+      "label": "Harga BBM, kurs, tarif",
+      "start": "in.param.fuel_price"
+    },
+    {
+      "id": "I8",
+      "label": "Batimetri / clearance",
+      "start": "in.site.bathymetry"
+    },
+    {
+      "id": "I9",
+      "label": "Discount rate",
+      "start": "in.param.discount_rate"
+    }
+  ],
+  "variables": [
+    {
+      "id": "in.horizon.years",
+      "label": "Periode tinjauan",
+      "unit": "th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!J403",
+      "section": "4.1",
+      "case_path": "horizon.years",
+      "screens": [
+        1
+      ],
+      "symbol": "T",
+      "deps": [],
+      "dependents": [
+        "demand.base",
+        "agg.annuity",
+        "obj.npv"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 23,
+      "group": "horizon"
+    },
+    {
+      "id": "in.horizon.phases",
+      "label": "Tahap perencanaan",
+      "unit": "th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "horizon.phases",
+      "screens": [
+        1,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 21,
+      "group": "horizon"
+    },
+    {
+      "id": "in.horizon.lead",
+      "label": "Masa konstruksi",
+      "unit": "th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "horizon.construction_lead_years",
+      "screens": [
+        1,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "terminal.n_berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 20,
+      "group": "horizon"
+    },
+    {
+      "id": "in.horizon.berth_lookahead",
+      "label": "Lookahead dermaga",
+      "unit": "th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "horizon.berth_lookahead_years",
+      "screens": [
+        1,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "terminal.n_berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 19,
+      "group": "horizon"
+    },
+    {
+      "id": "in.horizon.storage_lookahead",
+      "label": "Lookahead penyimpanan",
+      "unit": "th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "horizon.storage_lookahead_years",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 22,
+      "group": "horizon"
+    },
+    {
+      "id": "in.param.at",
+      "label": "Approach time",
+      "unit": "jam/call",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!F36",
+      "section": "4.1",
+      "case_path": "params.at_hours",
+      "screens": [
+        1
+      ],
+      "symbol": "AT",
+      "deps": [],
+      "dependents": [
+        "voyage.t_fix"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 25,
+      "group": "param"
+    },
+    {
+      "id": "in.param.wt",
+      "label": "Waiting time",
+      "unit": "jam/call",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!F37",
+      "section": "4.1",
+      "case_path": "params.wt_hours",
+      "screens": [
+        1
+      ],
+      "symbol": "WT",
+      "deps": [],
+      "dependents": [
+        "voyage.t_fix"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 48,
+      "group": "param"
+    },
+    {
+      "id": "in.param.it",
+      "label": "Idle time",
+      "unit": "jam/call",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!F38",
+      "section": "4.1",
+      "case_path": "params.it_hours",
+      "screens": [
+        1
+      ],
+      "symbol": "IT",
+      "deps": [],
+      "dependents": [
+        "voyage.t_fix"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 38,
+      "group": "param"
+    },
+    {
+      "id": "in.param.working_days",
+      "label": "Hari kerja terminal",
+      "unit": "hari/th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.working_days_per_year",
+      "screens": [
+        1,
+        8
+      ],
+      "symbol": "WD",
+      "deps": [],
+      "dependents": [
+        "terminal.n_berth",
+        "terminal.bor",
+        "storage.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 46,
+      "group": "param"
+    },
+    {
+      "id": "in.param.working_hours",
+      "label": "Jam kerja per hari",
+      "unit": "jam",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.working_hours_per_day",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 47,
+      "group": "param"
+    },
+    {
+      "id": "in.param.commission_days",
+      "label": "Commission days kapal",
+      "unit": "hari/th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.commission_days",
+      "screens": [
+        1
+      ],
+      "symbol": "CD",
+      "deps": [],
+      "dependents": [
+        "voyage.f_max",
+        "shipcost.tch"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 30,
+      "group": "param"
+    },
+    {
+      "id": "in.param.bor_max",
+      "label": "BOR maksimum",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.bor_max",
+      "screens": [
+        1,
+        8
+      ],
+      "symbol": "BOR_max",
+      "deps": [],
+      "dependents": [
+        "terminal.n_berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 28,
+      "group": "param"
+    },
+    {
+      "id": "in.param.mcr",
+      "label": "MCR mesin",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.mcr",
+      "screens": [
+        1
+      ],
+      "symbol": "MCR",
+      "deps": [],
+      "dependents": [
+        "shipcost.fuel_me_l"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 39,
+      "group": "param"
+    },
+    {
+      "id": "in.param.fuel_share_me",
+      "label": "Porsi pemakaian ME (laut, pelabuhan)",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.fuel_share_me_sea",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.fuel_me_l"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 37,
+      "group": "param"
+    },
+    {
+      "id": "in.param.fuel_share_ae",
+      "label": "Porsi pemakaian AE (laut, pelabuhan)",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.fuel_share_ae_port",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.fuel_ae_l"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 36,
+      "group": "param"
+    },
+    {
+      "id": "in.param.fuel_price",
+      "label": "Harga BBM",
+      "unit": "Rp/l",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!F45:F46",
+      "section": "4.1",
+      "case_path": "params.fuels[fuel].price_rp_per_l",
+      "screens": [
+        1,
+        7
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.fuel_me",
+        "shipcost.fuel_ae"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 35,
+      "group": "param"
+    },
+    {
+      "id": "in.param.fuel_choice",
+      "label": "Jenis BBM ME & AE",
+      "unit": "kode",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.me_fuel",
+      "screens": [
+        1
+      ],
+      "note": "A6: default HSD untuk keduanya",
+      "deps": [],
+      "dependents": [
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l",
+        "shipcost.fuel_me",
+        "shipcost.fuel_ae"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 34,
+      "group": "param"
+    },
+    {
+      "id": "in.param.sfoc_bands",
+      "label": "Tabel SFOC per rentang daya",
+      "unit": "g/kWh",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.sfoc_me_bands",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.sfoc"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 41,
+      "group": "param"
+    },
+    {
+      "id": "in.param.ae_me_ratio",
+      "label": "Rasio daya AE/ME default",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.ae_me_power_ratio",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.ae_kw"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 24,
+      "group": "param"
+    },
+    {
+      "id": "in.param.usd_rate",
+      "label": "Kurs",
+      "unit": "Rp/USD",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!F47",
+      "section": "4.1",
+      "case_path": "params.usd_rate",
+      "screens": [
+        1,
+        7
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.tch",
+        "shipcost.port_call",
+        "invest.handling"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 45,
+      "group": "param"
+    },
+    {
+      "id": "in.param.discount_rate",
+      "label": "Discount rate (WACC)",
+      "unit": "/th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!J403",
+      "section": "4.1",
+      "case_path": "params.discount_rate",
+      "screens": [
+        1,
+        9
+      ],
+      "symbol": "r",
+      "deps": [],
+      "dependents": [
+        "agg.pv_uc",
+        "agg.annuity",
+        "obj.npv"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 31,
+      "group": "param"
+    },
+    {
+      "id": "in.param.escalation_infra",
+      "label": "Eskalasi harga infrastruktur",
+      "unit": "/th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.escalation_infra",
+      "screens": [
+        1,
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.berth",
+        "invest.storage"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 33,
+      "group": "param"
+    },
+    {
+      "id": "in.param.escalation_equipment",
+      "label": "Eskalasi harga alat",
+      "unit": "/th",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.escalation_equipment",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.handling",
+        "invest.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 32,
+      "group": "param"
+    },
+    {
+      "id": "in.param.ballast_ratio",
+      "label": "Rasio kecepatan ballast",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.ballast_speed_ratio",
+      "screens": [
+        1
+      ],
+      "note": "A5",
+      "deps": [],
+      "dependents": [
+        "vessel.ballast_speed"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 26,
+      "group": "param"
+    },
+    {
+      "id": "in.param.payload_ratio",
+      "label": "α payload/DWT",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.payload_dwt_ratio",
+      "screens": [
+        1
+      ],
+      "symbol": "α",
+      "deps": [],
+      "dependents": [
+        "vessel.payload"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 40,
+      "group": "param"
+    },
+    {
+      "id": "in.param.teu_weight_ratio",
+      "label": "α batas berat per TEU",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.teu_weight_dwt_ratio",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "cargo.netmax"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 44,
+      "group": "param"
+    },
+    {
+      "id": "in.param.teu_capacity_ratio",
+      "label": "Rasio kapasitas TEU default",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.teu_capacity_dwt_ratio",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.teu_cap"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 42,
+      "group": "param"
+    },
+    {
+      "id": "in.param.teu_nominal_weight",
+      "label": "Berat nominal per TEU",
+      "unit": "t/TEU",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.teu_nominal_weight_t",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.teu_cap"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 43,
+      "group": "param"
+    },
+    {
+      "id": "in.param.berth_loa_ratio",
+      "label": "Rasio dermaga ÷ LOA minimum",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.berth_loa_min_ratio",
+      "screens": [
+        1,
+        3,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 27,
+      "group": "param"
+    },
+    {
+      "id": "in.param.cargo_per_call_mode",
+      "label": "Mode muatan per call",
+      "unit": "interval | full_load",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.1",
+      "case_path": "params.cargo_per_call_mode",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "voyage.q"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 29,
+      "group": "param"
+    },
+    {
+      "id": "in.container.dims",
+      "label": "Dimensi dalam kontainer 20′",
+      "unit": "m",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.3",
+      "case_path": "params.container.inner_length_m",
+      "screens": [
+        2
+      ],
+      "symbol": "Lc·Wc·Hc",
+      "deps": [],
+      "dependents": [
+        "cargo.box_per_teu",
+        "cargo.ton_per_teu"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 5,
+      "group": "container"
+    },
+    {
+      "id": "in.container.tare",
+      "label": "Tare kontainer",
+      "unit": "t",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.3",
+      "case_path": "params.container.tare_t",
+      "screens": [
+        2
+      ],
+      "deps": [],
+      "dependents": [
+        "cargo.netmax"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 7,
+      "group": "container"
+    },
+    {
+      "id": "in.container.max_net",
+      "label": "Muatan bersih maks kontainer",
+      "unit": "t",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.3",
+      "case_path": "params.container.max_net_t",
+      "screens": [
+        2
+      ],
+      "deps": [],
+      "dependents": [
+        "cargo.netmax"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 6,
+      "group": "container"
+    },
+    {
+      "id": "in.cmdty.packaging",
+      "label": "Kemasan komoditas (dimensi, berat)",
+      "unit": "m · kg",
+      "scope": "commodity",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Muatan!B:M",
+      "section": "4.3",
+      "case_path": "commodities[commodity].packaging",
+      "screens": [
+        2
+      ],
+      "symbol": "l·w·h, w_box",
+      "deps": [],
+      "dependents": [
+        "cargo.box_per_teu",
+        "cargo.ton_per_teu"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 2,
+      "group": "cmdty"
+    },
+    {
+      "id": "in.cmdty.stowage",
+      "label": "Stowage factor",
+      "unit": "m³/t",
+      "scope": "commodity",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.3",
+      "case_path": "commodities[commodity].stowage_factor_m3_t",
+      "screens": [
+        2
+      ],
+      "symbol": "SF",
+      "deps": [],
+      "dependents": [
+        "cargo.ton_per_teu"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 3,
+      "group": "cmdty"
+    },
+    {
+      "id": "in.cmdty.density",
+      "label": "Densitas komoditas",
+      "unit": "t/m³",
+      "scope": "commodity",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.3",
+      "case_path": "commodities[commodity].density_t_m3",
+      "screens": [
+        2
+      ],
+      "symbol": "ρ",
+      "deps": [],
+      "dependents": [
+        "storage.gc",
+        "storage.bulk",
+        "storage.liquid"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 1,
+      "group": "cmdty"
+    },
+    {
+      "id": "in.flow.start_year",
+      "label": "Tahun mulai",
+      "unit": "th-ke",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Proyeksi Muatan!F",
+      "section": "4.2",
+      "case_path": "flows[flow].volume.start_year",
+      "screens": [
+        2
+      ],
+      "symbol": "t₀",
+      "deps": [],
+      "dependents": [
+        "demand.base"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 17,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.initial",
+      "label": "Volume awal",
+      "unit": "t | TEU",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Proyeksi Muatan!C",
+      "section": "4.2",
+      "case_path": "flows[flow].volume.initial",
+      "screens": [
+        2
+      ],
+      "symbol": "V₀",
+      "deps": [],
+      "dependents": [
+        "demand.base"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 13,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.maximum",
+      "label": "Volume maksimum",
+      "unit": "t | TEU",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Proyeksi Muatan!D",
+      "section": "4.2",
+      "case_path": "flows[flow].volume.maximum",
+      "screens": [
+        2
+      ],
+      "symbol": "Dmax",
+      "deps": [],
+      "dependents": [
+        "demand.base"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 14,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.growth",
+      "label": "Laju pertumbuhan",
+      "unit": "/th",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Proyeksi Muatan!E",
+      "section": "4.2",
+      "case_path": "flows[flow].volume.growth_rate",
+      "screens": [
+        2
+      ],
+      "symbol": "g",
+      "deps": [],
+      "dependents": [
+        "demand.base"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 12,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.ratio",
+      "label": "Rasio konversi in→out",
+      "unit": "–",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Proyeksi Muatan!C12",
+      "section": "4.2",
+      "case_path": "flows[flow].volume.ratio",
+      "screens": [
+        2
+      ],
+      "symbol": "r",
+      "deps": [],
+      "dependents": [
+        "demand.ratio"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 15,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.unit",
+      "label": "Satuan flow",
+      "unit": "ton | TEU",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.2",
+      "case_path": "flows[flow].unit",
+      "screens": [
+        2
+      ],
+      "deps": [],
+      "dependents": [
+        "cargo.demand_unit",
+        "agg.uc"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 18,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.cargo_form",
+      "label": "Bentuk muatan",
+      "unit": "kode",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.2",
+      "case_path": "flows[flow].cargo_form",
+      "screens": [
+        2,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "cargo.demand_unit",
+        "vessel.payload",
+        "vessel.compatible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 11,
+      "group": "flow"
+    },
+    {
+      "id": "in.flow.route",
+      "label": "Rute flow",
+      "unit": "id",
+      "scope": "flow",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.2",
+      "case_path": "flows[flow].route_id",
+      "screens": [
+        2,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.feasible",
+        "voyage.t_port_ext",
+        "voyage.t_sea"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 16,
+      "group": "flow"
+    },
+    {
+      "id": "in.compat",
+      "label": "Matriks bentuk muatan × tipe kapal",
+      "unit": "boolean",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "compatibility",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.compatible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 4,
+      "group": "compat"
+    },
+    {
+      "id": "in.port.max_draft",
+      "label": "Draft maks pelabuhan",
+      "unit": "m",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Data Pelabuhan",
+      "section": "4.4",
+      "case_path": "ports[port].max_draft_m",
+      "screens": [
+        3,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 52,
+      "group": "port"
+    },
+    {
+      "id": "in.port.max_loa",
+      "label": "LOA maks eksplisit",
+      "unit": "m",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "ports[port].max_loa_m",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 53,
+      "group": "port"
+    },
+    {
+      "id": "in.port.longest_berth",
+      "label": "Dermaga terpanjang",
+      "unit": "m",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "ports[port].longest_berth_m",
+      "screens": [
+        3,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 51,
+      "group": "port"
+    },
+    {
+      "id": "in.port.productivity",
+      "label": "Produktivitas B/M pelabuhan",
+      "unit": "t/jam | TEU/jam",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Data Pelabuhan",
+      "section": "4.4",
+      "case_path": "ports[port].productivity",
+      "screens": [
+        3
+      ],
+      "note": "A3: total per kapal atau per alat × jumlah alat",
+      "deps": [],
+      "dependents": [
+        "voyage.t_port_ext"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 54,
+      "group": "port"
+    },
+    {
+      "id": "in.port.tariff_class",
+      "label": "Kelas tarif pelabuhan",
+      "unit": "kelas",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "ports[port].tariff_class",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 55,
+      "group": "port"
+    },
+    {
+      "id": "in.port.kind",
+      "label": "Domestik / luar negeri",
+      "unit": "–",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "ports[port].kind",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 50,
+      "group": "port"
+    },
+    {
+      "id": "in.port.berth_type",
+      "label": "Jenis dermaga (beton/dolphin)",
+      "unit": "–",
+      "scope": "port",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "ports[port].berth_type",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 49,
+      "group": "port"
+    },
+    {
+      "id": "in.route.distance",
+      "label": "Jarak rute",
+      "unit": "NM",
+      "scope": "route",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Rute!Y20:Y29",
+      "section": "4.4",
+      "case_path": "routes[route].legs",
+      "screens": [
+        3,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "voyage.t_sea"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 61,
+      "group": "route"
+    },
+    {
+      "id": "in.route.laden",
+      "label": "Kaki bermuatan / ballast",
+      "unit": "–",
+      "scope": "route",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.4",
+      "case_path": "routes[route].legs",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "voyage.t_sea"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 62,
+      "group": "route"
+    },
+    {
+      "id": "in.term.cargo_forms",
+      "label": "Bentuk muatan per terminal",
+      "unit": "kode",
+      "scope": "terminal",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.terminals[terminal].cargo_forms",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "voyage.t_port_kek",
+        "terminal.berth_days"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 100,
+      "group": "term"
+    },
+    {
+      "id": "in.term.berth_length",
+      "label": "Panjang unit tambatan",
+      "unit": "m",
+      "scope": "terminal",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.terminals[terminal].berth_unit_length_m",
+      "screens": [
+        8
+      ],
+      "symbol": "L_unit",
+      "deps": [],
+      "dependents": [
+        "terminal.berth_days",
+        "terminal.berth_length"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 98,
+      "group": "term"
+    },
+    {
+      "id": "in.term.berth_width",
+      "label": "Lebar dermaga",
+      "unit": "m",
+      "scope": "terminal",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.terminals[terminal].berth_width_m",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 99,
+      "group": "term"
+    },
+    {
+      "id": "in.site.bathymetry",
+      "label": "Profil batimetri tapak",
+      "unit": "m vs m",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Trestle!B34:B46",
+      "section": "4.5",
+      "case_path": "kek_site.bathymetry",
+      "screens": [
+        3,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "waterside.x_star",
+        "waterside.dredge_vol"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 78,
+      "group": "site"
+    },
+    {
+      "id": "in.site.waterside",
+      "label": "Kondisi perairan (angin, arus, gelombang, alur)",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Perairan",
+      "section": "4.5",
+      "case_path": "kek_site.waterside",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "waterside.channel",
+        "waterside.basin"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 83,
+      "group": "site"
+    },
+    {
+      "id": "in.site.depth_factor",
+      "label": "Faktor kedalaman ÷ draft",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.waterside.depth_factor_of_draft",
+      "screens": [
+        3,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "waterside.depth_req"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 79,
+      "group": "site"
+    },
+    {
+      "id": "in.site.trestle",
+      "label": "Spesifikasi trestle (panjang maks, lebar, tinggi)",
+      "unit": "m",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Trestle",
+      "section": "4.5",
+      "case_path": "kek_site.trestle",
+      "screens": [
+        3,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "waterside.trestle_len",
+        "invest.waterside"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 81,
+      "group": "site"
+    },
+    {
+      "id": "in.site.trestle_dredge",
+      "label": "Opsi trestle + keruk",
+      "unit": "m",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Trestle",
+      "section": "4.5",
+      "case_path": "kek_site.trestle_dredge",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "waterside.trestle_len",
+        "waterside.dredge_vol"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 82,
+      "group": "site"
+    },
+    {
+      "id": "in.site.port_charges",
+      "label": "Jasa kepelabuhanan TERSUS",
+      "unit": "none | tariff",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.port_charges",
+      "screens": [
+        3
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 80,
+      "group": "site"
+    },
+    {
+      "id": "in.ship.type",
+      "label": "Tipe kapal",
+      "unit": "kode",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Data Kapal",
+      "section": "4.6",
+      "case_path": "ships[ship].ship_type",
+      "screens": [
+        4,
+        6
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.compatible",
+        "shipcost.tch_rate"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 77,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.dwt",
+      "label": "DWT",
+      "unit": "t",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Data Kapal!M",
+      "section": "4.6",
+      "case_path": "ships[ship].dwt_t",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "DWT",
+      "deps": [],
+      "dependents": [
+        "cargo.netmax",
+        "vessel.teu_cap",
+        "vessel.payload",
+        "shipcost.tch_rate"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 69,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.payload",
+      "label": "Payload override",
+      "unit": "t",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].payload_t",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.payload"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 73,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.teu",
+      "label": "Kapasitas TEU",
+      "unit": "TEU",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].teu_capacity",
+      "screens": [
+        4
+      ],
+      "symbol": "TEU_k",
+      "deps": [],
+      "dependents": [
+        "vessel.teu_cap"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 76,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.loa",
+      "label": "LOA",
+      "unit": "m",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].loa_m",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "LOA_k",
+      "deps": [],
+      "dependents": [
+        "vessel.feasible",
+        "vessel.neq",
+        "terminal.berth_days",
+        "waterside.governing"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 71,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.beam",
+      "label": "Lebar (B)",
+      "unit": "m",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].beam_m",
+      "screens": [
+        4
+      ],
+      "symbol": "B",
+      "deps": [],
+      "dependents": [
+        "vessel.reach_ok",
+        "waterside.governing"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 67,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.draft",
+      "label": "Sarat (T)",
+      "unit": "m",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].draft_m",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "T_k",
+      "deps": [],
+      "dependents": [
+        "vessel.feasible",
+        "waterside.governing"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 68,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.speed",
+      "label": "Kecepatan dinas",
+      "unit": "knot",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].speed_kn",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "Vs",
+      "deps": [],
+      "dependents": [
+        "dv.speed",
+        "voyage.t_sea"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 75,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.ballast_speed",
+      "label": "Kecepatan ballast",
+      "unit": "knot",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].ballast_speed_kn",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.ballast_speed"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 66,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.gt",
+      "label": "GT",
+      "unit": "GT",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].gt",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 70,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.me_kw",
+      "label": "Daya mesin induk",
+      "unit": "kW",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].me_kw",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "P_ME",
+      "deps": [],
+      "dependents": [
+        "vessel.ae_kw",
+        "vessel.sfoc",
+        "shipcost.fuel_me_l"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 72,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.ae_kw",
+      "label": "Daya mesin bantu",
+      "unit": "kW",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].ae_kw",
+      "screens": [
+        4
+      ],
+      "symbol": "P_AE",
+      "deps": [],
+      "dependents": [
+        "vessel.ae_kw"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 65,
+      "group": "ship"
+    },
+    {
+      "id": "in.ship.sfoc",
+      "label": "SFOC override",
+      "unit": "g/kWh",
+      "scope": "ship",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.6",
+      "case_path": "ships[ship].sfoc_me_g_kwh",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.sfoc"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 74,
+      "group": "ship"
+    },
+    {
+      "id": "in.stype.tch_points",
+      "label": "Tabel tarif charter pasar",
+      "unit": "USD/hari",
+      "scope": "ship_type",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "TCH!B4:W12",
+      "section": "4.6",
+      "case_path": "ship_types[ship_type].tch_points",
+      "screens": [
+        4
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.tch_rate"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 91,
+      "group": "stype"
+    },
+    {
+      "id": "in.equip.productivity",
+      "label": "Produktivitas alat per bentuk muatan",
+      "unit": "t/jam",
+      "scope": "equip",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Alat BM",
+      "section": "4.7",
+      "case_path": "equipment[equip].productivity",
+      "screens": [
+        5,
+        8
+      ],
+      "symbol": "prod_e",
+      "deps": [],
+      "dependents": [
+        "voyage.t_port_kek"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 9,
+      "group": "equip"
+    },
+    {
+      "id": "in.equip.price",
+      "label": "Harga alat",
+      "unit": "USD",
+      "scope": "equip",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Alat BM",
+      "section": "4.7",
+      "case_path": "equipment[equip].price_usd",
+      "screens": [
+        5,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.handling"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 8,
+      "group": "equip"
+    },
+    {
+      "id": "in.equip.reach",
+      "label": "Jangkauan alat",
+      "unit": "m",
+      "scope": "equip",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.7",
+      "case_path": "equipment[equip].reach_m",
+      "screens": [
+        5
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.reach_ok"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 10,
+      "group": "equip"
+    },
+    {
+      "id": "in.rule.loa_bands",
+      "label": "Alat per tambatan menurut LOA",
+      "unit": "unit",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Model!CF34:CH37",
+      "section": "4.7",
+      "case_path": "equipment_rules.loa_bands",
+      "screens": [
+        5,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.neq"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 63,
+      "group": "rule"
+    },
+    {
+      "id": "in.rule.max_per_berth",
+      "label": "Batas alat per tambatan",
+      "unit": "unit",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.7",
+      "case_path": "equipment_rules.max_per_berth",
+      "screens": [
+        5,
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "vessel.neq"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 64,
+      "group": "rule"
+    },
+    {
+      "id": "in.tariff.labuh",
+      "label": "Tarif labuh",
+      "unit": "Rp | USD /GT",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.classes[tariff_class].labuh_domestic_rp_per_gt",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 94,
+      "group": "tariff"
+    },
+    {
+      "id": "in.tariff.pandu",
+      "label": "Tarif pandu",
+      "unit": "Rp | USD /GT/gerakan",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.classes[tariff_class].pandu_domestic_var_rp_per_gt",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 95,
+      "group": "tariff"
+    },
+    {
+      "id": "in.tariff.tambat",
+      "label": "Tarif tambat",
+      "unit": "Rp | USD /GT/etmal",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.classes[tariff_class].tambat_domestic_rp_per_gt_etmal",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 96,
+      "group": "tariff"
+    },
+    {
+      "id": "in.tariff.tunda",
+      "label": "Tarif tunda per rentang GT",
+      "unit": "Rp | USD",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.classes[tariff_class].tug",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 97,
+      "group": "tariff"
+    },
+    {
+      "id": "in.tariff.bm",
+      "label": "Tarif B/M (OPP/OPT)",
+      "unit": "Rp/t | Rp/TEU",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.classes[tariff_class].bm_domestic_rp_per_ton",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 92,
+      "group": "tariff"
+    },
+    {
+      "id": "in.tariff.gt_bands",
+      "label": "Rentang GT tarif tunda",
+      "unit": "GT",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "4.8",
+      "case_path": "tariffs.tug_gt_bands",
+      "screens": [
+        1
+      ],
+      "deps": [],
+      "dependents": [
+        "shipcost.port_call"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 93,
+      "group": "tariff"
+    },
+    {
+      "id": "in.storage.dwell",
+      "label": "Mode dwell time",
+      "unit": "from_consumption | fixed",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan Rata2!F134",
+      "section": "4.9",
+      "case_path": "storage.dwell_time_mode",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.dwell"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 86,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.share",
+      "label": "Porsi muatan masuk penyimpanan",
+      "unit": "–",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.9",
+      "case_path": "storage.inbound_share",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.throughput"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 89,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.cy",
+      "label": "Parameter container yard",
+      "unit": "m²/TEU · tier · YOR",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan",
+      "section": "4.9",
+      "case_path": "storage.container_yard",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.cy"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 85,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.gc",
+      "label": "Parameter lapangan/gudang GC",
+      "unit": "f · m · SOR",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan",
+      "section": "4.9",
+      "case_path": "storage.general_cargo",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.gc"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 87,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.bulk",
+      "label": "Parameter curah kering & silo",
+      "unit": "f · Rc · m³",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan",
+      "section": "4.9",
+      "case_path": "storage.dry_bulk",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.bulk",
+        "invest.storage"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 84,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.liquid",
+      "label": "Parameter tangki timbun",
+      "unit": "okupansi · m³",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan",
+      "section": "4.9",
+      "case_path": "storage.liquid",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.liquid"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 88,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.yard_equipment",
+      "label": "Alat lapangan per bentuk muatan",
+      "unit": "unit/jam",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Fasilitas Daratan",
+      "section": "4.9",
+      "case_path": "storage.yard_equipment",
+      "screens": [
+        8
+      ],
+      "deps": [],
+      "dependents": [
+        "storage.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 90,
+      "group": "storage"
+    },
+    {
+      "id": "in.price.berth",
+      "label": "Harga satuan dermaga & jetty",
+      "unit": "Rp/m²",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi!B2:F34",
+      "section": "5.8",
+      "case_path": "unit_prices",
+      "screens": [
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 56,
+      "group": "price"
+    },
+    {
+      "id": "in.price.trestle",
+      "label": "Harga satuan trestle",
+      "unit": "Rp/m²",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi",
+      "section": "5.8",
+      "case_path": "unit_prices",
+      "screens": [
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.waterside"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 59,
+      "group": "price"
+    },
+    {
+      "id": "in.price.dredge",
+      "label": "Harga satuan keruk",
+      "unit": "Rp/m³",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi",
+      "section": "5.8",
+      "case_path": "unit_prices",
+      "screens": [
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.waterside"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 57,
+      "group": "price"
+    },
+    {
+      "id": "in.price.storage",
+      "label": "Harga satuan lapangan, gudang, tangki",
+      "unit": "Rp/m² | Rp/unit",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi",
+      "section": "5.8",
+      "case_path": "unit_prices",
+      "screens": [
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 58,
+      "group": "price"
+    },
+    {
+      "id": "in.price.yard_equipment",
+      "label": "Harga alat lapangan",
+      "unit": "Rp/unit",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi",
+      "section": "5.8",
+      "case_path": "unit_prices",
+      "screens": [
+        9
+      ],
+      "deps": [],
+      "dependents": [
+        "invest.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 60,
+      "group": "price"
+    },
+    {
+      "id": "dv.ship",
+      "label": "Kapal terpilih per flow",
+      "unit": "y[f,k] ∈ {0,1}",
+      "scope": "flow×ship",
+      "kind": "decision",
+      "formula": "Σ_k y[f,k] = 1, hanya kapal feasible",
+      "deps": [
+        "vessel.feasible"
+      ],
+      "excel_ref": "Model!CG8:CG17",
+      "section": "6.1",
+      "screens": [
+        6,
+        10
+      ],
+      "symbol": "y[f,k]",
+      "dependents": [
+        "cargo.demand_unit",
+        "voyage.freq",
+        "voyage.t_sea",
+        "terminal.berth_days",
+        "terminal.n_equip",
+        "waterside.governing"
+      ],
+      "lane": 1,
+      "depth": 3,
+      "topo": 117
+    },
+    {
+      "id": "dv.equip",
+      "label": "Alat B/M per terminal",
+      "unit": "z[τ,e] ∈ {0,1}",
+      "scope": "terminal×equip",
+      "kind": "decision",
+      "formula": "Σ_e z[τ,e] = 1, alat dengan jangkauan cukup",
+      "deps": [
+        "vessel.reach_ok"
+      ],
+      "excel_ref": "Model!DB8:DB9",
+      "section": "6.1",
+      "screens": [
+        8,
+        10
+      ],
+      "symbol": "z[τ,e]",
+      "dependents": [
+        "voyage.t_port_kek",
+        "terminal.n_equip",
+        "invest.handling"
+      ],
+      "lane": 1,
+      "depth": 2,
+      "topo": 110
+    },
+    {
+      "id": "dv.waterside",
+      "label": "Mode perairan: trestle / keruk / campuran",
+      "unit": "w[m] | θ ∈ [0,1]",
+      "scope": "global",
+      "kind": "decision",
+      "formula": "pilih biaya perairan termurah",
+      "excel_ref": "Model!K395",
+      "section": "6.1",
+      "screens": [
+        8,
+        10
+      ],
+      "symbol": "w, θ",
+      "deps": [],
+      "dependents": [
+        "waterside.trestle_len",
+        "waterside.dredge_vol",
+        "invest.waterside"
+      ],
+      "lane": 1,
+      "depth": 1,
+      "topo": 0
+    },
+    {
+      "id": "dv.speed",
+      "label": "Kecepatan operasi (opsional)",
+      "unit": "knot",
+      "scope": "flow",
+      "kind": "decision",
+      "formula": "≤ Vs kapal; slow steaming = ekstensi v2",
+      "deps": [
+        "in.ship.speed"
+      ],
+      "section": "6.1",
+      "screens": [
+        6,
+        10
+      ],
+      "symbol": "V",
+      "dependents": [
+        "vessel.ballast_speed",
+        "voyage.t_sea"
+      ],
+      "lane": 1,
+      "depth": 1,
+      "topo": 106
+    },
+    {
+      "id": "demand.base",
+      "label": "Demand flow independen",
+      "unit": "t | TEU per th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "D[t] = 0 bila t < t₀; V₀ di t₀; min(Dmax, D[t−1]·(1+g))",
+      "deps": [
+        "in.flow.start_year",
+        "in.flow.initial",
+        "in.flow.maximum",
+        "in.flow.growth",
+        "in.horizon.years"
+      ],
+      "excel_ref": "Model!N3:AG3",
+      "section": "5.1",
+      "audit": [
+        "A4"
+      ],
+      "screens": [
+        2,
+        6
+      ],
+      "symbol": "D[f,t]",
+      "dependents": [
+        "demand.ratio",
+        "cargo.demand_unit"
+      ],
+      "lane": 2,
+      "depth": 1,
+      "topo": 101
+    },
+    {
+      "id": "demand.ratio",
+      "label": "Demand flow rasio (outbound)",
+      "unit": "t | TEU per th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "D_out[t] = r · D_in[t] (aturan volume §4.2)",
+      "deps": [
+        "demand.base",
+        "in.flow.ratio"
+      ],
+      "excel_ref": "Proyeksi Muatan!C12",
+      "section": "5.1",
+      "screens": [
+        2
+      ],
+      "dependents": [
+        "cargo.demand_unit"
+      ],
+      "lane": 2,
+      "depth": 2,
+      "topo": 109
+    },
+    {
+      "id": "cargo.netmax",
+      "label": "Muatan bersih maks per TEU",
+      "unit": "t/TEU",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "NetMax = min(payload kontainer, α·DWT_k / TEU_k − tare)",
+      "deps": [
+        "in.container.max_net",
+        "in.param.teu_weight_ratio",
+        "in.ship.dwt",
+        "vessel.teu_cap",
+        "in.container.tare"
+      ],
+      "excel_ref": "Muatan",
+      "section": "5.1",
+      "audit": [
+        "A8"
+      ],
+      "screens": [
+        2
+      ],
+      "symbol": "NetMax",
+      "dependents": [
+        "cargo.box_per_teu",
+        "cargo.ton_per_teu"
+      ],
+      "lane": 2,
+      "depth": 2,
+      "topo": 113
+    },
+    {
+      "id": "cargo.box_per_teu",
+      "label": "Kemasan per TEU",
+      "unit": "kemasan/TEU",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "nBox = min(⌊Lc/l⌋·⌊Wc/w⌋·⌊Hc/h⌋, ⌊NetMax / w_box⌋)",
+      "deps": [
+        "in.container.dims",
+        "in.cmdty.packaging",
+        "cargo.netmax"
+      ],
+      "excel_ref": "Muatan",
+      "section": "5.1",
+      "screens": [
+        2
+      ],
+      "symbol": "nBox",
+      "dependents": [
+        "cargo.ton_per_teu"
+      ],
+      "lane": 2,
+      "depth": 3,
+      "topo": 116
+    },
+    {
+      "id": "cargo.ton_per_teu",
+      "label": "Ton per TEU",
+      "unit": "t/TEU",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "nBox · w_box (atau Vc / SF), dibatasi NetMax",
+      "deps": [
+        "cargo.box_per_teu",
+        "in.cmdty.packaging",
+        "in.cmdty.stowage",
+        "in.container.dims",
+        "cargo.netmax"
+      ],
+      "excel_ref": "Muatan!L19:L22",
+      "section": "5.1",
+      "screens": [
+        2
+      ],
+      "symbol": "tonPerTEU",
+      "dependents": [
+        "cargo.demand_unit",
+        "vessel.payload"
+      ],
+      "lane": 2,
+      "depth": 4,
+      "topo": 118
+    },
+    {
+      "id": "cargo.demand_unit",
+      "label": "Demand dalam satuan kapal",
+      "unit": "t | TEU per th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "D_TEU = ⌈D_ton / tonPerTEU⌉ untuk muatan PK bersatuan ton; selain itu D",
+      "deps": [
+        "demand.base",
+        "demand.ratio",
+        "cargo.ton_per_teu",
+        "in.flow.unit",
+        "in.flow.cargo_form",
+        "dv.ship"
+      ],
+      "excel_ref": "Proyeksi Muatan!G20:Z24",
+      "section": "5.1",
+      "screens": [
+        2,
+        6
+      ],
+      "symbol": "D",
+      "dependents": [
+        "voyage.freq",
+        "voyage.q",
+        "voyage.consumption",
+        "shipcost.unit",
+        "storage.throughput",
+        "agg.uc"
+      ],
+      "lane": 2,
+      "depth": 5,
+      "topo": 121
+    },
+    {
+      "id": "vessel.teu_cap",
+      "label": "Kapasitas TEU efektif",
+      "unit": "TEU",
+      "scope": "ship",
+      "kind": "derived",
+      "formula": "TEU_k isian; bila kosong ⌊rasio · DWT / berat nominal per TEU⌋",
+      "deps": [
+        "in.ship.teu",
+        "in.ship.dwt",
+        "in.param.teu_capacity_ratio",
+        "in.param.teu_nominal_weight"
+      ],
+      "section": "5.2",
+      "screens": [
+        4
+      ],
+      "dependents": [
+        "cargo.netmax",
+        "vessel.payload",
+        "shipcost.tch_rate"
+      ],
+      "lane": 3,
+      "depth": 1,
+      "topo": 107
+    },
+    {
+      "id": "vessel.payload",
+      "label": "Payload efektif",
+      "unit": "t | TEU",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "GC/CK/CC: α·DWT (atau override); PK: kapasitas TEU, cek TEU·tonPerTEU ≤ 0,9·DWT",
+      "deps": [
+        "in.ship.dwt",
+        "in.param.payload_ratio",
+        "in.ship.payload",
+        "vessel.teu_cap",
+        "cargo.ton_per_teu",
+        "in.flow.cargo_form"
+      ],
+      "excel_ref": "Data Kapal!N · Model!AL26",
+      "section": "5.2",
+      "audit": [
+        "A8"
+      ],
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "payload[k]",
+      "dependents": [
+        "voyage.freq",
+        "voyage.q"
+      ],
+      "lane": 3,
+      "depth": 5,
+      "topo": 122
+    },
+    {
+      "id": "vessel.compatible",
+      "label": "Kompatibel bentuk muatan",
+      "unit": "boolean",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "tipe kapal k ∈ tipe yang diizinkan untuk bentuk muatan f",
+      "deps": [
+        "in.ship.type",
+        "in.flow.cargo_form",
+        "in.compat"
+      ],
+      "section": "5.2",
+      "screens": [
+        4,
+        6
+      ],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 3,
+      "depth": 1,
+      "topo": 108
+    },
+    {
+      "id": "vessel.feasible",
+      "label": "Kelayakan kapal (+ alasan gugur)",
+      "unit": "boolean",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "compatible ∧ T_k ≤ draft pelabuhan ∧ dermaga terpanjang ≥ rasio·LOA_k ∧ LOA_k ≤ LOA maks",
+      "deps": [
+        "vessel.compatible",
+        "in.ship.draft",
+        "in.ship.loa",
+        "in.port.max_draft",
+        "in.port.longest_berth",
+        "in.port.max_loa",
+        "in.param.berth_loa_ratio",
+        "in.flow.route"
+      ],
+      "excel_ref": "Model!CH24:CJ32",
+      "section": "5.2",
+      "screens": [
+        4,
+        6
+      ],
+      "symbol": "feasible[f,k]",
+      "dependents": [
+        "dv.ship"
+      ],
+      "lane": 3,
+      "depth": 2,
+      "topo": 115
+    },
+    {
+      "id": "vessel.neq",
+      "label": "Alat per tambatan",
+      "unit": "unit",
+      "scope": "ship×terminal",
+      "kind": "derived",
+      "formula": "dari tabel rentang LOA, dibatasi batas per terminal",
+      "deps": [
+        "in.ship.loa",
+        "in.rule.loa_bands",
+        "in.rule.max_per_berth"
+      ],
+      "excel_ref": "Model!CI8:CI17",
+      "section": "5.2",
+      "audit": [
+        "A10"
+      ],
+      "screens": [
+        5,
+        6,
+        8
+      ],
+      "symbol": "nEq[k]",
+      "dependents": [
+        "voyage.t_port_kek",
+        "terminal.n_equip"
+      ],
+      "lane": 3,
+      "depth": 1,
+      "topo": 104
+    },
+    {
+      "id": "vessel.reach_ok",
+      "label": "Jangkauan alat cukup",
+      "unit": "boolean",
+      "scope": "ship×equip",
+      "kind": "derived",
+      "formula": "radius alat ≥ B kapal + margin",
+      "deps": [
+        "in.equip.reach",
+        "in.ship.beam"
+      ],
+      "section": "5.2",
+      "screens": [
+        5
+      ],
+      "symbol": "reach_ok[k,e]",
+      "dependents": [
+        "dv.equip"
+      ],
+      "lane": 3,
+      "depth": 1,
+      "topo": 103
+    },
+    {
+      "id": "vessel.ballast_speed",
+      "label": "Kecepatan ballast efektif",
+      "unit": "knot",
+      "scope": "ship",
+      "kind": "derived",
+      "formula": "V_ballast isian; bila kosong rasio · Vs",
+      "deps": [
+        "in.ship.ballast_speed",
+        "in.param.ballast_ratio",
+        "dv.speed"
+      ],
+      "section": "5.3",
+      "audit": [
+        "A5"
+      ],
+      "screens": [
+        4
+      ],
+      "dependents": [
+        "voyage.t_sea"
+      ],
+      "lane": 3,
+      "depth": 2,
+      "topo": 112
+    },
+    {
+      "id": "vessel.ae_kw",
+      "label": "Daya AE efektif",
+      "unit": "kW",
+      "scope": "ship",
+      "kind": "derived",
+      "formula": "P_AE isian; bila kosong rasio · P_ME",
+      "deps": [
+        "in.ship.ae_kw",
+        "in.ship.me_kw",
+        "in.param.ae_me_ratio"
+      ],
+      "section": "5.4",
+      "screens": [
+        4
+      ],
+      "dependents": [
+        "vessel.sfoc",
+        "shipcost.fuel_ae_l"
+      ],
+      "lane": 3,
+      "depth": 1,
+      "topo": 105
+    },
+    {
+      "id": "vessel.sfoc",
+      "label": "SFOC ME & AE",
+      "unit": "g/kWh",
+      "scope": "ship",
+      "kind": "derived",
+      "formula": "override kapal; bila kosong dari tabel rentang daya",
+      "deps": [
+        "in.ship.sfoc",
+        "in.param.sfoc_bands",
+        "in.ship.me_kw",
+        "vessel.ae_kw"
+      ],
+      "section": "5.4",
+      "screens": [
+        4
+      ],
+      "dependents": [
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l"
+      ],
+      "lane": 3,
+      "depth": 2,
+      "topo": 111
+    },
+    {
+      "id": "voyage.freq",
+      "label": "Frekuensi",
+      "unit": "call/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "F_req = ⌈D / payload⌉",
+      "deps": [
+        "cargo.demand_unit",
+        "vessel.payload",
+        "dv.ship"
+      ],
+      "excel_ref": "Model!M28:AF28",
+      "section": "5.3",
+      "screens": [
+        6,
+        7
+      ],
+      "symbol": "F_req",
+      "dependents": [
+        "voyage.q",
+        "voyage.n_ship",
+        "voyage.utilization",
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l",
+        "shipcost.port",
+        "terminal.ship_days"
+      ],
+      "lane": 4,
+      "depth": 6,
+      "topo": 127
+    },
+    {
+      "id": "voyage.q",
+      "label": "Muatan per call",
+      "unit": "t | TEU",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "interval: D / F; full-load: payload",
+      "deps": [
+        "cargo.demand_unit",
+        "voyage.freq",
+        "vessel.payload",
+        "in.param.cargo_per_call_mode"
+      ],
+      "excel_ref": "Model!N41:AG41",
+      "section": "5.3",
+      "screens": [
+        6
+      ],
+      "symbol": "q",
+      "dependents": [
+        "voyage.t_port_kek",
+        "voyage.t_port_ext",
+        "voyage.consumption",
+        "shipcost.port_call"
+      ],
+      "lane": 4,
+      "depth": 7,
+      "topo": 131
+    },
+    {
+      "id": "voyage.t_port_kek",
+      "label": "Port time KEK",
+      "unit": "hari/call",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "q / (prod_e,form · nEq) / 24",
+      "deps": [
+        "voyage.q",
+        "in.equip.productivity",
+        "vessel.neq",
+        "dv.equip",
+        "in.term.cargo_forms"
+      ],
+      "excel_ref": "Model!M68:AF68 (Excel: hari/th)",
+      "section": "5.3",
+      "audit": [
+        "A2",
+        "A10"
+      ],
+      "screens": [
+        6
+      ],
+      "symbol": "tPortKEK",
+      "dependents": [
+        "voyage.t_port",
+        "shipcost.port_call",
+        "terminal.ship_days"
+      ],
+      "lane": 4,
+      "depth": 8,
+      "topo": 134
+    },
+    {
+      "id": "voyage.t_port_ext",
+      "label": "Port time pelabuhan asal/tujuan",
+      "unit": "hari/call",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "q / prodTotal_port / 24 (total per kapal atau per alat × jumlah alat)",
+      "deps": [
+        "voyage.q",
+        "in.port.productivity",
+        "in.flow.route"
+      ],
+      "excel_ref": "Model!M82:AF82 (Excel: hari/th)",
+      "section": "5.3",
+      "audit": [
+        "A3"
+      ],
+      "screens": [
+        6
+      ],
+      "symbol": "tPortExt",
+      "dependents": [
+        "voyage.t_port",
+        "shipcost.port_call"
+      ],
+      "lane": 4,
+      "depth": 8,
+      "topo": 135
+    },
+    {
+      "id": "voyage.t_port",
+      "label": "Port time per call",
+      "unit": "hari/call",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "tPortKEK + tPortExt",
+      "deps": [
+        "voyage.t_port_kek",
+        "voyage.t_port_ext"
+      ],
+      "excel_ref": "Model!M182:AF182",
+      "section": "5.3",
+      "screens": [
+        6
+      ],
+      "dependents": [
+        "voyage.rtd",
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l"
+      ],
+      "lane": 4,
+      "depth": 9,
+      "topo": 139
+    },
+    {
+      "id": "voyage.t_fix",
+      "label": "Waktu tetap per call",
+      "unit": "hari/call",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "tFix = (AT + WT + IT) / 24",
+      "deps": [
+        "in.param.at",
+        "in.param.wt",
+        "in.param.it"
+      ],
+      "section": "5.3",
+      "screens": [
+        6
+      ],
+      "symbol": "tFix",
+      "dependents": [
+        "voyage.rtd",
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l",
+        "terminal.ship_days"
+      ],
+      "lane": 4,
+      "depth": 1,
+      "topo": 102
+    },
+    {
+      "id": "voyage.t_sea",
+      "label": "Sea time",
+      "unit": "hari/call",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "(jarak bermuatan / Vs + jarak ballast / V_ballast) / 24",
+      "deps": [
+        "in.route.distance",
+        "in.route.laden",
+        "in.ship.speed",
+        "vessel.ballast_speed",
+        "dv.speed",
+        "dv.ship",
+        "in.flow.route"
+      ],
+      "excel_ref": "Model!M156:AF156",
+      "section": "5.3",
+      "audit": [
+        "A5"
+      ],
+      "screens": [
+        6
+      ],
+      "symbol": "tSea",
+      "dependents": [
+        "voyage.rtd",
+        "shipcost.fuel_me_l",
+        "shipcost.fuel_ae_l"
+      ],
+      "lane": 4,
+      "depth": 4,
+      "topo": 119
+    },
+    {
+      "id": "voyage.rtd",
+      "label": "Round trip days",
+      "unit": "hari",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "RTD = tSea + tPortKEK + tPortExt + tFix",
+      "deps": [
+        "voyage.t_sea",
+        "voyage.t_port",
+        "voyage.t_fix"
+      ],
+      "excel_ref": "Model!M195:AF195",
+      "section": "5.3",
+      "screens": [
+        6
+      ],
+      "symbol": "RTD",
+      "dependents": [
+        "voyage.f_max"
+      ],
+      "lane": 4,
+      "depth": 10,
+      "topo": 143
+    },
+    {
+      "id": "voyage.f_max",
+      "label": "Voyage maks per kapal",
+      "unit": "call/kapal/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "F_max = ⌊CD / RTD⌋",
+      "deps": [
+        "voyage.rtd",
+        "in.param.commission_days"
+      ],
+      "excel_ref": "Model!M208:AF208",
+      "section": "5.3",
+      "audit": [
+        "A1"
+      ],
+      "screens": [
+        6
+      ],
+      "symbol": "F_max",
+      "dependents": [
+        "voyage.n_ship",
+        "voyage.utilization"
+      ],
+      "lane": 4,
+      "depth": 11,
+      "topo": 152
+    },
+    {
+      "id": "voyage.n_ship",
+      "label": "Jumlah kapal",
+      "unit": "unit",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "N_ship = ⌈F_req / F_max⌉",
+      "deps": [
+        "voyage.freq",
+        "voyage.f_max"
+      ],
+      "excel_ref": "Model!M221:AF221",
+      "section": "5.3",
+      "screens": [
+        6,
+        7
+      ],
+      "symbol": "N_ship",
+      "dependents": [
+        "voyage.utilization",
+        "shipcost.tch"
+      ],
+      "lane": 4,
+      "depth": 12,
+      "topo": 159
+    },
+    {
+      "id": "voyage.utilization",
+      "label": "Utilisasi kapal",
+      "unit": "–",
+      "scope": "flow×year",
+      "kind": "metric",
+      "formula": "F_req / (N_ship · F_max)",
+      "deps": [
+        "voyage.freq",
+        "voyage.n_ship",
+        "voyage.f_max"
+      ],
+      "section": "5.3",
+      "screens": [
+        6
+      ],
+      "dependents": [],
+      "lane": 4,
+      "depth": 13,
+      "topo": 163
+    },
+    {
+      "id": "voyage.consumption",
+      "label": "Lama konsumsi",
+      "unit": "hari stok/pengapalan",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "q / (D / 365)",
+      "deps": [
+        "voyage.q",
+        "cargo.demand_unit"
+      ],
+      "excel_ref": "Model!M350:AF350",
+      "section": "5.3",
+      "screens": [
+        8
+      ],
+      "symbol": "lamaKonsumsi",
+      "dependents": [
+        "storage.dwell"
+      ],
+      "lane": 4,
+      "depth": 8,
+      "topo": 136
+    },
+    {
+      "id": "shipcost.fuel_me_l",
+      "label": "Konsumsi BBM ME",
+      "unit": "l/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "P_ME · MCR · SFOC_ME · 24 · (tSea · %ME_laut + (tPort + tFix) · %ME_pelabuhan) · F ÷ berat jenis",
+      "deps": [
+        "in.ship.me_kw",
+        "in.param.mcr",
+        "vessel.sfoc",
+        "voyage.t_sea",
+        "voyage.t_port",
+        "voyage.t_fix",
+        "voyage.freq",
+        "in.param.fuel_share_me",
+        "in.param.fuel_choice"
+      ],
+      "excel_ref": "Model!M247:AF247",
+      "section": "5.4",
+      "audit": [
+        "A9"
+      ],
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.fuel_me"
+      ],
+      "lane": 5,
+      "depth": 10,
+      "topo": 144
+    },
+    {
+      "id": "shipcost.fuel_ae_l",
+      "label": "Konsumsi BBM AE",
+      "unit": "l/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "P_AE · SFOC_AE · 24 · (tPort + tFix) · %AE_pelabuhan (+ porsi laut) · F ÷ berat jenis",
+      "deps": [
+        "vessel.ae_kw",
+        "vessel.sfoc",
+        "voyage.t_sea",
+        "voyage.t_port",
+        "voyage.t_fix",
+        "voyage.freq",
+        "in.param.fuel_share_ae",
+        "in.param.fuel_choice"
+      ],
+      "excel_ref": "Model!M260:AF260",
+      "section": "5.4",
+      "audit": [
+        "A9"
+      ],
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.fuel_ae"
+      ],
+      "lane": 5,
+      "depth": 10,
+      "topo": 145
+    },
+    {
+      "id": "shipcost.fuel_me",
+      "label": "Biaya BBM ME",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "liter ME × harga BBM ME",
+      "deps": [
+        "shipcost.fuel_me_l",
+        "in.param.fuel_price",
+        "in.param.fuel_choice"
+      ],
+      "excel_ref": "Model!M273:AF273",
+      "section": "5.4",
+      "audit": [
+        "A6"
+      ],
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.voyage"
+      ],
+      "lane": 5,
+      "depth": 11,
+      "topo": 153
+    },
+    {
+      "id": "shipcost.fuel_ae",
+      "label": "Biaya BBM AE",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "liter AE × harga BBM AE",
+      "deps": [
+        "shipcost.fuel_ae_l",
+        "in.param.fuel_price",
+        "in.param.fuel_choice"
+      ],
+      "excel_ref": "Model!M286:AF286",
+      "section": "5.4",
+      "audit": [
+        "A6"
+      ],
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.voyage"
+      ],
+      "lane": 5,
+      "depth": 11,
+      "topo": 154
+    },
+    {
+      "id": "shipcost.voyage",
+      "label": "Voyage cost (BBM)",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "BBM ME + BBM AE",
+      "deps": [
+        "shipcost.fuel_me",
+        "shipcost.fuel_ae"
+      ],
+      "excel_ref": "Model!M299:AF299",
+      "section": "5.4",
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.total"
+      ],
+      "lane": 5,
+      "depth": 12,
+      "topo": 160
+    },
+    {
+      "id": "shipcost.tch_rate",
+      "label": "Tarif TCH per hari",
+      "unit": "USD/hari",
+      "scope": "ship",
+      "kind": "derived",
+      "formula": "a_tipe · ukuran_k + b_tipe (regresi linier tabel pasar)",
+      "deps": [
+        "in.stype.tch_points",
+        "in.ship.type",
+        "in.ship.dwt",
+        "vessel.teu_cap"
+      ],
+      "excel_ref": "TCH!C15:U16",
+      "section": "5.4",
+      "screens": [
+        4,
+        7
+      ],
+      "dependents": [
+        "shipcost.tch"
+      ],
+      "lane": 5,
+      "depth": 2,
+      "topo": 114
+    },
+    {
+      "id": "shipcost.tch",
+      "label": "Biaya time charter",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "tarif TCH · kurs · CD · N_ship",
+      "deps": [
+        "shipcost.tch_rate",
+        "in.param.usd_rate",
+        "in.param.commission_days",
+        "voyage.n_ship"
+      ],
+      "excel_ref": "Model!M312:AF312",
+      "section": "5.4",
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.total"
+      ],
+      "lane": 5,
+      "depth": 13,
+      "topo": 164
+    },
+    {
+      "id": "shipcost.port_call",
+      "label": "Biaya pelabuhan per call",
+      "unit": "Rp/call",
+      "scope": "flow×ship",
+      "kind": "derived",
+      "formula": "Σ_{ext, KEK} labuh(GT) + pandu(GT, gerakan) + tambat(GT, etmal) + tunda(GT) + B/M(q)",
+      "deps": [
+        "in.ship.gt",
+        "in.tariff.labuh",
+        "in.tariff.pandu",
+        "in.tariff.tambat",
+        "in.tariff.tunda",
+        "in.tariff.bm",
+        "in.tariff.gt_bands",
+        "in.port.tariff_class",
+        "in.port.kind",
+        "in.port.berth_type",
+        "in.site.port_charges",
+        "in.param.usd_rate",
+        "voyage.q",
+        "voyage.t_port_ext",
+        "voyage.t_port_kek"
+      ],
+      "excel_ref": "Biaya Pelabuhan",
+      "section": "5.4",
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.port"
+      ],
+      "lane": 5,
+      "depth": 9,
+      "topo": 140
+    },
+    {
+      "id": "shipcost.port",
+      "label": "Biaya pelabuhan per tahun",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "F · biaya pelabuhan per call",
+      "deps": [
+        "shipcost.port_call",
+        "voyage.freq"
+      ],
+      "excel_ref": "Model!M325:AF325",
+      "section": "5.4",
+      "audit": [
+        "A11"
+      ],
+      "screens": [
+        7
+      ],
+      "dependents": [
+        "shipcost.total"
+      ],
+      "lane": 5,
+      "depth": 10,
+      "topo": 146
+    },
+    {
+      "id": "shipcost.total",
+      "label": "Shipping cost",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "voyage cost + TCH + biaya pelabuhan",
+      "deps": [
+        "shipcost.voyage",
+        "shipcost.tch",
+        "shipcost.port"
+      ],
+      "excel_ref": "Model!M338:AF338",
+      "section": "5.4",
+      "screens": [
+        6,
+        7
+      ],
+      "dependents": [
+        "shipcost.unit",
+        "agg.tc"
+      ],
+      "lane": 5,
+      "depth": 14,
+      "topo": 166
+    },
+    {
+      "id": "shipcost.unit",
+      "label": "Biaya pelayaran per satuan",
+      "unit": "Rp/t | Rp/TEU",
+      "scope": "flow×year",
+      "kind": "metric",
+      "formula": "shipping cost / D (satuan flow, A7)",
+      "deps": [
+        "shipcost.total",
+        "cargo.demand_unit"
+      ],
+      "section": "5.4",
+      "audit": [
+        "A7"
+      ],
+      "screens": [
+        6,
+        7
+      ],
+      "dependents": [],
+      "lane": 5,
+      "depth": 15,
+      "topo": 167
+    },
+    {
+      "id": "terminal.ship_days",
+      "label": "Ship-days di KEK",
+      "unit": "hari/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "F · tPortKEK (+ tFix sesuai konvensi)",
+      "deps": [
+        "voyage.freq",
+        "voyage.t_port_kek",
+        "voyage.t_fix"
+      ],
+      "excel_ref": "Model!K101:AD102 (Σ per terminal)",
+      "section": "5.5",
+      "screens": [
+        8
+      ],
+      "symbol": "shipDays[f]",
+      "dependents": [
+        "terminal.berth_days",
+        "terminal.bor"
+      ],
+      "lane": 6,
+      "depth": 9,
+      "topo": 138
+    },
+    {
+      "id": "terminal.berth_days",
+      "label": "Berth-days required",
+      "unit": "hari/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "⌈shipDays · LOA_k / L_unit,τ⌉",
+      "deps": [
+        "terminal.ship_days",
+        "in.ship.loa",
+        "dv.ship",
+        "in.term.berth_length",
+        "in.term.cargo_forms"
+      ],
+      "excel_ref": "Model!M106:AF106 · K119:AD120",
+      "section": "5.5",
+      "screens": [
+        6,
+        8
+      ],
+      "symbol": "berthDaysReq[f]",
+      "dependents": [
+        "terminal.n_berth",
+        "terminal.bor"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 142
+    },
+    {
+      "id": "terminal.n_berth",
+      "label": "Jumlah tambatan",
+      "unit": "unit",
+      "scope": "terminal×year",
+      "kind": "derived",
+      "formula": "⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉, dibangun untuk N th ke depan",
+      "deps": [
+        "terminal.berth_days",
+        "in.param.bor_max",
+        "in.param.working_days",
+        "in.horizon.berth_lookahead",
+        "in.horizon.lead"
+      ],
+      "excel_ref": "Model!K124:AD125",
+      "section": "5.5",
+      "screens": [
+        8,
+        9
+      ],
+      "symbol": "nBerth[τ]",
+      "dependents": [
+        "terminal.bor",
+        "terminal.berth_length",
+        "terminal.n_equip"
+      ],
+      "lane": 6,
+      "depth": 11,
+      "topo": 151
+    },
+    {
+      "id": "terminal.bor",
+      "label": "BOR realisasi",
+      "unit": "–",
+      "scope": "terminal×year",
+      "kind": "metric",
+      "formula": "Σ shipDays / (nBerth · (Σ shipDays / Σ berthDaysReq) · WD)",
+      "deps": [
+        "terminal.ship_days",
+        "terminal.berth_days",
+        "terminal.n_berth",
+        "in.param.working_days"
+      ],
+      "excel_ref": "Model!K144:AD145",
+      "section": "5.5",
+      "screens": [
+        8
+      ],
+      "symbol": "BOR[τ]",
+      "dependents": [],
+      "lane": 6,
+      "depth": 12,
+      "topo": 156
+    },
+    {
+      "id": "terminal.berth_length",
+      "label": "Panjang dermaga",
+      "unit": "m",
+      "scope": "terminal×year",
+      "kind": "derived",
+      "formula": "nBerth · L_unit,τ (jetty CC per tambatan)",
+      "deps": [
+        "terminal.n_berth",
+        "in.term.berth_length"
+      ],
+      "section": "5.5",
+      "screens": [
+        8,
+        9
+      ],
+      "dependents": [
+        "invest.berth"
+      ],
+      "lane": 6,
+      "depth": 12,
+      "topo": 157
+    },
+    {
+      "id": "terminal.n_equip",
+      "label": "Jumlah alat B/M",
+      "unit": "unit",
+      "scope": "terminal×year",
+      "kind": "derived",
+      "formula": "nBerth · nEq(kapal terpanjang di τ); penambahan per tahun",
+      "deps": [
+        "terminal.n_berth",
+        "vessel.neq",
+        "dv.equip",
+        "dv.ship"
+      ],
+      "excel_ref": "Model!K362:AD363",
+      "section": "5.5",
+      "audit": [
+        "A10"
+      ],
+      "screens": [
+        8,
+        9
+      ],
+      "symbol": "nAlat[τ]",
+      "dependents": [
+        "invest.handling"
+      ],
+      "lane": 6,
+      "depth": 12,
+      "topo": 158
+    },
+    {
+      "id": "storage.dwell",
+      "label": "Dwell time",
+      "unit": "hari",
+      "scope": "commodity×year",
+      "kind": "derived",
+      "formula": "dari lama konsumsi (maks atas tahun) atau isian tetap",
+      "deps": [
+        "voyage.consumption",
+        "in.storage.dwell"
+      ],
+      "excel_ref": "Fasilitas Daratan Rata2!F134",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "symbol": "Tdw",
+      "dependents": [
+        "storage.cy",
+        "storage.gc",
+        "storage.bulk",
+        "storage.liquid"
+      ],
+      "lane": 6,
+      "depth": 9,
+      "topo": 141
+    },
+    {
+      "id": "storage.throughput",
+      "label": "Arus masuk penyimpanan",
+      "unit": "t | TEU per th",
+      "scope": "commodity×year",
+      "kind": "derived",
+      "formula": "Q = porsi masuk · D",
+      "deps": [
+        "cargo.demand_unit",
+        "in.storage.share"
+      ],
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "symbol": "Q",
+      "dependents": [
+        "storage.cy",
+        "storage.gc",
+        "storage.bulk",
+        "storage.liquid",
+        "storage.yard_equipment"
+      ],
+      "lane": 6,
+      "depth": 6,
+      "topo": 126
+    },
+    {
+      "id": "storage.cy",
+      "label": "Lapangan penumpukan petikemas",
+      "unit": "m² · slot",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "A = Q_TEU · Tdw · A_TEU / (365 · H_ratio · YOR)",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.cy"
+      ],
+      "excel_ref": "Fasilitas Daratan",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 147
+    },
+    {
+      "id": "storage.gc",
+      "label": "Gudang / lapangan GC",
+      "unit": "m²",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "A = Q · Tdw · f_area · f_bulk / (365 · ρ · H · YOR)",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.gc",
+        "in.cmdty.density"
+      ],
+      "excel_ref": "Fasilitas Daratan",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 148
+    },
+    {
+      "id": "storage.bulk",
+      "label": "Curah kering: lapangan / silo",
+      "unit": "m² | unit",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "V_silo = Q · Tdw · Rc / (365 · ρ · YOR); nSilo = ⌈V / cap⌉",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.bulk",
+        "in.cmdty.density"
+      ],
+      "excel_ref": "Fasilitas Daratan",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 149
+    },
+    {
+      "id": "storage.liquid",
+      "label": "Tangki curah cair",
+      "unit": "m³ | unit",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "V = Q · Tdw / (365 · ρ · okupansi); nTangki = ⌈V / cap⌉",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.liquid",
+        "in.cmdty.density"
+      ],
+      "excel_ref": "Fasilitas Daratan",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 150
+    },
+    {
+      "id": "storage.yard_equipment",
+      "label": "Alat lapangan",
+      "unit": "unit",
+      "scope": "cargo_form×year",
+      "kind": "derived",
+      "formula": "⌈Q / (produktivitas · utilisasi · jam kerja)⌉",
+      "deps": [
+        "storage.throughput",
+        "in.storage.yard_equipment",
+        "in.param.working_days",
+        "in.param.working_hours"
+      ],
+      "excel_ref": "Fasilitas Daratan",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.yard_equipment"
+      ],
+      "lane": 6,
+      "depth": 7,
+      "topo": 130
+    },
+    {
+      "id": "waterside.governing",
+      "label": "Kapal penentu (T, LOA, B maks)",
+      "unit": "m",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "maks atas kapal terpilih yang singgah KEK",
+      "deps": [
+        "dv.ship",
+        "in.ship.draft",
+        "in.ship.loa",
+        "in.ship.beam"
+      ],
+      "excel_ref": "Fasilitas Perairan!C4",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "waterside.depth_req",
+        "waterside.channel",
+        "waterside.basin"
+      ],
+      "lane": 7,
+      "depth": 4,
+      "topo": 120
+    },
+    {
+      "id": "waterside.depth_req",
+      "label": "Kedalaman perlu",
+      "unit": "m LWS",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "faktor × T_maks (K15: 1,5; K21: 1,2)",
+      "deps": [
+        "waterside.governing",
+        "in.site.depth_factor"
+      ],
+      "excel_ref": "Fasilitas Perairan!K18",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "waterside.x_star",
+        "waterside.dredge_vol"
+      ],
+      "lane": 7,
+      "depth": 5,
+      "topo": 123
+    },
+    {
+      "id": "waterside.channel",
+      "label": "Lebar & panjang alur",
+      "unit": "m",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "1 jalur Wm + Wa + 2Wb; 2 jalur 2(Wm + Wa + 2Wb) + Ws; panjang L … 2L",
+      "deps": [
+        "waterside.governing",
+        "in.site.waterside"
+      ],
+      "excel_ref": "Fasilitas Perairan!K14:L23",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "waterside.dredge_vol"
+      ],
+      "lane": 7,
+      "depth": 5,
+      "topo": 124
+    },
+    {
+      "id": "waterside.basin",
+      "label": "Kolam putar, pintu masuk, area sandar, labuh",
+      "unit": "m · m²",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "kolam putar 1,5–4 LOA; pintu masuk 0,7–1 LOA; stopping 7–8 LOA; area sandar 1,25 LOA × 1,5 B; radius labuh L + 6D",
+      "deps": [
+        "waterside.governing",
+        "in.site.waterside"
+      ],
+      "excel_ref": "Fasilitas Perairan!K29:L50",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "waterside.dredge_vol"
+      ],
+      "lane": 7,
+      "depth": 5,
+      "topo": 125
+    },
+    {
+      "id": "waterside.x_star",
+      "label": "Jarak ke kedalaman perlu",
+      "unit": "m",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "x* : batimetri(x*) ≥ kedalaman perlu",
+      "deps": [
+        "waterside.depth_req",
+        "in.site.bathymetry"
+      ],
+      "excel_ref": "Trestle!B86:K108",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "symbol": "x*",
+      "dependents": [
+        "waterside.trestle_len"
+      ],
+      "lane": 7,
+      "depth": 6,
+      "topo": 128
+    },
+    {
+      "id": "waterside.trestle_len",
+      "label": "Panjang trestle",
+      "unit": "m",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "opsi trestle: x* (≤ maks); campuran: θ · x*",
+      "deps": [
+        "waterside.x_star",
+        "in.site.trestle",
+        "in.site.trestle_dredge",
+        "dv.waterside"
+      ],
+      "excel_ref": "Trestle",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.waterside"
+      ],
+      "lane": 7,
+      "depth": 7,
+      "topo": 132
+    },
+    {
+      "id": "waterside.dredge_vol",
+      "label": "Volume keruk",
+      "unit": "m³",
+      "scope": "global",
+      "kind": "derived",
+      "formula": "Σ luas · (kedalaman perlu − kedalaman eksisting)",
+      "deps": [
+        "waterside.depth_req",
+        "in.site.bathymetry",
+        "in.site.trestle_dredge",
+        "waterside.basin",
+        "waterside.channel",
+        "dv.waterside"
+      ],
+      "excel_ref": "Trestle",
+      "section": "5.7",
+      "screens": [
+        8
+      ],
+      "dependents": [
+        "invest.waterside"
+      ],
+      "lane": 7,
+      "depth": 6,
+      "topo": 129
+    },
+    {
+      "id": "invest.berth",
+      "label": "Investasi dermaga MP & jetty CC",
+      "unit": "Rp/th",
+      "scope": "terminal×year",
+      "kind": "derived",
+      "formula": "Δ panjang dermaga · lebar · harga satuan · eskalasi, saat dibangun",
+      "deps": [
+        "terminal.berth_length",
+        "in.term.berth_width",
+        "in.price.berth",
+        "in.param.escalation_infra",
+        "in.horizon.phases"
+      ],
+      "excel_ref": "Model!K387:AD387 · K391:AD391",
+      "section": "5.8",
+      "screens": [
+        9
+      ],
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 13,
+      "topo": 161
+    },
+    {
+      "id": "invest.handling",
+      "label": "Investasi alat B/M",
+      "unit": "Rp/th",
+      "scope": "terminal×year",
+      "kind": "derived",
+      "formula": "Δ jumlah alat · harga · kurs · eskalasi",
+      "deps": [
+        "terminal.n_equip",
+        "in.equip.price",
+        "dv.equip",
+        "in.param.usd_rate",
+        "in.param.escalation_equipment"
+      ],
+      "excel_ref": "Model!K376:AD377",
+      "section": "5.8",
+      "screens": [
+        9
+      ],
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 13,
+      "topo": 162
+    },
+    {
+      "id": "invest.storage",
+      "label": "Investasi penyimpanan",
+      "unit": "Rp/th",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "Δ luas / volume / unit · harga satuan, dibangun untuk N th ke depan",
+      "deps": [
+        "storage.cy",
+        "storage.gc",
+        "storage.bulk",
+        "storage.liquid",
+        "in.price.storage",
+        "in.storage.bulk",
+        "in.param.escalation_infra",
+        "in.horizon.storage_lookahead"
+      ],
+      "excel_ref": "Model!K381:AD384",
+      "section": "5.8",
+      "screens": [
+        8,
+        9
+      ],
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 11,
+      "topo": 155
+    },
+    {
+      "id": "invest.yard_equipment",
+      "label": "Investasi alat lapangan",
+      "unit": "Rp/th",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "Δ alat lapangan · harga · eskalasi",
+      "deps": [
+        "storage.yard_equipment",
+        "in.price.yard_equipment",
+        "in.param.escalation_equipment"
+      ],
+      "excel_ref": "Model!K370:AD373",
+      "section": "5.8",
+      "screens": [
+        9
+      ],
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 8,
+      "topo": 133
+    },
+    {
+      "id": "invest.waterside",
+      "label": "Investasi trestle / keruk",
+      "unit": "Rp",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "panjang · lebar · Rp/m²  +  volume keruk · Rp/m³",
+      "deps": [
+        "waterside.trestle_len",
+        "waterside.dredge_vol",
+        "in.site.trestle",
+        "in.price.trestle",
+        "in.price.dredge",
+        "dv.waterside"
+      ],
+      "excel_ref": "Model!K395:AD395",
+      "section": "5.8",
+      "screens": [
+        8,
+        9
+      ],
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 8,
+      "topo": 137
+    },
+    {
+      "id": "invest.total",
+      "label": "Investasi per tahun",
+      "unit": "Rp/th",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "Σ komponen investasi yang dibangun di tahun t",
+      "deps": [
+        "invest.berth",
+        "invest.handling",
+        "invest.storage",
+        "invest.yard_equipment",
+        "invest.waterside"
+      ],
+      "section": "5.8",
+      "screens": [
+        9
+      ],
+      "dependents": [
+        "agg.tc"
+      ],
+      "lane": 8,
+      "depth": 14,
+      "topo": 165
+    },
+    {
+      "id": "agg.tc",
+      "label": "Total cost",
+      "unit": "Rp/th",
+      "scope": "year",
+      "kind": "derived",
+      "formula": "TC[t] = Σ shipping cost + investasi tahun t",
+      "deps": [
+        "shipcost.total",
+        "invest.total"
+      ],
+      "excel_ref": "Model!K399:AD399",
+      "section": "5.9",
+      "screens": [
+        9
+      ],
+      "note": "K15 membagi investasi awal 20 lalu menambahkannya tiap tahun (Model!K400)",
+      "symbol": "TC[t]",
+      "dependents": [
+        "agg.uc",
+        "obj.npv"
+      ],
+      "lane": 8,
+      "depth": 15,
+      "topo": 168
+    },
+    {
+      "id": "agg.uc",
+      "label": "Unit cost per kelompok satuan",
+      "unit": "Rp/t | Rp/TEU",
+      "scope": "unit×year",
+      "kind": "derived",
+      "formula": "TC[t] dialokasikan ke flow / muatan[t], dipisah Rp/ton dan Rp/TEU",
+      "deps": [
+        "agg.tc",
+        "cargo.demand_unit",
+        "in.flow.unit"
+      ],
+      "excel_ref": "Model!K404:AD404",
+      "section": "5.9",
+      "audit": [
+        "A7"
+      ],
+      "screens": [
+        9
+      ],
+      "symbol": "UC[t]",
+      "dependents": [
+        "agg.pv_uc"
+      ],
+      "lane": 8,
+      "depth": 16,
+      "topo": 169
+    },
+    {
+      "id": "agg.pv_uc",
+      "label": "PV unit cost",
+      "unit": "Rp/t | Rp/TEU",
+      "scope": "unit×year",
+      "kind": "derived",
+      "formula": "UC[t] / (1+r)^t",
+      "deps": [
+        "agg.uc",
+        "in.param.discount_rate"
+      ],
+      "excel_ref": "Model!K405:AD405",
+      "section": "5.9",
+      "screens": [
+        9
+      ],
+      "dependents": [
+        "agg.annuity"
+      ],
+      "lane": 8,
+      "depth": 17,
+      "topo": 171
+    },
+    {
+      "id": "agg.annuity",
+      "label": "Anuitas unit cost",
+      "unit": "Rp/t | Rp/TEU",
+      "scope": "unit",
+      "kind": "metric",
+      "formula": "PMT(r, T, Σ PV_UC)",
+      "deps": [
+        "agg.pv_uc",
+        "in.param.discount_rate",
+        "in.horizon.years"
+      ],
+      "excel_ref": "Model!K407",
+      "section": "5.9",
+      "screens": [
+        9,
+        11
+      ],
+      "dependents": [],
+      "lane": 8,
+      "depth": 18,
+      "topo": 172
+    },
+    {
+      "id": "obj.npv",
+      "label": "NPV biaya total (objektif)",
+      "unit": "Rp",
+      "scope": "global",
+      "kind": "objective",
+      "formula": "Σ_t TC[t] / (1+r)^t → diminimumkan atas y, z, w (dan V)",
+      "deps": [
+        "agg.tc",
+        "in.param.discount_rate",
+        "in.horizon.years"
+      ],
+      "section": "5.9",
+      "screens": [
+        9,
+        10,
+        11
+      ],
+      "note": "K15/Evolver meminimumkan anuitas (Model!K407); v2 memakai NPV total cost sebagai objektif default",
+      "dependents": [],
+      "lane": 8,
+      "depth": 16,
+      "topo": 170
+    }
+  ]
+}

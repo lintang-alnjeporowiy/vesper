@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 // Grafik sederhana berbasis div/SVG sesuai wireframe 2a. Recharts/ECharts (SPEC §9.1)
 // bisa menggantikan ini setelah engine mengirim data nyata.
 export const C = { hitam: '#000000', biru: '#56BDCC', hijau: '#90B148', merah: '#AA3A36', abu: '#9A9A9A', garis: '#DEDEDE' }
@@ -34,7 +35,7 @@ export function ColumnStack(props: { columns: number[][]; colors: string[]; heig
 }
 
 /** Batang horizontal bertumpuk dengan label kiri dan total kanan. */
-export function BarRows(props: { rows: { label: string; parts: number[] | null; total?: string; emptyText?: string; strong?: boolean }[]; colors: string[]; width?: number }) {
+export function BarRows(props: { rows: { label: string; parts: number[] | null; total?: ReactNode; emptyText?: string; strong?: boolean }[]; colors: string[]; width?: number; onSegment?: (label: string, j: number, value: number) => void; segmentTitle?: (label: string, j: number, value: number) => string }) {
   const w = props.width ?? 560
   const max = Math.max(1e-9, ...props.rows.map((r) => (r.parts ? r.parts.reduce((a, b) => a + b, 0) : 0)))
   return (
@@ -46,7 +47,11 @@ export function BarRows(props: { rows: { label: string; parts: number[] | null; 
             <>
               <span className="flex gap-px" style={{ width: w }}>
                 {r.parts.map((v, j) => (
-                  <span key={j} className="h-4" style={{ width: (v / max) * w, background: props.colors[j] }} />
+                  props.onSegment ? (
+                    <button key={j} type="button" title={props.segmentTitle?.(r.label, j, v)} onClick={() => props.onSegment!(r.label, j, v)} className="h-4 cursor-pointer border-0 p-0 hover:opacity-80" style={{ width: (v / max) * w, background: props.colors[j] }} />
+                  ) : (
+                    <span key={j} className="h-4" style={{ width: (v / max) * w, background: props.colors[j] }} />
+                  )
                 ))}
               </span>
               <span className="font-mono text-[13px] text-abu">{r.total}</span>

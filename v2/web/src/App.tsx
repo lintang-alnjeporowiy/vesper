@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import { Sidebar, TopBar, TraceDrawer } from './components/shell'
-import { usePlanner } from './store'
+import { MAP_SCREEN, usePlanner } from './store'
 import S00Beranda from './screens/S00Beranda'
 import S01Soal from './screens/S01Soal'
 import S02Tenant from './screens/S02Tenant'
@@ -13,10 +13,11 @@ import S08Terminal from './screens/S08Terminal'
 import S09Investasi from './screens/S09Investasi'
 import S10Optimasi from './screens/S10Optimasi'
 import S11Skenario from './screens/S11Skenario'
+import S12PetaVariabel from './screens/S12PetaVariabel'
 
 const SCREENS: ComponentType[] = [
   S00Beranda, S01Soal, S02Tenant, S03Pelabuhan, S04Kapal, S05Alat,
-  S06Armada, S07Biaya, S08Terminal, S09Investasi, S10Optimasi, S11Skenario,
+  S06Armada, S07Biaya, S08Terminal, S09Investasi, S10Optimasi, S11Skenario, S12PetaVariabel,
 ]
 
 export default function App() {
@@ -28,7 +29,7 @@ export default function App() {
       <div className="flex">
         <Sidebar />
         <main className="min-w-0 grow">
-          <div className="mx-auto flex max-w-[960px] flex-col gap-8 px-8 pt-8 pb-12">
+          <div className={`mx-auto flex flex-col gap-8 px-8 pt-8 pb-12 ${screen === MAP_SCREEN ? 'max-w-none' : 'max-w-[960px]'}`}>
             <Screen />
           </div>
         </main>

@@ -4,163 +4,56 @@
 // terkait tersambung (Tahap 4–10). Jangan dipakai sebagai acuan perhitungan.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface TraceInput {
-  label: string
-  value: string
-  /** true = nilai input kasus (penanda biru), false = turunan. */
-  input?: boolean
-  sub?: boolean
+/**
+ * Nilai placeholder turunan untuk contoh jejak in.damai · AETOS · tahun 10 (dan terminal MP tahun 13).
+ * Dipakai laci jejak untuk mengisi kolom nilai masukan/turunan; konteks lain tampil "–".
+ * Definisi variabel (rumus, dependensi, Excel) ada di registry.json, bukan di sini.
+ */
+export const PH_SAMPLE_CTX = { flow: 'in.damai', ship: 'ship.aetos', year: 10 }
+export const PH_SAMPLE: Record<string, string> = {
+  'demand.base': '4,65 jt t',
+  'cargo.demand_unit': '4,65 jt t',
+  'vessel.payload': '32.636 t',
+  'vessel.feasible': 'layak',
+  'vessel.compatible': 'ya',
+  'vessel.neq': '4 alat',
+  'vessel.ballast_speed': '15,6 kn',
+  'voyage.freq': '143 call/th',
+  'voyage.q': '32.517 t',
+  'voyage.t_port_kek': '0,9 hari',
+  'voyage.t_port_ext': '1,4 hari',
+  'voyage.t_port': '2,3 hari',
+  'voyage.t_fix': '0,4 hari',
+  'voyage.t_sea': '5,3 hari',
+  'voyage.rtd': '8,0 hari',
+  'voyage.f_max': '45 call/kapal',
+  'voyage.n_ship': '4 unit',
+  'voyage.utilization': '78 %',
+  'shipcost.tch': 'Rp 230 M',
+  'shipcost.voyage': 'Rp 260 M',
+  'shipcost.port': 'Rp 73 M',
+  'shipcost.total': 'Rp 563 M',
+  'shipcost.unit': '121 rb/t',
+  'terminal.ship_days': '129 hari',
+  'terminal.berth_days': '164 hari',
 }
-
-export interface TraceDef {
-  name: string
-  context: string
-  value: string
-  unit: string
-  formula: string
-  spec: string
-  inputs: TraceInput[]
-  usedBy: string[]
-  audit?: string
-}
-
-const TRACE_DEFS = {
-  rtd: {
-    name: 'RTD',
-    context: 'in.damai · AETOS · tahun 10',
-    value: '8,0',
-    unit: 'hari',
-    formula: 'RTD = sea time + port time asal + port time KEK + (AT + WT + IT) × 2',
-    spec: 'SPEC §5.3',
-    inputs: [
-      { label: 'Sea time', value: '5,3 hari' },
-      { label: 'Jarak Badas–Batu Ampar', value: '992,2 nm', input: true, sub: true },
-      { label: 'Kecepatan AETOS', value: '15,6 kn', input: true, sub: true },
-      { label: 'Port time Badas', value: '1,4 hari' },
-      { label: 'Produktivitas Badas', value: '1.000 t/jam', input: true, sub: true },
-      { label: 'Port time KEK', value: '0,9 hari' },
-      { label: 'AT + WT + IT', value: '6 jam × 2', input: true },
-    ],
-    usedBy: ['Jumlah kapal', 'TCH per tahun', 'BBM per tahun'],
-  },
-  demand: {
-    name: 'Demand',
-    context: 'in.damai · tahun 10',
-    value: '4,65',
-    unit: 'jt t',
-    formula: 'V(t) = min(V₀ × (1 + g)^(t − t₀), V maks)',
-    spec: 'SPEC §5.1',
-    inputs: [
-      { label: 'Volume awal', value: '3.000.000 t', input: true },
-      { label: 'Laju pertumbuhan', value: '5 %/th', input: true },
-      { label: 'Volume maksimum', value: '7.900.000 t', input: true },
-      { label: 'Tahun mulai', value: '1', input: true },
-    ],
-    usedBy: ['Frekuensi', 'Volume out.damai', 'Penyimpanan GC'],
-  },
-  payload: {
-    name: 'Payload',
-    context: 'in.damai · AETOS',
-    value: '32.636',
-    unit: 't',
-    formula: 'Payload = DWT × rasio payload/DWT',
-    spec: 'SPEC §5.2',
-    inputs: [
-      { label: 'DWT AETOS', value: '38.395 t', input: true },
-      { label: 'Payload / DWT', value: '0,85', input: true },
-    ],
-    usedBy: ['Frekuensi', 'Port time'],
-  },
-  frekuensi: {
-    name: 'Frekuensi',
-    context: 'in.damai · tahun 10',
-    value: '143',
-    unit: 'call/th',
-    formula: 'Frekuensi = demand ÷ payload per call',
-    spec: 'SPEC §5.3',
-    inputs: [
-      { label: 'Demand', value: '4,65 jt t' },
-      { label: 'Payload', value: '32.636 t' },
-    ],
-    usedBy: ['Jumlah kapal', 'Biaya pelabuhan', 'Berth-days KEK'],
-  },
-  porttime: {
-    name: 'Port time',
-    context: 'in.damai · AETOS',
-    value: '2,7',
-    unit: 'hari',
-    formula: 'Port time = payload ÷ produktivitas (asal) + payload ÷ produktivitas alat (KEK) + AT/WT/IT',
-    spec: 'SPEC §5.3',
-    inputs: [
-      { label: 'Payload', value: '32.636 t' },
-      { label: 'Produktivitas Badas', value: '1.000 t/jam', input: true },
-      { label: 'Alat KEK (LHM 280 × 4)', value: '1.000 t/jam/alat', input: true },
-    ],
-    usedBy: ['RTD', 'Berth-days KEK'],
-  },
-  seatime: {
-    name: 'Sea time',
-    context: 'in.damai · AETOS',
-    value: '5,3',
-    unit: 'hari',
-    formula: 'Sea time = 2 × jarak ÷ kecepatan ÷ 24',
-    spec: 'SPEC §5.3',
-    inputs: [
-      { label: 'Jarak', value: '992,2 nm', input: true },
-      { label: 'Kecepatan', value: '15,6 kn', input: true },
-    ],
-    usedBy: ['RTD', 'BBM per tahun'],
-  },
-  kapal: {
-    name: 'Jumlah kapal',
-    context: 'in.damai · tahun 10',
-    value: '4',
-    unit: 'unit',
-    formula: 'Jumlah kapal = ⌈frekuensi ÷ (hari kerja ÷ RTD)⌉',
-    spec: 'SPEC §5.3',
-    inputs: [
-      { label: 'Frekuensi', value: '143 call/th' },
-      { label: 'RTD', value: '8,0 hari' },
-      { label: 'Hari kerja', value: '365', input: true },
-    ],
-    usedBy: ['TCH per tahun', 'Shipping cost'],
-  },
-  berth: {
-    name: 'Tambatan MP',
-    context: 'TERSUS Batu Ampar · tahun 13',
-    value: '3',
-    unit: 'tambatan',
-    formula: 'Tambatan = ⌈berth-days ÷ (BOR maks × hari kerja)⌉',
-    spec: 'SPEC §5.5',
-    inputs: [
-      { label: 'Berth-days MP', value: '547 hari' },
-      { label: 'BOR maks', value: '0,70', input: true },
-      { label: 'Hari kerja', value: '365', input: true },
-    ],
-    usedBy: ['Panjang dermaga', 'Jumlah alat', 'Investasi dermaga'],
-    audit: 'A2, A10: Excel menghitung berth-days dengan pembulatan berbeda.',
-  },
-} satisfies Record<string, TraceDef>
-
-export type TraceKey = keyof typeof TRACE_DEFS
-export const TRACES: Record<TraceKey, TraceDef> = TRACE_DEFS
 
 // ── Layar 6: armada in.damai ─────────────────────────────────────────────────
-export const CHAIN_DAMAI: { key: TraceKey; label: string; value: string; input?: boolean; final?: boolean }[] = [
-  { key: 'demand', label: 'Demand', value: '4,65 jt t', input: true },
-  { key: 'payload', label: 'Payload', value: '32.636 t', input: true },
-  { key: 'frekuensi', label: 'Frekuensi', value: '143 /th' },
-  { key: 'porttime', label: 'Port time', value: '2,7 hr' },
-  { key: 'seatime', label: 'Sea time', value: '5,3 hr' },
-  { key: 'rtd', label: 'RTD', value: '8,0 hr' },
-  { key: 'kapal', label: 'Jumlah kapal', value: '4 unit', final: true },
+export const CHAIN_DAMAI: { id: string; label: string; value: string; input?: boolean; final?: boolean }[] = [
+  { id: 'demand.base', label: 'Demand', value: '4,65 jt t', input: true },
+  { id: 'vessel.payload', label: 'Payload', value: '32.636 t', input: true },
+  { id: 'voyage.freq', label: 'Frekuensi', value: '143 /th' },
+  { id: 'voyage.t_port', label: 'Port time', value: '2,7 hr' },
+  { id: 'voyage.t_sea', label: 'Sea time', value: '5,3 hr' },
+  { id: 'voyage.rtd', label: 'RTD', value: '8,0 hr' },
+  { id: 'voyage.n_ship', label: 'Jumlah kapal', value: '4 unit', final: true },
 ]
 
 export const KPI_FLEET = [
-  { label: 'Utilisasi kapal', value: '78 %' },
-  { label: 'Shipping cost / th', value: 'Rp 563 M' },
-  { label: 'Unit cost', value: '121 rb/t' },
-  { label: 'Berth-days KEK', value: '164 hr' },
+  { label: 'Utilisasi kapal', value: '78 %', v: 'voyage.utilization' },
+  { label: 'Shipping cost / th', value: 'Rp 563 M', v: 'shipcost.total' },
+  { label: 'Unit cost', value: '121 rb/t', v: 'shipcost.unit' },
+  { label: 'Berth-days KEK', value: '164 hr', v: 'terminal.berth_days' },
 ]
 
 /** Estimasi kasar per kandidat GC untuk in.damai tahun 10 (bukan engine). */
@@ -219,10 +112,10 @@ export const STAGING = {
   ccBerths: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
 }
 export const STORAGE_Y13 = [
-  { commodity: 'Jagung, pelat, profil baja', facility: 'Lapangan GC', param: 'f 1,5 · 5 m · SOR 0,7', need: '48.000 m²', cost: 'Rp 96 M' },
-  { commodity: 'Gandum', facility: 'Silo', param: '23.379 m³ · isi 80 %', need: '9 silo', cost: 'USD 288 rb' },
-  { commodity: 'Petikemas, 4 flow', facility: 'Container yard', param: '15 m²/TEU · 5 tier · YOR 0,7', need: '62.000 m²', cost: 'Rp 124 M' },
-  { commodity: 'CPO, RBD olein', facility: 'Tangki timbun', param: '20.000 m³ · okupansi 0,65', need: '14 tangki', cost: 'Rp 210 M' },
+  { v: 'storage.gc', commodity: 'Jagung, pelat, profil baja', facility: 'Lapangan GC', param: 'f 1,5 · 5 m · SOR 0,7', need: '48.000 m²', cost: 'Rp 96 M' },
+  { v: 'storage.bulk', commodity: 'Gandum', facility: 'Silo', param: '23.379 m³ · isi 80 %', need: '9 silo', cost: 'USD 288 rb' },
+  { v: 'storage.cy', commodity: 'Petikemas, 4 flow', facility: 'Container yard', param: '15 m²/TEU · 5 tier · YOR 0,7', need: '62.000 m²', cost: 'Rp 124 M' },
+  { v: 'storage.liquid', commodity: 'CPO, RBD olein', facility: 'Tangki timbun', param: '20.000 m³ · okupansi 0,65', need: '14 tangki', cost: 'Rp 210 M' },
 ]
 export const WATERSIDE_OPTIONS = [
   { id: 'trestle', name: 'Trestle penuh', spec: '500 × 40 m · tinggi 3,3 m · tanpa keruk', cost: 'Rp 1,9 T · PV Rp 1,6 T', delta: null },
@@ -231,10 +124,10 @@ export const WATERSIDE_OPTIONS = [
 
 // ── Layar 9: investasi & ringkasan ──────────────────────────────────────────
 export const KPI_SUMMARY = [
-  { label: 'Total biaya 20 th', value: 'Rp 256 T' },
-  { label: 'Investasi awal / th', value: 'Rp 88 M' },
-  { label: 'Anuitas', value: '551 rb/t' },
-  { label: 'NPV biaya total · objektif', value: 'Rp 48,2 T', final: true },
+  { label: 'Total biaya 20 th', value: 'Rp 256 T', v: 'agg.tc' },
+  { label: 'Investasi awal / th', value: 'Rp 88 M', v: 'invest.total' },
+  { label: 'Anuitas', value: '551 rb/t', v: 'agg.annuity' },
+  { label: 'NPV biaya total · objektif', value: 'Rp 48,2 T', v: 'obj.npv', final: true },
 ]
 /** Rp miliar per tahun 0–19: [infrastruktur, alat, penyimpanan] */
 export const INVEST_SCHEDULE: [number, number, number][] = Array.from({ length: 20 }, (_, y) => {
@@ -248,13 +141,13 @@ export const INVEST_SCHEDULE: [number, number, number][] = Array.from({ length: 
   return spikes[y] ?? [0, 0, 0]
 })
 export const INVEST_ITEMS = [
-  { item: 'Trestle 500 m', cat: 'infrastruktur', years: '0', value: 'Rp 1,90 T' },
-  { item: 'Dermaga MP · 3 tambatan', cat: 'infrastruktur', years: '0, 6', value: 'Rp 22,5 M' },
-  { item: 'Jetty CC · 1 tambatan', cat: 'infrastruktur', years: '11', value: 'Rp 8,8 M' },
-  { item: 'Alat HMC · 12 unit', cat: 'alat', years: '0, 6', value: 'Rp 27,9 M' },
-  { item: 'Alat MLA · 2 unit', cat: 'alat', years: '11', value: 'Rp 9,3 M' },
-  { item: 'Penyimpanan PK, CK, GC, CC', cat: 'penyimpanan', years: '0, 2, 6, 11, 15', value: 'Rp 434 M' },
-  { item: 'Alat lapangan per bentuk muatan', cat: 'alat', years: '0, 6, 11', value: 'Rp 312 M' },
+  { v: 'invest.waterside', item: 'Trestle 500 m', cat: 'infrastruktur', years: '0', value: 'Rp 1,90 T' },
+  { v: 'invest.berth', item: 'Dermaga MP · 3 tambatan', cat: 'infrastruktur', years: '0, 6', value: 'Rp 22,5 M' },
+  { v: 'invest.berth', item: 'Jetty CC · 1 tambatan', cat: 'infrastruktur', years: '11', value: 'Rp 8,8 M' },
+  { v: 'invest.handling', item: 'Alat HMC · 12 unit', cat: 'alat', years: '0, 6', value: 'Rp 27,9 M' },
+  { v: 'invest.handling', item: 'Alat MLA · 2 unit', cat: 'alat', years: '11', value: 'Rp 9,3 M' },
+  { v: 'invest.storage', item: 'Penyimpanan PK, CK, GC, CC', cat: 'penyimpanan', years: '0, 2, 6, 11, 15', value: 'Rp 434 M' },
+  { v: 'invest.yard_equipment', item: 'Alat lapangan per bentuk muatan', cat: 'alat', years: '0, 6, 11', value: 'Rp 312 M' },
 ]
 
 // ── Layar 10: optimasi ──────────────────────────────────────────────────────

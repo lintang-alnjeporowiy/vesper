@@ -1,4 +1,5 @@
 import { C, ColumnStack } from '../charts/charts'
+import { Tv } from '../components/trace'
 import { KpiStrip, Legend, Note, PH, ScreenHeader, Section, Slider, Table } from '../components/ui'
 import { num } from '../lib/format'
 import { INVEST_ITEMS, INVEST_SCHEDULE, KPI_SUMMARY } from '../mock/placeholders'
@@ -16,12 +17,12 @@ export default function S09Investasi() {
         <div className="w-[392px] shrink-0">
           <Slider label="Discount rate (I9)" value={c.params.discount_rate * 100} min={4} max={16} step={0.5} display={`${num(c.params.discount_rate * 100, 1)} %`} />
         </div>
-        <Note>Discount rate tinggi membuat investasi bertahap lebih menarik daripada membangun penuh di awal. Nilai diedit di layar 1.</Note>
+        <Note><Tv v="in.param.discount_rate">Discount rate</Tv> tinggi membuat investasi bertahap lebih menarik daripada membangun penuh di awal. Nilai diedit di layar 1.</Note>
       </div>
 
-      <Section title="Jadwal investasi per tahun, Rp miliar" aside={<Legend items={[{ color: C.hitam, label: 'infrastruktur' }, { color: C.biru, label: 'alat' }, { color: C.hijau, label: 'penyimpanan' }]} />}>
+      <Section title="Jadwal investasi per tahun, Rp miliar" aside={<span className="flex items-center gap-3"><Tv v="invest.total" className="font-mono text-[13px]">ƒx investasi/th</Tv><Legend items={[{ color: C.hitam, label: 'infrastruktur' }, { color: C.biru, label: 'alat' }, { color: C.hijau, label: 'penyimpanan' }]} /></span>}>
         <ColumnStack columns={INVEST_SCHEDULE} colors={[C.hitam, C.biru, C.hijau]} height={200} labels={['th 0', 'th 5', 'th 10', 'th 15', 'th 19']} />
-        <Note>Lonjakan mengikuti staging di layar 8 (bangun {c.horizon.construction_lead_years} tahun sebelum dibutuhkan).</Note>
+        <Note>Lonjakan mengikuti staging di layar 8 (bangun <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} tahun`}</Tv> sebelum dibutuhkan).</Note>
       </Section>
 
       <Section title="Item investasi">
@@ -31,11 +32,11 @@ export default function S09Investasi() {
           columns={[
             { key: 'i', head: 'Item', width: 260, render: (r) => r.item },
             { key: 'c', head: 'Kategori', width: 140, render: (r) => <span className="text-[13px] text-abu">{r.cat}</span> },
-            { key: 'y', head: 'Tahun bangun', width: 150, mono: true, render: (r) => r.years },
-            { key: 'v', head: 'Nilai', mono: true, render: (r) => <span className="text-abu">{r.value}</span> },
+            { key: 'y', head: 'Tahun bangun', width: 150, mono: true, render: (r) => <Tv v={r.v === 'invest.berth' ? 'terminal.n_berth' : r.v === 'invest.handling' ? 'terminal.n_equip' : r.v === 'invest.waterside' ? 'dv.waterside' : 'in.horizon.storage_lookahead'}>{r.years}</Tv> },
+            { key: 'v', head: 'Nilai', mono: true, render: (r) => <Tv v={r.v} className="text-abu">{r.value}</Tv> },
           ]}
         />
-        <Note>Harga satuan dari {c.unit_prices.length} item sheet Investasi ({c.unit_prices[0]?.year}), dieskalasi {num(c.params.escalation_infra * 100)} %/th. Semua nilai placeholder.</Note>
+        <Note><Tv v="in.price.berth">{`Harga satuan dari ${c.unit_prices.length} item sheet Investasi (${c.unit_prices[0]?.year})`}</Tv>, dieskalasi <Tv v="in.param.escalation_infra">{num(c.params.escalation_infra * 100)} %/th</Tv>. Semua nilai placeholder.</Note>
       </Section>
     </>
   )
