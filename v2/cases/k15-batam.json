@@ -1,0 +1,5625 @@
+{
+  "refs": {},
+  "schema_version": "1",
+  "meta": {
+    "refs": {},
+    "id": "k15-batam",
+    "name": "K15 — KI Batam",
+    "kek_name": "Kawasan Industri Batam",
+    "kek_port_name": "TERSUS Batu Ampar, Batam",
+    "location": "Batam, Kepulauan Riau",
+    "description": "Tugas Perencanaan Transportasi Laut Kelompok 15 (Febiola G. Puspa, Yudho D. Wibowo), Teknik Transportasi Laut ITS, 2024. Kasus referensi utama v2.",
+    "source_files": [
+      "TPT_Kelompok 15 Revisi 02-Januari-2025.xlsx",
+      "K15_Laporan Revisi.pdf",
+      "K15_Presentasi Sidang Revisi.pptx"
+    ],
+    "extracted_at": "2026-11-21"
+  },
+  "horizon": {
+    "refs": {
+      "years": "Investasi!C14",
+      "construction_lead_years": "Investasi!C13",
+      "phases": "Laporan K15 §2.5 (PM 51/2015)",
+      "berth_lookahead_years": "Investasi!L9 = SUM(L8:R8) → 7 tahun",
+      "storage_lookahead_years": "Fasilitas Daratan Rata2!F157 = SUM(F154:J154) → 5 tahun"
+    },
+    "years": 20,
+    "phases": [
+      {
+        "refs": {
+          "start_year": "Laporan K15 §2.5 (PM 51/2015)",
+          "end_year": "Laporan K15 §2.5 (PM 51/2015)"
+        },
+        "name": "pendek",
+        "start_year": 1,
+        "end_year": 5
+      },
+      {
+        "refs": {
+          "start_year": "Laporan K15 §2.5 (PM 51/2015)",
+          "end_year": "Laporan K15 §2.5 (PM 51/2015)"
+        },
+        "name": "menengah",
+        "start_year": 6,
+        "end_year": 10
+      },
+      {
+        "refs": {
+          "start_year": "Laporan K15 §2.5 (PM 51/2015)",
+          "end_year": "Laporan K15 §2.5 (PM 51/2015)"
+        },
+        "name": "panjang",
+        "start_year": 11,
+        "end_year": 20
+      }
+    ],
+    "construction_lead_years": 1,
+    "berth_lookahead_years": 7,
+    "storage_lookahead_years": 5
+  },
+  "params": {
+    "refs": {
+      "at_hours": "Model!B34",
+      "wt_hours": "Model!B35",
+      "it_hours": "Model!B36",
+      "working_days_per_year": "Model!F51",
+      "commission_days": "Model!F53",
+      "bor_max": "Model!F52",
+      "mcr": "Model!F40",
+      "fuel_share_me_sea": "Model!F36",
+      "fuel_share_me_port": "Model!F37",
+      "fuel_share_ae_sea": "Model!F38",
+      "fuel_share_ae_port": "Model!F39",
+      "usd_rate": "Alat BM!Q4",
+      "discount_rate": "Model!J403",
+      "escalation_infra": "Investasi!C15",
+      "escalation_equipment": "Investasi!C21",
+      "payload_dwt_ratio": "Data Kapal!V32",
+      "teu_capacity_dwt_ratio": "Data Kapal!V32",
+      "teu_nominal_weight_t": "Data Kapal!O53",
+      "working_hours_per_day": "Model (konstanta /24 di rumus port time)",
+      "me_fuel": "Keputusan A6 (K15: ME=HSD)",
+      "ae_fuel": "Keputusan A6 (K15: AE=MFO)",
+      "ae_me_power_ratio": "Data Kapal!Q4 = 50%*P4",
+      "ballast_speed_ratio": "Keputusan A5 (K15: Data Kapal!L4 = 130%*K4)",
+      "teu_weight_dwt_ratio": "Muatan!AD5 = 90%*AC5",
+      "berth_loa_min_ratio": "Keputusan data K15 (2026-11-21): dermaga ≥ 85% LOA",
+      "cargo_per_call_mode": "Model!N41 = D/F"
+    },
+    "at_hours": 2.0,
+    "wt_hours": 2.0,
+    "it_hours": 2.0,
+    "working_days_per_year": 365.0,
+    "working_hours_per_day": 24.0,
+    "commission_days": 365.0,
+    "bor_max": 0.7,
+    "mcr": 0.8,
+    "fuel_share_me_sea": 1.0,
+    "fuel_share_me_port": 0.0,
+    "fuel_share_ae_sea": 0.0,
+    "fuel_share_ae_port": 1.0,
+    "fuels": [
+      {
+        "refs": {
+          "price_rp_per_l": "Model!F45",
+          "density_kg_m3": "Model!F41"
+        },
+        "code": "MFO",
+        "name": "Marine Fuel Oil",
+        "price_rp_per_l": 18600.0,
+        "density_kg_m3": 890.0
+      },
+      {
+        "refs": {
+          "price_rp_per_l": "Model!F46",
+          "density_kg_m3": "Model!F43"
+        },
+        "code": "HSD",
+        "name": "High Speed Diesel",
+        "price_rp_per_l": 24000.0,
+        "density_kg_m3": 832.0
+      }
+    ],
+    "me_fuel": "HSD",
+    "ae_fuel": "HSD",
+    "sfoc_me_bands": [
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V8",
+          "sfoc_g_kwh": "Data Kapal!Z8",
+          "max_kw": "Data Kapal!X8"
+        },
+        "note": "ME: Excel mulai dari 1 kW; g/kWh = g/HP·h × 1,359",
+        "min_kw": 0.0,
+        "max_kw": 1000.0,
+        "sfoc_g_kwh": 218.799
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V9",
+          "sfoc_g_kwh": "Data Kapal!Z9",
+          "max_kw": "Data Kapal!X9"
+        },
+        "min_kw": 1001.0,
+        "max_kw": 2500.0,
+        "sfoc_g_kwh": 210.645
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V10",
+          "sfoc_g_kwh": "Data Kapal!Z10",
+          "max_kw": "Data Kapal!X10"
+        },
+        "min_kw": 2501.0,
+        "max_kw": 4000.0,
+        "sfoc_g_kwh": 206.56799999999998
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V11",
+          "sfoc_g_kwh": "Data Kapal!Z11",
+          "max_kw": "Data Kapal!X11"
+        },
+        "min_kw": 4001.0,
+        "max_kw": 5500.0,
+        "sfoc_g_kwh": 194.337
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V12",
+          "sfoc_g_kwh": "Data Kapal!Z12",
+          "max_kw": "Data Kapal!X12"
+        },
+        "min_kw": 5501.0,
+        "max_kw": 7000.0,
+        "sfoc_g_kwh": 190.26
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V13",
+          "sfoc_g_kwh": "Data Kapal!Z13",
+          "max_kw": "Data Kapal!X13"
+        },
+        "min_kw": 7001.0,
+        "sfoc_g_kwh": 183.465
+      }
+    ],
+    "sfoc_ae_bands": [
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V16",
+          "sfoc_g_kwh": "Data Kapal!Z16",
+          "max_kw": "Data Kapal!X16"
+        },
+        "note": "AE: Excel mulai dari 1 kW; g/kWh = g/HP·h × 1,359",
+        "min_kw": 0.0,
+        "max_kw": 300.0,
+        "sfoc_g_kwh": 218.799
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V17",
+          "sfoc_g_kwh": "Data Kapal!Z17",
+          "max_kw": "Data Kapal!X17"
+        },
+        "min_kw": 301.0,
+        "max_kw": 800.0,
+        "sfoc_g_kwh": 216.081
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V18",
+          "sfoc_g_kwh": "Data Kapal!Z18",
+          "max_kw": "Data Kapal!X18"
+        },
+        "min_kw": 801.0,
+        "max_kw": 1300.0,
+        "sfoc_g_kwh": 212.004
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V19",
+          "sfoc_g_kwh": "Data Kapal!Z19",
+          "max_kw": "Data Kapal!X19"
+        },
+        "min_kw": 1301.0,
+        "max_kw": 1800.0,
+        "sfoc_g_kwh": 197.055
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V20",
+          "sfoc_g_kwh": "Data Kapal!Z20",
+          "max_kw": "Data Kapal!X20"
+        },
+        "min_kw": 1801.0,
+        "max_kw": 2300.0,
+        "sfoc_g_kwh": 192.978
+      },
+      {
+        "refs": {
+          "min_kw": "Data Kapal!V21",
+          "sfoc_g_kwh": "Data Kapal!Z21",
+          "max_kw": "Data Kapal!X21"
+        },
+        "min_kw": 2301.0,
+        "sfoc_g_kwh": 183.465
+      }
+    ],
+    "ae_me_power_ratio": 0.5,
+    "usd_rate": 15521.4,
+    "discount_rate": 0.1,
+    "escalation_infra": 0.01,
+    "escalation_equipment": 0.01,
+    "ballast_speed_ratio": 1.0,
+    "payload_dwt_ratio": 0.85,
+    "teu_weight_dwt_ratio": 0.9,
+    "teu_capacity_dwt_ratio": 0.85,
+    "teu_nominal_weight_t": 20.0,
+    "berth_loa_min_ratio": 0.85,
+    "cargo_per_call_mode": "interval",
+    "container": {
+      "refs": {
+        "inner_length_m": "Muatan!C84",
+        "inner_width_m": "Muatan!D84",
+        "inner_height_m": "Muatan!E84",
+        "tare_t": "Muatan!G84",
+        "max_gross_t": "Muatan!H84",
+        "max_net_t": "Muatan!I84",
+        "share_20ft": "Model!F50"
+      },
+      "inner_length_m": 5.919,
+      "inner_width_m": 2.34,
+      "inner_height_m": 2.38,
+      "tare_t": 1.9,
+      "max_gross_t": 24.0,
+      "max_net_t": 22.1,
+      "share_20ft": 1.0
+    }
+  },
+  "cargo_forms": [
+    {
+      "refs": {},
+      "code": "CC",
+      "name": "Curah cair",
+      "default_unit": "ton"
+    },
+    {
+      "refs": {},
+      "code": "CK",
+      "name": "Curah kering",
+      "default_unit": "ton"
+    },
+    {
+      "refs": {},
+      "code": "PK",
+      "name": "Petikemas",
+      "default_unit": "TEU"
+    },
+    {
+      "refs": {},
+      "code": "GC",
+      "name": "General cargo",
+      "default_unit": "ton"
+    }
+  ],
+  "ship_types": [
+    {
+      "refs": {},
+      "code": "tanker",
+      "name": "Tanker (curah cair)",
+      "size_basis": "dwt",
+      "tch_points": [
+        {
+          "refs": {
+            "size": "TCH!I5",
+            "usd_per_day": "TCH!J5"
+          },
+          "label": "Handysize",
+          "size": 30000.0,
+          "usd_per_day": 11300.0
+        },
+        {
+          "refs": {
+            "size": "TCH!I6",
+            "usd_per_day": "TCH!J6"
+          },
+          "label": "Medium Range",
+          "size": 47500.0,
+          "usd_per_day": 14200.0
+        },
+        {
+          "refs": {
+            "size": "TCH!I7",
+            "usd_per_day": "TCH!J7"
+          },
+          "label": "Large Range 1",
+          "size": 67500.0,
+          "usd_per_day": 15400.0
+        },
+        {
+          "refs": {
+            "size": "TCH!I8",
+            "usd_per_day": "TCH!J8"
+          },
+          "label": "Large Range 2",
+          "size": 120000.0,
+          "usd_per_day": 18600.0
+        }
+      ]
+    },
+    {
+      "refs": {},
+      "code": "bulk_carrier",
+      "name": "Bulk carrier (curah kering)",
+      "size_basis": "dwt",
+      "tch_points": [
+        {
+          "refs": {
+            "size": "TCH!C5",
+            "usd_per_day": "TCH!D5"
+          },
+          "label": "Handysize",
+          "size": 28000.0,
+          "usd_per_day": 14400.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C6",
+            "usd_per_day": "TCH!D6"
+          },
+          "size": 35000.0,
+          "usd_per_day": 16800.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C7",
+            "usd_per_day": "TCH!D7"
+          },
+          "label": "Supramax",
+          "size": 58000.0,
+          "usd_per_day": 19300.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C8",
+            "usd_per_day": "TCH!D8"
+          },
+          "size": 62000.0,
+          "usd_per_day": 23100.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C9",
+            "usd_per_day": "TCH!D9"
+          },
+          "label": "Panamax",
+          "size": 74000.0,
+          "usd_per_day": 25200.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C10",
+            "usd_per_day": "TCH!D10"
+          },
+          "size": 82000.0,
+          "usd_per_day": 27200.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C11",
+            "usd_per_day": "TCH!D11"
+          },
+          "label": "Cape size",
+          "size": 180000.0,
+          "usd_per_day": 28000.0
+        },
+        {
+          "refs": {
+            "size": "TCH!C12",
+            "usd_per_day": "TCH!D12"
+          },
+          "size": 220000.0,
+          "usd_per_day": 32500.0
+        }
+      ]
+    },
+    {
+      "refs": {},
+      "code": "container_ship",
+      "name": "Kapal petikemas",
+      "size_basis": "teu",
+      "tch_points": [
+        {
+          "refs": {
+            "size": "TCH!O5",
+            "usd_per_day": "TCH!P5"
+          },
+          "label": "Petikemas",
+          "size": 700.0,
+          "usd_per_day": 17000.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O6",
+            "usd_per_day": "TCH!P6"
+          },
+          "size": 1110.0,
+          "usd_per_day": 21000.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O7",
+            "usd_per_day": "TCH!P7"
+          },
+          "size": 1700.0,
+          "usd_per_day": 25000.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O8",
+            "usd_per_day": "TCH!P8"
+          },
+          "size": 2500.0,
+          "usd_per_day": 40500.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O9",
+            "usd_per_day": "TCH!P9"
+          },
+          "size": 3500.0,
+          "usd_per_day": 47500.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O10",
+            "usd_per_day": "TCH!P10"
+          },
+          "size": 4250.0,
+          "usd_per_day": 50500.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O11",
+            "usd_per_day": "TCH!P11"
+          },
+          "size": 5000.0,
+          "usd_per_day": 55000.0
+        },
+        {
+          "refs": {
+            "size": "TCH!O12",
+            "usd_per_day": "TCH!P12"
+          },
+          "size": 8500.0,
+          "usd_per_day": 97500.0
+        }
+      ]
+    },
+    {
+      "refs": {},
+      "code": "general_cargo_ship",
+      "name": "Kapal general cargo",
+      "size_basis": "dwt",
+      "tch_points": [
+        {
+          "refs": {
+            "size": "TCH!U5",
+            "usd_per_day": "TCH!V5"
+          },
+          "label": "General Cargo",
+          "size": 7500.0,
+          "usd_per_day": 8050.0
+        },
+        {
+          "refs": {
+            "size": "TCH!U6",
+            "usd_per_day": "TCH!V6"
+          },
+          "size": 12500.0,
+          "usd_per_day": 14500.0
+        },
+        {
+          "refs": {
+            "size": "TCH!U7",
+            "usd_per_day": "TCH!V7"
+          },
+          "size": 17500.0,
+          "usd_per_day": 15150.0
+        },
+        {
+          "refs": {
+            "size": "TCH!U8",
+            "usd_per_day": "TCH!V8"
+          },
+          "size": 22500.0,
+          "usd_per_day": 15200.0
+        }
+      ]
+    },
+    {
+      "refs": {},
+      "note": "Ditambahkan v2 (keputusan §13 no.7); belum ada kandidat kapal & tarif charter di K15.",
+      "code": "lct",
+      "name": "LCT / tongkang",
+      "size_basis": "dwt",
+      "tch_points": []
+    }
+  ],
+  "compatibility": {
+    "CC": [
+      "tanker"
+    ],
+    "CK": [
+      "bulk_carrier"
+    ],
+    "PK": [
+      "container_ship"
+    ],
+    "GC": [
+      "general_cargo_ship",
+      "lct"
+    ]
+  },
+  "commodities": [
+    {
+      "refs": {
+        "density_t_m3": "Muatan!C13",
+        "stowage_factor_m3_t": "Muatan!C11"
+      },
+      "id": "jagung_karung",
+      "name": "Jagung dalam karung",
+      "cargo_form": "GC",
+      "density_t_m3": 0.72,
+      "stowage_factor_m3_t": 1.3888888888888888
+    },
+    {
+      "refs": {
+        "stowage_factor_m3_t": "Muatan!C69"
+      },
+      "note": "Volume inbound didefinisikan dalam TEU. Data kemasan di Muatan!B17:C22 adalah salinan data kardus maizena, tidak dipakai.",
+      "id": "aluminium",
+      "name": "Aluminium",
+      "cargo_form": "PK",
+      "stowage_factor_m3_t": 0.88
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!C45"
+      },
+      "id": "pelat_baja",
+      "name": "Pelat baja",
+      "cargo_form": "GC",
+      "density_t_m3": 8.05,
+      "packaging": {
+        "refs": {
+          "length_m": "Muatan!C40",
+          "width_m": "Muatan!C41",
+          "height_m": "Muatan!C42",
+          "weight_kg": "Muatan!C39"
+        },
+        "kind": "pelat",
+        "length_m": 2.4,
+        "width_m": 1.2,
+        "height_m": 0.001,
+        "weight_kg": 23.0
+      }
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!C51"
+      },
+      "id": "gandum",
+      "name": "Gandum",
+      "cargo_form": "CK",
+      "density_t_m3": 0.79
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!C56"
+      },
+      "note": "Muatan!C56 berlabel kg/m³ tapi nilainya t/m³; Fasilitas Daratan memakai 0,9.",
+      "id": "cpo",
+      "name": "Crude palm oil (CPO)",
+      "cargo_form": "CC",
+      "density_t_m3": 0.909
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!L13"
+      },
+      "id": "tepung_jagung",
+      "name": "Tepung jagung (kardus)",
+      "cargo_form": "PK",
+      "density_t_m3": 0.67,
+      "packaging": {
+        "refs": {
+          "length_m": "Muatan!L7",
+          "width_m": "Muatan!L8",
+          "height_m": "Muatan!L9",
+          "weight_kg": "Muatan!L12",
+          "pieces_per_pack": "Muatan!L11"
+        },
+        "kind": "kardus",
+        "length_m": 0.5,
+        "width_m": 0.4,
+        "height_m": 0.3,
+        "weight_kg": 18.5,
+        "pieces_per_pack": 18
+      }
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!L32"
+      },
+      "note": "Volume outbound didefinisikan dalam TEU (1 TEU aluminium = 2 TEU baja ringan).",
+      "id": "baja_ringan",
+      "name": "Baja ringan",
+      "cargo_form": "PK",
+      "density_t_m3": 7.8500000000000005,
+      "packaging": {
+        "refs": {
+          "length_m": "Muatan!L26",
+          "width_m": "Muatan!L27",
+          "height_m": "Muatan!L28",
+          "weight_kg": "Muatan!L31",
+          "pieces_per_pack": "Muatan!L30"
+        },
+        "kind": "batang",
+        "length_m": 4.0,
+        "width_m": 0.05,
+        "height_m": 0.03,
+        "weight_kg": 4.52,
+        "pieces_per_pack": 1
+      }
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!L72"
+      },
+      "id": "profil_baja",
+      "name": "Profil baja",
+      "cargo_form": "GC",
+      "density_t_m3": 7.85
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!L51"
+      },
+      "id": "tepung_terigu",
+      "name": "Tepung terigu (kardus)",
+      "cargo_form": "PK",
+      "density_t_m3": 0.525,
+      "packaging": {
+        "refs": {
+          "length_m": "Muatan!L45",
+          "width_m": "Muatan!L46",
+          "height_m": "Muatan!L47",
+          "weight_kg": "Muatan!L50",
+          "pieces_per_pack": "Muatan!L49"
+        },
+        "kind": "kardus",
+        "length_m": 0.5,
+        "width_m": 0.35,
+        "height_m": 0.25,
+        "weight_kg": 12.5,
+        "pieces_per_pack": 12
+      }
+    },
+    {
+      "refs": {
+        "density_t_m3": "Muatan!L78"
+      },
+      "id": "rbd_olein",
+      "name": "RBD olein",
+      "cargo_form": "CC",
+      "density_t_m3": 0.91
+    }
+  ],
+  "tenants": [
+    {
+      "refs": {
+        "name": "Proyeksi Muatan!A4",
+        "sector": "Laporan K15 §1.3"
+      },
+      "id": "damai",
+      "name": "PT. Damai Sejahtera",
+      "sector": "makanan"
+    },
+    {
+      "refs": {
+        "name": "Proyeksi Muatan!A5",
+        "sector": "Laporan K15 §1.3"
+      },
+      "id": "fantasi",
+      "name": "PT. Fantasi Berkah",
+      "sector": "elektronik"
+    },
+    {
+      "refs": {
+        "name": "Proyeksi Muatan!A6",
+        "sector": "Laporan K15 §1.3"
+      },
+      "id": "esa",
+      "name": "PT. Esa Karya",
+      "sector": "manufaktur"
+    },
+    {
+      "refs": {
+        "name": "Proyeksi Muatan!A7",
+        "sector": "Laporan K15 §1.3"
+      },
+      "id": "baru",
+      "name": "PT. Baru Sentosa",
+      "sector": "makanan"
+    },
+    {
+      "refs": {
+        "name": "Proyeksi Muatan!A8",
+        "sector": "Laporan K15 §1.3"
+      },
+      "id": "adi",
+      "name": "PT. Adi Energi",
+      "sector": "energi"
+    }
+  ],
+  "flows": [
+    {
+      "refs": {},
+      "id": "in.damai",
+      "tenant_id": "damai",
+      "direction": "inbound",
+      "commodity_id": "jagung_karung",
+      "cargo_form": "GC",
+      "unit": "ton",
+      "route_id": "rt.badas",
+      "volume": {
+        "refs": {
+          "start_year": "Proyeksi Muatan!B4",
+          "initial": "Proyeksi Muatan!C4",
+          "maximum": "Proyeksi Muatan!D4",
+          "growth_rate": "Proyeksi Muatan!F4"
+        },
+        "mode": "independent",
+        "start_year": 1,
+        "initial": 3000000.0,
+        "maximum": 7900000.0,
+        "growth_rate": 0.05
+      }
+    },
+    {
+      "refs": {},
+      "id": "out.damai",
+      "tenant_id": "damai",
+      "direction": "outbound",
+      "commodity_id": "tepung_jagung",
+      "cargo_form": "PK",
+      "unit": "ton",
+      "route_id": "rt.bangkok",
+      "volume": {
+        "refs": {
+          "ratio": "Proyeksi Muatan!C12/C4 (= D12/D4)"
+        },
+        "mode": "ratio",
+        "basis_flow_id": "in.damai",
+        "ratio": 0.85
+      }
+    },
+    {
+      "refs": {},
+      "id": "in.fantasi",
+      "tenant_id": "fantasi",
+      "direction": "inbound",
+      "commodity_id": "aluminium",
+      "cargo_form": "PK",
+      "unit": "TEU",
+      "route_id": "rt.lampia",
+      "volume": {
+        "refs": {
+          "start_year": "Proyeksi Muatan!B5",
+          "initial": "Proyeksi Muatan!C5",
+          "maximum": "Proyeksi Muatan!D5",
+          "growth_rate": "Proyeksi Muatan!F5"
+        },
+        "mode": "independent",
+        "start_year": 3,
+        "initial": 100000.0,
+        "maximum": 160000.0,
+        "growth_rate": 0.04
+      }
+    },
+    {
+      "refs": {},
+      "id": "out.fantasi",
+      "tenant_id": "fantasi",
+      "direction": "outbound",
+      "commodity_id": "baja_ringan",
+      "cargo_form": "PK",
+      "unit": "TEU",
+      "route_id": "rt.kobe",
+      "volume": {
+        "refs": {
+          "ratio": "Proyeksi Muatan!C13/C5 (= D13/D5)"
+        },
+        "mode": "ratio",
+        "basis_flow_id": "in.fantasi",
+        "ratio": 2.0
+      }
+    },
+    {
+      "refs": {},
+      "id": "in.esa",
+      "tenant_id": "esa",
+      "direction": "inbound",
+      "commodity_id": "pelat_baja",
+      "cargo_form": "GC",
+      "unit": "ton",
+      "route_id": "rt.visakhapatnam",
+      "volume": {
+        "refs": {
+          "start_year": "Proyeksi Muatan!B6",
+          "initial": "Proyeksi Muatan!C6",
+          "maximum": "Proyeksi Muatan!D6",
+          "growth_rate": "Proyeksi Muatan!F6"
+        },
+        "mode": "independent",
+        "start_year": 8,
+        "initial": 2000000.0,
+        "maximum": 5000000.0,
+        "growth_rate": 0.03
+      }
+    },
+    {
+      "refs": {},
+      "note": "Excel menulis tahun operasi outbound 3 (Proyeksi Muatan!B14), tapi nilai baru muncul di tahun 8; ikut inbound.",
+      "id": "out.esa",
+      "tenant_id": "esa",
+      "direction": "outbound",
+      "commodity_id": "profil_baja",
+      "cargo_form": "GC",
+      "unit": "ton",
+      "route_id": "rt.tanjung_priok",
+      "volume": {
+        "refs": {
+          "ratio": "Proyeksi Muatan!C14/C6 (= D14/D6)"
+        },
+        "mode": "ratio",
+        "basis_flow_id": "in.esa",
+        "ratio": 0.75
+      }
+    },
+    {
+      "refs": {},
+      "id": "in.baru",
+      "tenant_id": "baru",
+      "direction": "inbound",
+      "commodity_id": "gandum",
+      "cargo_form": "CK",
+      "unit": "ton",
+      "route_id": "rt.melbourne",
+      "volume": {
+        "refs": {
+          "start_year": "Proyeksi Muatan!B7",
+          "initial": "Proyeksi Muatan!C7",
+          "maximum": "Proyeksi Muatan!D7",
+          "growth_rate": "Proyeksi Muatan!F7"
+        },
+        "mode": "independent",
+        "start_year": 8,
+        "initial": 4500000.0,
+        "maximum": 7200000.0,
+        "growth_rate": 0.04
+      }
+    },
+    {
+      "refs": {},
+      "id": "out.baru",
+      "tenant_id": "baru",
+      "direction": "outbound",
+      "commodity_id": "tepung_terigu",
+      "cargo_form": "PK",
+      "unit": "ton",
+      "route_id": "rt.gresik",
+      "volume": {
+        "refs": {
+          "ratio": "Proyeksi Muatan!C15/C7 (= D15/D7)"
+        },
+        "mode": "ratio",
+        "basis_flow_id": "in.baru",
+        "ratio": 0.5
+      }
+    },
+    {
+      "refs": {},
+      "id": "in.adi",
+      "tenant_id": "adi",
+      "direction": "inbound",
+      "commodity_id": "cpo",
+      "cargo_form": "CC",
+      "unit": "ton",
+      "route_id": "rt.belawan",
+      "volume": {
+        "refs": {
+          "start_year": "Proyeksi Muatan!B8",
+          "initial": "Proyeksi Muatan!C8",
+          "maximum": "Proyeksi Muatan!D8",
+          "growth_rate": "Proyeksi Muatan!F8"
+        },
+        "mode": "independent",
+        "start_year": 13,
+        "initial": 5000000.0,
+        "maximum": 7400000.0,
+        "growth_rate": 0.03
+      }
+    },
+    {
+      "refs": {},
+      "id": "out.adi",
+      "tenant_id": "adi",
+      "direction": "outbound",
+      "commodity_id": "rbd_olein",
+      "cargo_form": "CC",
+      "unit": "ton",
+      "route_id": "rt.chennai",
+      "volume": {
+        "refs": {
+          "ratio": "Proyeksi Muatan!C16/C8 (= D16/D8)"
+        },
+        "mode": "ratio",
+        "basis_flow_id": "in.adi",
+        "ratio": 0.6
+      }
+    }
+  ],
+  "ports": [
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B3",
+        "kind": "Biaya Pelabuhan!D3",
+        "tariff_class": "Biaya Pelabuhan!E3",
+        "terminal_type": "Data Pelabuhan!D21",
+        "max_draft_m": "Data Pelabuhan!G35",
+        "longest_berth_m": "Data Pelabuhan!G21",
+        "berth_type": "Biaya Pelabuhan!G3"
+      },
+      "id": "badas",
+      "name": "Pelabuhan Badas",
+      "country": "Indonesia",
+      "kind": "domestic",
+      "terminal_type": "General Cargo",
+      "max_draft_m": 11.5,
+      "longest_berth_m": 159.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!G34"
+        },
+        "mode": "total",
+        "value": 1000.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "2",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B4",
+        "kind": "Biaya Pelabuhan!D4",
+        "tariff_class": "Biaya Pelabuhan!E4",
+        "terminal_type": "Data Pelabuhan!D22",
+        "max_draft_m": "Data Pelabuhan!G48",
+        "berth_type": "Biaya Pelabuhan!G4"
+      },
+      "note": "Tabel ringkas Data Pelabuhan!E22 menulis 'Pelabuhan Makasar' (dermaga 80 m) untuk POL Malili; angka itu tidak dipakai, longest_berth_m dikosongkan sampai ada data Lampia.",
+      "id": "lampia",
+      "name": "Pelabuhan Lampia",
+      "country": "Indonesia",
+      "kind": "domestic",
+      "terminal_type": "Peti Kemas",
+      "max_draft_m": 15.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!G47"
+        },
+        "mode": "total",
+        "value": 30.0,
+        "unit": "TEU/h"
+      },
+      "tariff_class": "1",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B5",
+        "kind": "Biaya Pelabuhan!D5",
+        "tariff_class": "Biaya Pelabuhan!E5",
+        "terminal_type": "Data Pelabuhan!D23",
+        "max_draft_m": "Data Pelabuhan!G61",
+        "longest_berth_m": "Data Pelabuhan!G23",
+        "berth_type": "Biaya Pelabuhan!G5"
+      },
+      "id": "visakhapatnam",
+      "name": "Pelabuhan Visakhapatnam",
+      "country": "India",
+      "kind": "foreign",
+      "terminal_type": "General Cargo",
+      "max_draft_m": 11.0,
+      "longest_berth_m": 195.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!G60"
+        },
+        "mode": "total",
+        "value": 2500.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "utama",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B6",
+        "kind": "Biaya Pelabuhan!D6",
+        "tariff_class": "Biaya Pelabuhan!E6",
+        "terminal_type": "Data Pelabuhan!D24",
+        "max_draft_m": "Data Pelabuhan!G74",
+        "longest_berth_m": "Data Pelabuhan!G24",
+        "berth_type": "Biaya Pelabuhan!G6"
+      },
+      "id": "melbourne",
+      "name": "Port of Melbourne",
+      "country": "Australia",
+      "kind": "foreign",
+      "terminal_type": "Curah Kering",
+      "max_draft_m": 15.0,
+      "longest_berth_m": 1080.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!G73"
+        },
+        "mode": "total",
+        "value": 1500.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "utama",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B7",
+        "kind": "Biaya Pelabuhan!D7",
+        "tariff_class": "Biaya Pelabuhan!E7",
+        "terminal_type": "Data Pelabuhan!D25",
+        "max_draft_m": "Data Pelabuhan!G87",
+        "longest_berth_m": "Data Pelabuhan!G25",
+        "berth_type": "Biaya Pelabuhan!G7"
+      },
+      "id": "belawan",
+      "name": "Pelabuhan Belawan",
+      "country": "Indonesia",
+      "kind": "domestic",
+      "terminal_type": "Curah Cair",
+      "max_draft_m": 11.5,
+      "longest_berth_m": 1057.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!G86"
+        },
+        "mode": "total",
+        "value": 3000.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "1",
+      "berth_type": "dolphin"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B8",
+        "kind": "Biaya Pelabuhan!D8",
+        "tariff_class": "Biaya Pelabuhan!E8",
+        "terminal_type": "Data Pelabuhan!N21",
+        "max_draft_m": "Data Pelabuhan!Q35",
+        "longest_berth_m": "Data Pelabuhan!Q21",
+        "berth_type": "Biaya Pelabuhan!G8"
+      },
+      "note": "Tabel ringkas Data Pelabuhan!O21 menulis 'laem chabang'.",
+      "id": "bangkok",
+      "name": "Port of Bangkok",
+      "country": "Thailand",
+      "kind": "foreign",
+      "terminal_type": "Petikemas",
+      "max_draft_m": 16.0,
+      "longest_berth_m": 172.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!Q34"
+        },
+        "mode": "total",
+        "value": 40.0,
+        "unit": "TEU/h"
+      },
+      "tariff_class": "utama",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B9",
+        "kind": "Biaya Pelabuhan!D9",
+        "tariff_class": "Biaya Pelabuhan!E9",
+        "terminal_type": "Data Pelabuhan!N22",
+        "max_draft_m": "Data Pelabuhan!Q48",
+        "longest_berth_m": "Data Pelabuhan!Q22",
+        "berth_type": "Biaya Pelabuhan!G9"
+      },
+      "id": "kobe",
+      "name": "Port Of Kobe",
+      "country": "Jepang",
+      "kind": "foreign",
+      "terminal_type": "Peti Kemas",
+      "max_draft_m": 14.0,
+      "longest_berth_m": 649.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!Q47"
+        },
+        "mode": "total",
+        "value": 30.0,
+        "unit": "TEU/h"
+      },
+      "tariff_class": "utama",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B10",
+        "kind": "Biaya Pelabuhan!D10",
+        "tariff_class": "Biaya Pelabuhan!E10",
+        "terminal_type": "Data Pelabuhan!N23",
+        "max_draft_m": "Data Pelabuhan!Q61",
+        "longest_berth_m": "Data Pelabuhan!Q23",
+        "berth_type": "Biaya Pelabuhan!G10"
+      },
+      "id": "tanjung_priok",
+      "name": "Tanjung Priok",
+      "country": "Indonesia",
+      "kind": "domestic",
+      "terminal_type": "General Cargo",
+      "max_draft_m": 14.0,
+      "longest_berth_m": 650.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!Q60"
+        },
+        "mode": "total",
+        "value": 2300.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "1",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B11",
+        "kind": "Biaya Pelabuhan!D11",
+        "tariff_class": "Biaya Pelabuhan!E11",
+        "terminal_type": "Data Pelabuhan!N24",
+        "max_draft_m": "Data Pelabuhan!Q74",
+        "longest_berth_m": "Data Pelabuhan!Q24",
+        "berth_type": "Biaya Pelabuhan!G11"
+      },
+      "id": "gresik",
+      "name": "Pelabuhan gresik",
+      "country": "Indonesia",
+      "kind": "domestic",
+      "terminal_type": "Petikemas",
+      "max_draft_m": 13.7,
+      "longest_berth_m": 1080.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!Q73"
+        },
+        "mode": "total",
+        "value": 30.0,
+        "unit": "TEU/h"
+      },
+      "tariff_class": "1",
+      "berth_type": "beton"
+    },
+    {
+      "refs": {
+        "name": "Biaya Pelabuhan!B12",
+        "kind": "Biaya Pelabuhan!D12",
+        "tariff_class": "Biaya Pelabuhan!E12",
+        "terminal_type": "Data Pelabuhan!N25",
+        "max_draft_m": "Data Pelabuhan!Q87",
+        "longest_berth_m": "Data Pelabuhan!Q25",
+        "berth_type": "Biaya Pelabuhan!G12"
+      },
+      "id": "chennai",
+      "name": "Pelabuhan Chennai",
+      "country": "India",
+      "kind": "foreign",
+      "terminal_type": "Curah Cair",
+      "max_draft_m": 16.0,
+      "longest_berth_m": 620.0,
+      "productivity": {
+        "refs": {
+          "value": "Data Pelabuhan!Q86"
+        },
+        "mode": "total",
+        "value": 1936.0,
+        "unit": "t/h"
+      },
+      "tariff_class": "utama",
+      "berth_type": "dolphin"
+    }
+  ],
+  "routes": [
+    {
+      "refs": {
+        "code": "Rute!X20"
+      },
+      "id": "rt.badas",
+      "name": "Pelabuhan Badas – Batu Ampar – Pelabuhan Badas",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y20"
+          },
+          "origin": "badas",
+          "destination": "KEK",
+          "distance_nm": 992.2,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y20"
+          },
+          "origin": "KEK",
+          "destination": "badas",
+          "distance_nm": 992.2,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X21"
+      },
+      "id": "rt.lampia",
+      "name": "Pelabuhan Lampia – Batu Ampar – Pelabuhan Lampia",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y21"
+          },
+          "origin": "lampia",
+          "destination": "KEK",
+          "distance_nm": 1262.6,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y21"
+          },
+          "origin": "KEK",
+          "destination": "lampia",
+          "distance_nm": 1262.6,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X22"
+      },
+      "id": "rt.visakhapatnam",
+      "name": "Pelabuhan Visakhapatnam – Batu Ampar – Pelabuhan Visakhapatnam",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y22"
+          },
+          "origin": "visakhapatnam",
+          "destination": "KEK",
+          "distance_nm": 2533.0,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y22"
+          },
+          "origin": "KEK",
+          "destination": "visakhapatnam",
+          "distance_nm": 2533.0,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X23"
+      },
+      "id": "rt.melbourne",
+      "name": "Port of Melbourne – Batu Ampar – Port of Melbourne",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y23"
+          },
+          "origin": "melbourne",
+          "destination": "KEK",
+          "distance_nm": 3918.3,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y23"
+          },
+          "origin": "KEK",
+          "destination": "melbourne",
+          "distance_nm": 3918.3,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X24"
+      },
+      "id": "rt.belawan",
+      "name": "Pelabuhan Belawan – Batu Ampar – Pelabuhan Belawan",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y24"
+          },
+          "origin": "belawan",
+          "destination": "KEK",
+          "distance_nm": 358.5,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y24"
+          },
+          "origin": "KEK",
+          "destination": "belawan",
+          "distance_nm": 358.5,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X25"
+      },
+      "id": "rt.bangkok",
+      "name": "Batu Ampar – Port of Bangkok – Batu Ampar",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y25"
+          },
+          "origin": "KEK",
+          "destination": "bangkok",
+          "distance_nm": 782.6,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y25"
+          },
+          "origin": "bangkok",
+          "destination": "KEK",
+          "distance_nm": 782.6,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X26"
+      },
+      "id": "rt.kobe",
+      "name": "Batu Ampar – Port Of Kobe – Batu Ampar",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y26"
+          },
+          "origin": "KEK",
+          "destination": "kobe",
+          "distance_nm": 3632.2,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y26"
+          },
+          "origin": "kobe",
+          "destination": "KEK",
+          "distance_nm": 3632.2,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X27"
+      },
+      "id": "rt.tanjung_priok",
+      "name": "Batu Ampar – Tanjung Priok – Batu Ampar",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y27"
+          },
+          "origin": "KEK",
+          "destination": "tanjung_priok",
+          "distance_nm": 528.8,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y27"
+          },
+          "origin": "tanjung_priok",
+          "destination": "KEK",
+          "distance_nm": 528.8,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X28"
+      },
+      "id": "rt.gresik",
+      "name": "Batu Ampar – Pelabuhan gresik – Batu Ampar",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y28"
+          },
+          "origin": "KEK",
+          "destination": "gresik",
+          "distance_nm": 774.9,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y28"
+          },
+          "origin": "gresik",
+          "destination": "KEK",
+          "distance_nm": 774.9,
+          "laden": false
+        }
+      ]
+    },
+    {
+      "refs": {
+        "code": "Rute!X29"
+      },
+      "id": "rt.chennai",
+      "name": "Batu Ampar – Pelabuhan Chennai – Batu Ampar",
+      "pattern": "round_trip",
+      "legs": [
+        {
+          "refs": {
+            "distance_nm": "Rute!Y29"
+          },
+          "origin": "KEK",
+          "destination": "chennai",
+          "distance_nm": 2491.8,
+          "laden": true
+        },
+        {
+          "refs": {
+            "distance_nm": "Rute!Y29"
+          },
+          "origin": "chennai",
+          "destination": "KEK",
+          "distance_nm": 2491.8,
+          "laden": false
+        }
+      ]
+    }
+  ],
+  "kek_site": {
+    "refs": {},
+    "name": "TERSUS KI Batam — Batu Ampar",
+    "terminals": [
+      {
+        "refs": {
+          "berth_unit_length_m": "Investasi!C3",
+          "berth_width_m": "Investasi!C5"
+        },
+        "id": "MP",
+        "name": "Dermaga multipurpose",
+        "cargo_forms": [
+          "PK",
+          "GC",
+          "CK"
+        ],
+        "berth_unit_length_m": 300.0,
+        "berth_width_m": 50.0,
+        "equipment_kind": "HMC"
+      },
+      {
+        "refs": {
+          "berth_unit_length_m": "Investasi!C4",
+          "berth_width_m": "Investasi!C6"
+        },
+        "id": "CC",
+        "name": "Jetty curah cair",
+        "cargo_forms": [
+          "CC"
+        ],
+        "berth_unit_length_m": 40.0,
+        "berth_width_m": 35.0,
+        "equipment_kind": "MLA"
+      }
+    ],
+    "bathymetry": [
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 0.0,
+        "depth_m": 0.0
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 25.0,
+        "depth_m": 0.8
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 50.0,
+        "depth_m": 1.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 100.0,
+        "depth_m": 3.5
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 150.0,
+        "depth_m": 5.5
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 200.0,
+        "depth_m": 7.8
+      },
+      {
+        "refs": {
+          "distance_m": "dummy, dikunci ke Trestle!C69/C73 (10 m pada 250 m)",
+          "depth_m": "dummy, dikunci ke Trestle!C69/C73 (10 m pada 250 m)"
+        },
+        "distance_m": 250.0,
+        "depth_m": 10.0
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 300.0,
+        "depth_m": 12.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 350.0,
+        "depth_m": 15.2
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 400.0,
+        "depth_m": 17.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 450.0,
+        "depth_m": 19.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy, dikunci ke Trestle!C50/C9 (21,3 m pada 500 m)",
+          "depth_m": "dummy, dikunci ke Trestle!C50/C9 (21,3 m pada 500 m)"
+        },
+        "distance_m": 500.0,
+        "depth_m": 21.3
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 550.0,
+        "depth_m": 22.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 600.0,
+        "depth_m": 23.6
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 700.0,
+        "depth_m": 25.0
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 800.0,
+        "depth_m": 26.0
+      },
+      {
+        "refs": {
+          "distance_m": "dummy",
+          "depth_m": "dummy"
+        },
+        "distance_m": 1000.0,
+        "depth_m": 27.5
+      }
+    ],
+    "bathymetry_source": "dummy",
+    "trestle": {
+      "refs": {
+        "max_length_m": "Trestle!C50",
+        "width_mp_m": "Trestle!C51",
+        "width_jetty_m": "Trestle!C60",
+        "height_m": "Trestle!C52"
+      },
+      "max_length_m": 500.0,
+      "width_mp_m": 40.0,
+      "width_jetty_m": 1.5,
+      "height_m": 3.3
+    },
+    "trestle_dredge": {
+      "refs": {
+        "trestle_length_m": "Trestle!C69",
+        "trestle_width_m": "Trestle!C70",
+        "existing_depth_m": "Trestle!C73"
+      },
+      "trestle_length_m": 250.0,
+      "trestle_width_m": 50.0,
+      "existing_depth_m": 10.0
+    },
+    "waterside": {
+      "refs": {
+        "wind_kn": "Fasilitas Perairan!J3",
+        "cross_current_kn": "Fasilitas Perairan!J4",
+        "longitudinal_current_kn": "Fasilitas Perairan!J5",
+        "wave_height_m": "Fasilitas Perairan!J6",
+        "exposure": "Fasilitas Perairan!J7",
+        "maneuverability": "Fasilitas Perairan!J8",
+        "nav_aids": "Fasilitas Perairan!L3",
+        "seabed": "Fasilitas Perairan!L4",
+        "channel_slope": "Fasilitas Perairan!L5",
+        "lanes": "Fasilitas Perairan!K16 (2 jalur)",
+        "long_channel": "Trestle!C40 = Fasilitas Perairan!L23 (alur relatif pendek, frekuensi tinggi)",
+        "tug_assisted": "Fasilitas Perairan!K35/J37",
+        "depth_factor_of_draft": "Fasilitas Perairan!K18 = 1,5×T"
+      },
+      "wind_kn": 15.0,
+      "cross_current_kn": 0.5,
+      "longitudinal_current_kn": 1.5,
+      "wave_height_m": 1.25,
+      "exposure": "terbuka",
+      "maneuverability": "sedang",
+      "nav_aids": "baik",
+      "seabed": "tanah_lunak",
+      "channel_slope": "sedang",
+      "lanes": 2,
+      "long_channel": false,
+      "high_frequency": true,
+      "tug_assisted": true,
+      "depth_factor_of_draft": 1.5
+    },
+    "port_charges": "none"
+  },
+  "ships": [
+    {
+      "refs": {
+        "name": "Model!AL25",
+        "loa_m": "Model!AL27",
+        "beam_m": "Model!AL28",
+        "draft_m": "Model!AL29",
+        "depth_m": "Model!AL30",
+        "speed_kn": "Model!AL31",
+        "dwt_t": "Model!AL39",
+        "gt": "Model!AL37",
+        "me_kw": "Model!AL33",
+        "ae_kw": "Model!AL34",
+        "imo": "Data Kapal!C22",
+        "classification": "Data Kapal!E22",
+        "lpp_m": "Data Kapal!F22",
+        "model_id": "Kapal 1 (Model!AL24)"
+      },
+      "id": "ship.debonair",
+      "name": "DEBONAIR",
+      "ship_type": "tanker",
+      "imo": "9635066",
+      "classification": "ClassNK",
+      "lpp_m": 86.94,
+      "loa_m": 91.85,
+      "beam_m": 17.3,
+      "draft_m": 7.514,
+      "depth_m": 9.6,
+      "speed_kn": 11.3,
+      "dwt_t": 6274.0,
+      "gt": 4189.0,
+      "me_kw": 800.0,
+      "ae_kw": 400.0
+    },
+    {
+      "refs": {
+        "name": "Model!AM25",
+        "loa_m": "Model!AM27",
+        "beam_m": "Model!AM28",
+        "draft_m": "Model!AM29",
+        "depth_m": "Model!AM30",
+        "speed_kn": "Model!AM31",
+        "dwt_t": "Model!AM39",
+        "gt": "Model!AM37",
+        "me_kw": "Model!AM33",
+        "ae_kw": "Model!AM34",
+        "imo": "Data Kapal!C23",
+        "classification": "Data Kapal!E23",
+        "lpp_m": "Data Kapal!F23",
+        "model_id": "Kapal 2 (Model!AM24)"
+      },
+      "id": "ship.fortune_18",
+      "name": "FORTUNE 18",
+      "ship_type": "tanker",
+      "imo": "9508354",
+      "classification": "ClassNK",
+      "lpp_m": 108.0,
+      "loa_m": 115.0,
+      "beam_m": 19.0,
+      "draft_m": 7.616,
+      "depth_m": 9.8,
+      "speed_kn": 14.3,
+      "dwt_t": 9261.0,
+      "gt": 5635.0,
+      "me_kw": 3309.0,
+      "ae_kw": 1654.5
+    },
+    {
+      "refs": {
+        "name": "Model!AN25",
+        "loa_m": "Model!AN27",
+        "beam_m": "Model!AN28",
+        "draft_m": "Model!AN29",
+        "depth_m": "Model!AN30",
+        "speed_kn": "Model!AN31",
+        "dwt_t": "Model!AN39",
+        "gt": "Model!AN37",
+        "me_kw": "Model!AN33",
+        "ae_kw": "Model!AN34",
+        "imo": "Data Kapal!C24",
+        "classification": "Data Kapal!E24",
+        "lpp_m": "Data Kapal!F24",
+        "model_id": "Kapal 3 (Model!AN24)"
+      },
+      "id": "ship.martha_option",
+      "name": "MARTHA OPTION",
+      "ship_type": "tanker",
+      "imo": "9072836",
+      "classification": "BKI",
+      "lpp_m": 124.0,
+      "loa_m": 132.0,
+      "beam_m": 20.4,
+      "draft_m": 8.79,
+      "depth_m": 11.2,
+      "speed_kn": 13.5,
+      "dwt_t": 13940.0,
+      "gt": 7922.0,
+      "me_kw": 3355.0,
+      "ae_kw": 1677.5
+    },
+    {
+      "refs": {
+        "name": "Model!AO25",
+        "loa_m": "Model!AO27",
+        "beam_m": "Model!AO28",
+        "draft_m": "Model!AO29",
+        "depth_m": "Model!AO30",
+        "speed_kn": "Model!AO31",
+        "dwt_t": "Model!AO39",
+        "gt": "Model!AO37",
+        "me_kw": "Model!AO33",
+        "ae_kw": "Model!AO34",
+        "imo": "Data Kapal!C25",
+        "classification": "Data Kapal!E25",
+        "lpp_m": "Data Kapal!F25",
+        "model_id": "Kapal 4 (Model!AO24)"
+      },
+      "id": "ship.eternal_oil_i",
+      "name": "ETERNAL OIL - I",
+      "ship_type": "tanker",
+      "imo": "9160839",
+      "classification": "BKI",
+      "lpp_m": 152.48,
+      "loa_m": 158.0,
+      "beam_m": 27.0,
+      "draft_m": 7.0,
+      "depth_m": 11.7,
+      "speed_kn": 13.0,
+      "dwt_t": 18277.0,
+      "gt": 14474.0,
+      "me_kw": 4900.0,
+      "ae_kw": 2450.0
+    },
+    {
+      "refs": {
+        "name": "Model!AP25",
+        "loa_m": "Model!AP27",
+        "beam_m": "Model!AP28",
+        "draft_m": "Model!AP29",
+        "depth_m": "Model!AP30",
+        "speed_kn": "Model!AP31",
+        "dwt_t": "Model!AP39",
+        "gt": "Model!AP37",
+        "me_kw": "Model!AP33",
+        "ae_kw": "Model!AP34",
+        "imo": "Data Kapal!C26",
+        "classification": "Data Kapal!E26",
+        "lpp_m": "Data Kapal!F26",
+        "model_id": "Kapal 5 (Model!AP24)"
+      },
+      "id": "ship.madonna_sun",
+      "name": "MADONNA SUN",
+      "ship_type": "tanker",
+      "imo": "9196436",
+      "classification": "BKI",
+      "lpp_m": 167.62,
+      "loa_m": 174.38,
+      "beam_m": 27.7,
+      "draft_m": 10.02,
+      "depth_m": 16.0,
+      "speed_kn": 14.0,
+      "dwt_t": 30561.0,
+      "gt": 20116.0,
+      "me_kw": 8058.0328,
+      "ae_kw": 4029.0164
+    },
+    {
+      "refs": {
+        "name": "Model!AQ25",
+        "loa_m": "Model!AQ27",
+        "beam_m": "Model!AQ28",
+        "draft_m": "Model!AQ29",
+        "depth_m": "Model!AQ30",
+        "speed_kn": "Model!AQ31",
+        "dwt_t": "Model!AQ39",
+        "gt": "Model!AQ37",
+        "me_kw": "Model!AQ33",
+        "ae_kw": "Model!AQ34",
+        "imo": "Data Kapal!C27",
+        "classification": "Data Kapal!E27",
+        "lpp_m": "Data Kapal!F27",
+        "model_id": "Kapal 6 (Model!AQ24)"
+      },
+      "id": "ship.avanti",
+      "name": "AVANTI",
+      "ship_type": "tanker",
+      "imo": "9403334",
+      "classification": "ClassNK",
+      "lpp_m": 172.0,
+      "loa_m": 179.88,
+      "beam_m": 32.2,
+      "draft_m": 12.072,
+      "depth_m": 18.7,
+      "speed_kn": 16.8,
+      "dwt_t": 45965.0,
+      "gt": 28054.0,
+      "me_kw": 9480.0,
+      "ae_kw": 4740.0
+    },
+    {
+      "refs": {
+        "name": "Model!AR25",
+        "loa_m": "Model!AR27",
+        "beam_m": "Model!AR28",
+        "draft_m": "Model!AR29",
+        "depth_m": "Model!AR30",
+        "speed_kn": "Model!AR31",
+        "dwt_t": "Model!AR39",
+        "gt": "Model!AR37",
+        "me_kw": "Model!AR33",
+        "ae_kw": "Model!AR34",
+        "imo": "Data Kapal!C28",
+        "classification": "Data Kapal!E28",
+        "lpp_m": "Data Kapal!F28",
+        "model_id": "Kapal 7 (Model!AR24)"
+      },
+      "id": "ship.sunda",
+      "name": "SUNDA",
+      "ship_type": "tanker",
+      "imo": "9806146",
+      "classification": "Nippon Kaiji Kyokai",
+      "lpp_m": 212.7,
+      "loa_m": 219.0,
+      "beam_m": 38.0,
+      "draft_m": 13.8,
+      "depth_m": 19.5,
+      "speed_kn": 14.8,
+      "dwt_t": 79600.0,
+      "gt": 44400.0,
+      "me_kw": 9078.0,
+      "ae_kw": 4539.0
+    },
+    {
+      "refs": {
+        "name": "Model!AS25",
+        "loa_m": "Model!AS27",
+        "beam_m": "Model!AS28",
+        "draft_m": "Model!AS29",
+        "depth_m": "Model!AS30",
+        "speed_kn": "Model!AS31",
+        "dwt_t": "Model!AS39",
+        "gt": "Model!AS37",
+        "me_kw": "Model!AS33",
+        "ae_kw": "Model!AS34",
+        "imo": "Data Kapal!C29",
+        "classification": "Data Kapal!E29",
+        "lpp_m": "Data Kapal!F29",
+        "model_id": "Kapal 8 (Model!AS24)"
+      },
+      "id": "ship.thea",
+      "name": "THEA",
+      "ship_type": "tanker",
+      "imo": "9290309",
+      "classification": "ClassNK",
+      "lpp_m": 234.0,
+      "loa_m": 243.96,
+      "beam_m": 42.0,
+      "draft_m": 14.918,
+      "depth_m": 21.0,
+      "speed_kn": 15.2,
+      "dwt_t": 105941.0,
+      "gt": 57226.0,
+      "me_kw": 13547.0,
+      "ae_kw": 6773.5
+    },
+    {
+      "refs": {
+        "name": "Model!AT25",
+        "loa_m": "Model!AT27",
+        "beam_m": "Model!AT28",
+        "draft_m": "Model!AT29",
+        "depth_m": "Model!AT30",
+        "speed_kn": "Model!AT31",
+        "dwt_t": "Model!AT39",
+        "gt": "Model!AT37",
+        "me_kw": "Model!AT33",
+        "ae_kw": "Model!AT34",
+        "imo": "Data Kapal!C30",
+        "classification": "Data Kapal!E30",
+        "lpp_m": "Data Kapal!F30",
+        "model_id": "Kapal 9 (Model!AT24)"
+      },
+      "id": "ship.alaskan_frontier",
+      "name": "ALASKAN FRONTIER",
+      "ship_type": "tanker",
+      "imo": "9244659",
+      "classification": "ABS",
+      "lpp_m": 274.0,
+      "loa_m": 286.85,
+      "beam_m": 50.0,
+      "draft_m": 18.8,
+      "depth_m": 28.0,
+      "speed_kn": 15.3,
+      "dwt_t": 193050.0,
+      "gt": 117281.0,
+      "me_kw": 15000.0,
+      "ae_kw": 7500.0
+    },
+    {
+      "refs": {
+        "name": "Model!AU25",
+        "loa_m": "Model!AU27",
+        "beam_m": "Model!AU28",
+        "draft_m": "Model!AU29",
+        "depth_m": "Model!AU30",
+        "speed_kn": "Model!AU31",
+        "dwt_t": "Model!AU39",
+        "gt": "Model!AU37",
+        "me_kw": "Model!AU33",
+        "ae_kw": "Model!AU34",
+        "imo": "Data Kapal!C13",
+        "classification": "Data Kapal!E13",
+        "lpp_m": "Data Kapal!F13",
+        "model_id": "Kapal 10 (Model!AU24)"
+      },
+      "id": "ship.afina_i",
+      "name": "AFINA I",
+      "ship_type": "bulk_carrier",
+      "imo": "9585015",
+      "classification": "ClassNK",
+      "lpp_m": 129.8,
+      "loa_m": 138.6,
+      "beam_m": 20.4,
+      "draft_m": 7.91,
+      "depth_m": 11.0,
+      "speed_kn": 10.6,
+      "dwt_t": 12824.0,
+      "gt": 8887.0,
+      "me_kw": 4050.0,
+      "ae_kw": 2025.0
+    },
+    {
+      "refs": {
+        "name": "Model!AV25",
+        "loa_m": "Model!AV27",
+        "beam_m": "Model!AV28",
+        "draft_m": "Model!AV29",
+        "depth_m": "Model!AV30",
+        "speed_kn": "Model!AV31",
+        "dwt_t": "Model!AV39",
+        "gt": "Model!AV37",
+        "me_kw": "Model!AV33",
+        "ae_kw": "Model!AV34",
+        "imo": "Data Kapal!C14",
+        "classification": "Data Kapal!E14",
+        "lpp_m": "Data Kapal!F14",
+        "model_id": "Kapal 11 (Model!AV24)"
+      },
+      "id": "ship.african_jacaranda",
+      "name": "AFRICAN JACARANDA",
+      "ship_type": "bulk_carrier",
+      "imo": "9354076",
+      "classification": "ClassNK",
+      "lpp_m": 132.0,
+      "loa_m": 139.92,
+      "beam_m": 25.0,
+      "draft_m": 8.4,
+      "depth_m": 11.5,
+      "speed_kn": 15.1,
+      "dwt_t": 18909.0,
+      "gt": 11681.0,
+      "me_kw": 5180.0,
+      "ae_kw": 2590.0
+    },
+    {
+      "refs": {
+        "name": "Model!AW25",
+        "loa_m": "Model!AW27",
+        "beam_m": "Model!AW28",
+        "draft_m": "Model!AW29",
+        "depth_m": "Model!AW30",
+        "speed_kn": "Model!AW31",
+        "dwt_t": "Model!AW39",
+        "gt": "Model!AW37",
+        "me_kw": "Model!AW33",
+        "ae_kw": "Model!AW34",
+        "imo": "Data Kapal!C15",
+        "classification": "Data Kapal!E15",
+        "lpp_m": "Data Kapal!F15",
+        "model_id": "Kapal 12 (Model!AW24)"
+      },
+      "id": "ship.african_joseph_r",
+      "name": "AFRICAN JOSEPH R",
+      "ship_type": "bulk_carrier",
+      "imo": "9333711",
+      "classification": "ClassNK",
+      "lpp_m": 132.0,
+      "loa_m": 139.92,
+      "beam_m": 25.0,
+      "draft_m": 8.4,
+      "depth_m": 11.5,
+      "speed_kn": 14.7,
+      "dwt_t": 18922.0,
+      "gt": 11680.0,
+      "me_kw": 5180.0,
+      "ae_kw": 2590.0
+    },
+    {
+      "refs": {
+        "name": "Model!AX25",
+        "loa_m": "Model!AX27",
+        "beam_m": "Model!AX28",
+        "draft_m": "Model!AX29",
+        "depth_m": "Model!AX30",
+        "speed_kn": "Model!AX31",
+        "dwt_t": "Model!AX39",
+        "gt": "Model!AX37",
+        "me_kw": "Model!AX33",
+        "ae_kw": "Model!AX34",
+        "imo": "Data Kapal!C16",
+        "classification": "Data Kapal!E16",
+        "lpp_m": "Data Kapal!F16",
+        "model_id": "Kapal 13 (Model!AX24)"
+      },
+      "id": "ship.cape_gull",
+      "name": "CAPE GULL",
+      "ship_type": "bulk_carrier",
+      "imo": "9674804",
+      "classification": "ClassNK",
+      "lpp_m": 176.5,
+      "loa_m": 28.8,
+      "beam_m": 10.7,
+      "draft_m": 15.2,
+      "depth_m": 14.0,
+      "speed_kn": 16.3,
+      "dwt_t": 36320.0,
+      "gt": 21699.0,
+      "me_kw": 6800.0,
+      "ae_kw": 3400.0
+    },
+    {
+      "refs": {
+        "name": "Model!AY25",
+        "loa_m": "Model!AY27",
+        "beam_m": "Model!AY28",
+        "draft_m": "Model!AY29",
+        "depth_m": "Model!AY30",
+        "speed_kn": "Model!AY31",
+        "dwt_t": "Model!AY39",
+        "gt": "Model!AY37",
+        "me_kw": "Model!AY33",
+        "ae_kw": "Model!AY34",
+        "imo": "Data Kapal!C17",
+        "classification": "Data Kapal!E17",
+        "lpp_m": "Data Kapal!F17",
+        "model_id": "Kapal 14 (Model!AY24)"
+      },
+      "id": "ship.atalante",
+      "name": "ATALANTE",
+      "ship_type": "bulk_carrier",
+      "imo": "9363168",
+      "classification": "ClassNK",
+      "lpp_m": 150.53,
+      "loa_m": 26.0,
+      "beam_m": 9.572,
+      "draft_m": 13.2,
+      "depth_m": 15.0,
+      "speed_kn": 16.9,
+      "dwt_t": 23641.0,
+      "gt": 14501.0,
+      "me_kw": 6150.0,
+      "ae_kw": 3075.0
+    },
+    {
+      "refs": {
+        "name": "Model!AZ25",
+        "loa_m": "Model!AZ27",
+        "beam_m": "Model!AZ28",
+        "draft_m": "Model!AZ29",
+        "depth_m": "Model!AZ30",
+        "speed_kn": "Model!AZ31",
+        "dwt_t": "Model!AZ39",
+        "gt": "Model!AZ37",
+        "me_kw": "Model!AZ33",
+        "ae_kw": "Model!AZ34",
+        "imo": "Data Kapal!C18",
+        "classification": "Data Kapal!E18",
+        "lpp_m": "Data Kapal!F18",
+        "model_id": "Kapal 15 (Model!AZ24)"
+      },
+      "id": "ship.global_galaxy",
+      "name": "GLOBAL GALAXY",
+      "ship_type": "bulk_carrier",
+      "imo": "9291365",
+      "classification": "ClassNK",
+      "lpp_m": 179.0,
+      "loa_m": 188.5,
+      "beam_m": 32.26,
+      "draft_m": 12.163,
+      "depth_m": 17.15,
+      "speed_kn": 16.1,
+      "dwt_t": 53020.0,
+      "gt": 29353.0,
+      "me_kw": 8046.0,
+      "ae_kw": 4023.0
+    },
+    {
+      "refs": {
+        "name": "Model!BA25",
+        "loa_m": "Model!BA27",
+        "beam_m": "Model!BA28",
+        "draft_m": "Model!BA29",
+        "depth_m": "Model!BA30",
+        "speed_kn": "Model!BA31",
+        "dwt_t": "Model!BA39",
+        "gt": "Model!BA37",
+        "me_kw": "Model!BA33",
+        "ae_kw": "Model!BA34",
+        "imo": "Data Kapal!C19",
+        "classification": "Data Kapal!E19",
+        "lpp_m": "Data Kapal!F19",
+        "model_id": "Kapal 16 (Model!BA24)"
+      },
+      "id": "ship.azalea_island",
+      "name": "AZALEA ISLAND",
+      "ship_type": "bulk_carrier",
+      "imo": "9304148",
+      "classification": "ClassNK",
+      "lpp_m": 245.62,
+      "loa_m": 255.22,
+      "beam_m": 43.0,
+      "draft_m": 19.39,
+      "depth_m": 13.465,
+      "speed_kn": 16.1,
+      "dwt_t": 104996.0,
+      "gt": 58107.0,
+      "me_kw": 12268.0,
+      "ae_kw": 6134.0
+    },
+    {
+      "refs": {
+        "name": "Model!BB25",
+        "loa_m": "Model!BB27",
+        "beam_m": "Model!BB28",
+        "draft_m": "Model!BB29",
+        "depth_m": "Model!BB30",
+        "speed_kn": "Model!BB31",
+        "dwt_t": "Model!BB39",
+        "gt": "Model!BB37",
+        "me_kw": "Model!BB33",
+        "ae_kw": "Model!BB34",
+        "imo": "Data Kapal!C20",
+        "classification": "Data Kapal!E20",
+        "lpp_m": "Data Kapal!F20",
+        "model_id": "Kapal 17 (Model!BB24)"
+      },
+      "id": "ship.adelante",
+      "name": "ADELANTE",
+      "ship_type": "bulk_carrier",
+      "imo": "9597109",
+      "classification": "ClassNK",
+      "lpp_m": 223.0,
+      "loa_m": 229.0,
+      "beam_m": 32.26,
+      "draft_m": 12.88,
+      "depth_m": 20.2,
+      "speed_kn": 16.3,
+      "dwt_t": 81585.0,
+      "gt": 44544.0,
+      "me_kw": 10170.0,
+      "ae_kw": 5085.0
+    },
+    {
+      "refs": {
+        "name": "Model!BC25",
+        "loa_m": "Model!BC27",
+        "beam_m": "Model!BC28",
+        "draft_m": "Model!BC29",
+        "depth_m": "Model!BC30",
+        "speed_kn": "Model!BC31",
+        "dwt_t": "Model!BC39",
+        "gt": "Model!BC37",
+        "me_kw": "Model!BC33",
+        "ae_kw": "Model!BC34",
+        "imo": "Data Kapal!C21",
+        "classification": "Data Kapal!E21",
+        "lpp_m": "Data Kapal!F21",
+        "model_id": "Kapal 18 (Model!BC24)"
+      },
+      "id": "ship.ac_anhe",
+      "name": "AC ANHE",
+      "ship_type": "bulk_carrier",
+      "imo": "9259159",
+      "classification": "ClassNK",
+      "lpp_m": 240.0,
+      "loa_m": 249.0,
+      "beam_m": 43.0,
+      "draft_m": 12.11,
+      "depth_m": 18.7,
+      "speed_kn": 16.2,
+      "dwt_t": 91860.0,
+      "gt": 55327.0,
+      "me_kw": 12240.0,
+      "ae_kw": 6120.0
+    },
+    {
+      "refs": {
+        "name": "Model!BD25",
+        "loa_m": "Model!BD27",
+        "beam_m": "Model!BD28",
+        "draft_m": "Model!BD29",
+        "depth_m": "Model!BD30",
+        "speed_kn": "Model!BD31",
+        "dwt_t": "Model!BD39",
+        "gt": "Model!BD37",
+        "me_kw": "Model!BD33",
+        "ae_kw": "Model!BD34",
+        "imo": "Data Kapal!C32",
+        "classification": "Data Kapal!E32",
+        "lpp_m": "Data Kapal!F32",
+        "model_id": "Kapal 19 (Model!BD24)"
+      },
+      "id": "ship.bmi_express",
+      "name": "BMI EXPRESS",
+      "ship_type": "container_ship",
+      "imo": "9207261",
+      "classification": "ClassNK",
+      "lpp_m": 104.9,
+      "loa_m": 113.8,
+      "beam_m": 16.2,
+      "draft_m": 7.01,
+      "depth_m": 8.8,
+      "speed_kn": 15.5,
+      "dwt_t": 6252.0,
+      "gt": 4721.0,
+      "me_kw": 4200.0,
+      "ae_kw": 2100.0
+    },
+    {
+      "refs": {
+        "name": "Model!BE25",
+        "loa_m": "Model!BE27",
+        "beam_m": "Model!BE28",
+        "draft_m": "Model!BE29",
+        "depth_m": "Model!BE30",
+        "speed_kn": "Model!BE31",
+        "dwt_t": "Model!BE39",
+        "gt": "Model!BE37",
+        "me_kw": "Model!BE33",
+        "ae_kw": "Model!BE34",
+        "imo": "Data Kapal!C33",
+        "classification": "Data Kapal!E33",
+        "lpp_m": "Data Kapal!F33",
+        "model_id": "Kapal 20 (Model!BE24)"
+      },
+      "id": "ship.harbour_express",
+      "name": "HARBOUR EXPRESS",
+      "ship_type": "container_ship",
+      "imo": "9176503",
+      "classification": "ClassNK",
+      "lpp_m": 113.6,
+      "loa_m": 123.57,
+      "beam_m": 18.5,
+      "draft_m": 8.014,
+      "depth_m": 11.0,
+      "speed_kn": 17.8,
+      "dwt_t": 8888.0,
+      "gt": 6775.0,
+      "me_kw": 5979.0,
+      "ae_kw": 2989.5
+    },
+    {
+      "refs": {
+        "name": "Model!BF25",
+        "loa_m": "Model!BF27",
+        "beam_m": "Model!BF28",
+        "draft_m": "Model!BF29",
+        "depth_m": "Model!BF30",
+        "speed_kn": "Model!BF31",
+        "dwt_t": "Model!BF39",
+        "gt": "Model!BF37",
+        "me_kw": "Model!BF33",
+        "ae_kw": "Model!BF34",
+        "imo": "Data Kapal!C34",
+        "classification": "Data Kapal!E34",
+        "lpp_m": "Data Kapal!F34",
+        "model_id": "Kapal 21 (Model!BF24)"
+      },
+      "id": "ship.pacific_express",
+      "name": "PACIFIC EXPRESS",
+      "ship_type": "container_ship",
+      "imo": "9167851",
+      "classification": "ClassNK",
+      "lpp_m": 119.04,
+      "loa_m": 128.5,
+      "beam_m": 22.4,
+      "draft_m": 8.222,
+      "depth_m": 11.2,
+      "speed_kn": 18.4,
+      "dwt_t": 11117.0,
+      "gt": 8333.0,
+      "me_kw": 7355.0,
+      "ae_kw": 3677.5
+    },
+    {
+      "refs": {
+        "name": "Model!BG25",
+        "loa_m": "Model!BG27",
+        "beam_m": "Model!BG28",
+        "draft_m": "Model!BG29",
+        "depth_m": "Model!BG30",
+        "speed_kn": "Model!BG31",
+        "dwt_t": "Model!BG39",
+        "gt": "Model!BG37",
+        "me_kw": "Model!BG33",
+        "ae_kw": "Model!BG34",
+        "imo": "Data Kapal!C35",
+        "classification": "Data Kapal!E35",
+        "lpp_m": "Data Kapal!F35",
+        "model_id": "Kapal 22 (Model!BG24)"
+      },
+      "id": "ship.seaboard_galaxy",
+      "name": "SEABOARD GALAXY",
+      "ship_type": "container_ship",
+      "imo": "9970959",
+      "classification": "ABS",
+      "lpp_m": 163.55,
+      "loa_m": 172.07,
+      "beam_m": 27.4,
+      "draft_m": 8.75,
+      "depth_m": 14.3,
+      "speed_kn": 20.0,
+      "dwt_t": 22614.0,
+      "gt": 17955.0,
+      "me_kw": 10920.0,
+      "ae_kw": 5460.0
+    },
+    {
+      "refs": {
+        "name": "Model!BH25",
+        "loa_m": "Model!BH27",
+        "beam_m": "Model!BH28",
+        "draft_m": "Model!BH29",
+        "depth_m": "Model!BH30",
+        "speed_kn": "Model!BH31",
+        "dwt_t": "Model!BH39",
+        "gt": "Model!BH37",
+        "me_kw": "Model!BH33",
+        "ae_kw": "Model!BH34",
+        "imo": "Data Kapal!C36",
+        "classification": "Data Kapal!E36",
+        "lpp_m": "Data Kapal!F36",
+        "model_id": "Kapal 23 (Model!BH24)"
+      },
+      "id": "ship.uni_promote",
+      "name": "UNI-PROMOTE",
+      "ship_type": "container_ship",
+      "imo": "9202211",
+      "classification": "ClassNK",
+      "lpp_m": 170.0,
+      "loa_m": 181.76,
+      "beam_m": 28.0,
+      "draft_m": 9.019,
+      "depth_m": 13.9,
+      "speed_kn": 20.9,
+      "dwt_t": 19311.0,
+      "gt": 17887.0,
+      "me_kw": 10914.0,
+      "ae_kw": 5457.0
+    },
+    {
+      "refs": {
+        "name": "Model!BI25",
+        "loa_m": "Model!BI27",
+        "beam_m": "Model!BI28",
+        "draft_m": "Model!BI29",
+        "depth_m": "Model!BI30",
+        "speed_kn": "Model!BI31",
+        "dwt_t": "Model!BI39",
+        "gt": "Model!BI37",
+        "me_kw": "Model!BI33",
+        "ae_kw": "Model!BI34",
+        "imo": "Data Kapal!C37",
+        "classification": "Data Kapal!E37",
+        "lpp_m": "Data Kapal!F37",
+        "model_id": "Kapal 24 (Model!BI24)"
+      },
+      "id": "ship.ever_boomy",
+      "name": "EVER BOOMY",
+      "ship_type": "container_ship",
+      "imo": "9787015",
+      "classification": "ABS",
+      "lpp_m": 206.9,
+      "loa_m": 211.9,
+      "beam_m": 32.8,
+      "draft_m": 10.0,
+      "depth_m": 16.8,
+      "speed_kn": 21.8,
+      "dwt_t": 37301.0,
+      "gt": 32659.0,
+      "me_kw": 24260.0,
+      "ae_kw": 12130.0
+    },
+    {
+      "refs": {
+        "name": "Model!BJ25",
+        "loa_m": "Model!BJ27",
+        "beam_m": "Model!BJ28",
+        "draft_m": "Model!BJ29",
+        "depth_m": "Model!BJ30",
+        "speed_kn": "Model!BJ31",
+        "dwt_t": "Model!BJ39",
+        "gt": "Model!BJ37",
+        "me_kw": "Model!BJ33",
+        "ae_kw": "Model!BJ34",
+        "imo": "Data Kapal!C38",
+        "classification": "Data Kapal!E38",
+        "lpp_m": "Data Kapal!F38",
+        "model_id": "Kapal 25 (Model!BJ24)"
+      },
+      "id": "ship.ever_excel",
+      "name": "EVER EXCEL",
+      "ship_type": "container_ship",
+      "imo": "9241322",
+      "classification": "ABS",
+      "lpp_m": 283.0,
+      "loa_m": 299.99,
+      "beam_m": 42.8,
+      "draft_m": 13.5,
+      "depth_m": 24.2,
+      "speed_kn": 24.5,
+      "dwt_t": 75801.0,
+      "gt": 77712.0,
+      "me_kw": 48600.0,
+      "ae_kw": 24300.0
+    },
+    {
+      "refs": {
+        "name": "Model!BK25",
+        "loa_m": "Model!BK27",
+        "beam_m": "Model!BK28",
+        "draft_m": "Model!BK29",
+        "depth_m": "Model!BK30",
+        "speed_kn": "Model!BK31",
+        "dwt_t": "Model!BK39",
+        "gt": "Model!BK37",
+        "me_kw": "Model!BK33",
+        "ae_kw": "Model!BK34",
+        "imo": "Data Kapal!C39",
+        "classification": "Data Kapal!E39",
+        "lpp_m": "Data Kapal!F39",
+        "model_id": "Kapal 26 (Model!BK24)"
+      },
+      "id": "ship.ever_steady",
+      "name": "EVER STEADY",
+      "ship_type": "container_ship",
+      "imo": "9300439",
+      "classification": "ABS",
+      "lpp_m": 285.0,
+      "loa_m": 300.0,
+      "beam_m": 42.8,
+      "draft_m": 14.2,
+      "depth_m": 24.2,
+      "speed_kn": 25.3,
+      "dwt_t": 78664.0,
+      "gt": 79198.37,
+      "me_kw": 54900.0,
+      "ae_kw": 27450.0
+    },
+    {
+      "refs": {
+        "name": "Model!BL25",
+        "loa_m": "Model!BL27",
+        "beam_m": "Model!BL28",
+        "draft_m": "Model!BL29",
+        "depth_m": "Model!BL30",
+        "speed_kn": "Model!BL31",
+        "dwt_t": "Model!BL39",
+        "gt": "Model!BL37",
+        "me_kw": "Model!BL33",
+        "ae_kw": "Model!BL34",
+        "imo": "Data Kapal!C40",
+        "classification": "Data Kapal!E40",
+        "lpp_m": "Data Kapal!F40",
+        "model_id": "Kapal 27 (Model!BL24)"
+      },
+      "id": "ship.als_ceres",
+      "name": "ALS CERES",
+      "ship_type": "container_ship",
+      "imo": "9938303",
+      "classification": "ABS",
+      "lpp_m": 250.5,
+      "loa_m": 255.0,
+      "beam_m": 42.8,
+      "draft_m": 14.2,
+      "depth_m": 24.6,
+      "speed_kn": 25.3,
+      "dwt_t": 82488.7,
+      "gt": 72896.0,
+      "me_kw": 25600.0,
+      "ae_kw": 12800.0
+    },
+    {
+      "refs": {
+        "name": "Model!BM25",
+        "loa_m": "Model!BM27",
+        "beam_m": "Model!BM28",
+        "draft_m": "Model!BM29",
+        "depth_m": "Model!BM30",
+        "speed_kn": "Model!BM31",
+        "dwt_t": "Model!BM39",
+        "gt": "Model!BM37",
+        "me_kw": "Model!BM33",
+        "ae_kw": "Model!BM34",
+        "teu_capacity": "Model!BM26",
+        "imo": "Data Kapal!C41",
+        "model_id": "Kapal 28 (Model!BM24)"
+      },
+      "note": "Kapasitas TEU riil dari K15 (600 TEU); rumus turunan akan memberi 445.",
+      "id": "ship.tanto_selalu",
+      "name": "TANTO SELALU",
+      "ship_type": "container_ship",
+      "imo": "9816452",
+      "loa_m": 129.9,
+      "beam_m": 22.8,
+      "draft_m": 5.8,
+      "depth_m": 8.3,
+      "speed_kn": 10.8,
+      "dwt_t": 10489.0,
+      "teu_capacity": 600,
+      "gt": 8075.0,
+      "me_kw": 4410.07,
+      "ae_kw": 2873.5
+    },
+    {
+      "refs": {
+        "name": "Model!BN25",
+        "loa_m": "Model!BN27",
+        "beam_m": "Model!BN28",
+        "draft_m": "Model!BN29",
+        "depth_m": "Model!BN30",
+        "speed_kn": "Model!BN31",
+        "dwt_t": "Model!BN39",
+        "gt": "Model!BN37",
+        "me_kw": "Model!BN33",
+        "ae_kw": "Model!BN34",
+        "teu_capacity": "Model!BN26",
+        "imo": "Data Kapal!C42",
+        "model_id": "Kapal 29 (Model!BN24)"
+      },
+      "note": "Kapasitas TEU riil dari K15 (3100 TEU); rumus turunan akan memberi 1838.",
+      "id": "ship.maersk_brani",
+      "name": "MAERSK BRANI",
+      "ship_type": "container_ship",
+      "imo": "9409352",
+      "loa_m": 223.3,
+      "beam_m": 32.2,
+      "draft_m": 10.8,
+      "depth_m": 19.3,
+      "speed_kn": 14.3,
+      "dwt_t": 43268.8,
+      "teu_capacity": 3100,
+      "gt": 35835.0,
+      "me_kw": 29231.0,
+      "ae_kw": 2055.0
+    },
+    {
+      "refs": {
+        "name": "Model!BO25",
+        "loa_m": "Model!BO27",
+        "beam_m": "Model!BO28",
+        "draft_m": "Model!BO29",
+        "depth_m": "Model!BO30",
+        "speed_kn": "Model!BO31",
+        "dwt_t": "Model!BO39",
+        "gt": "Model!BO37",
+        "me_kw": "Model!BO33",
+        "ae_kw": "Model!BO34",
+        "teu_capacity": "Model!BO26",
+        "imo": "Data Kapal!C43",
+        "lpp_m": "Data Kapal!F43",
+        "model_id": "Kapal 30 (Model!BO24)"
+      },
+      "note": "Kapasitas TEU riil dari K15 (2858 TEU); rumus turunan akan memberi 1681.",
+      "id": "ship.acx_crystal",
+      "name": "ACX CRYSTAL",
+      "ship_type": "container_ship",
+      "imo": "9360611",
+      "lpp_m": 211.5,
+      "loa_m": 222.6,
+      "beam_m": 30.1,
+      "draft_m": 12.018,
+      "depth_m": 16.8,
+      "speed_kn": 25.3,
+      "dwt_t": 39565.0,
+      "teu_capacity": 2858,
+      "gt": 29060.0,
+      "me_kw": 28880.0,
+      "ae_kw": 8225.0
+    },
+    {
+      "refs": {
+        "name": "Model!BP25",
+        "loa_m": "Model!BP27",
+        "beam_m": "Model!BP28",
+        "draft_m": "Model!BP29",
+        "depth_m": "Model!BP30",
+        "speed_kn": "Model!BP31",
+        "dwt_t": "Model!BP39",
+        "gt": "Model!BP37",
+        "me_kw": "Model!BP33",
+        "ae_kw": "Model!BP34",
+        "teu_capacity": "Model!BP26",
+        "imo": "Data Kapal!C44",
+        "lpp_m": "Data Kapal!F44",
+        "model_id": "Kapal 31 (Model!BP24)"
+      },
+      "note": "Kapasitas TEU riil dari K15 (1708 TEU); rumus turunan akan memberi 914.",
+      "id": "ship.integra",
+      "name": "INTEGRA",
+      "ship_type": "container_ship",
+      "imo": "9730854",
+      "lpp_m": 169.83,
+      "loa_m": 171.99,
+      "beam_m": 27.6,
+      "draft_m": 8.5,
+      "depth_m": 14.0,
+      "speed_kn": 19.5,
+      "dwt_t": 21512.0,
+      "teu_capacity": 1708,
+      "gt": 17200.0,
+      "me_kw": 12050.0,
+      "ae_kw": 1280.0
+    },
+    {
+      "refs": {
+        "name": "Model!BQ25",
+        "loa_m": "Model!BQ27",
+        "beam_m": "Model!BQ28",
+        "draft_m": "Model!BQ29",
+        "depth_m": "Model!BQ30",
+        "speed_kn": "Model!BQ31",
+        "dwt_t": "Model!BQ39",
+        "gt": "Model!BQ37",
+        "me_kw": "Model!BQ33",
+        "ae_kw": "Model!BQ34",
+        "teu_capacity": "Model!BQ26",
+        "imo": "Data Kapal!C45",
+        "lpp_m": "Data Kapal!F45",
+        "model_id": "Kapal 32 (Model!BQ24)"
+      },
+      "note": "Kapasitas TEU riil dari K15 (2926 TEU); rumus turunan akan memberi 1609.",
+      "id": "ship.ever_bliss",
+      "name": "EVER BLISS",
+      "ship_type": "container_ship",
+      "imo": "9786932",
+      "lpp_m": 206.92,
+      "loa_m": 211.9,
+      "beam_m": 32.8,
+      "draft_m": 10.0,
+      "depth_m": 16.8,
+      "speed_kn": 22.43,
+      "dwt_t": 37872.0,
+      "teu_capacity": 2926,
+      "gt": 32659.0,
+      "me_kw": 24260.0,
+      "ae_kw": 1400.0
+    },
+    {
+      "refs": {
+        "name": "Model!BR25",
+        "loa_m": "Model!BR27",
+        "beam_m": "Model!BR28",
+        "draft_m": "Model!BR29",
+        "depth_m": "Model!BR30",
+        "speed_kn": "Model!BR31",
+        "dwt_t": "Model!BR39",
+        "gt": "Model!BR37",
+        "me_kw": "Model!BR33",
+        "ae_kw": "Model!BR34",
+        "imo": "Data Kapal!C4",
+        "classification": "Data Kapal!E4",
+        "lpp_m": "Data Kapal!F4",
+        "model_id": "Kapal 33 (Model!BR24)"
+      },
+      "id": "ship.gemini_dream",
+      "name": "GEMINI DREAM",
+      "ship_type": "general_cargo_ship",
+      "imo": "9565871",
+      "classification": "ClassNK",
+      "lpp_m": 104.0,
+      "loa_m": 110.0,
+      "beam_m": 18.0,
+      "draft_m": 8.0,
+      "depth_m": 12.7,
+      "speed_kn": 15.0,
+      "dwt_t": 8788.0,
+      "gt": 7057.0,
+      "me_kw": 3250.0,
+      "ae_kw": 1625.0
+    },
+    {
+      "refs": {
+        "name": "Model!BS25",
+        "loa_m": "Model!BS27",
+        "beam_m": "Model!BS28",
+        "draft_m": "Model!BS29",
+        "depth_m": "Model!BS30",
+        "speed_kn": "Model!BS31",
+        "dwt_t": "Model!BS39",
+        "gt": "Model!BS37",
+        "me_kw": "Model!BS33",
+        "ae_kw": "Model!BS34",
+        "imo": "Data Kapal!C5",
+        "classification": "Data Kapal!E5",
+        "lpp_m": "Data Kapal!F5",
+        "model_id": "Kapal 34 (Model!BS24)"
+      },
+      "id": "ship.ashico_victoria",
+      "name": "ASHICO VICTORIA",
+      "ship_type": "general_cargo_ship",
+      "imo": "9522867",
+      "classification": "ClassNK",
+      "lpp_m": 96.5,
+      "loa_m": 103.64,
+      "beam_m": 18.8,
+      "draft_m": 9.065,
+      "depth_m": 13.2,
+      "speed_kn": 15.0,
+      "dwt_t": 10071.0,
+      "gt": 6732.0,
+      "me_kw": 3640.0,
+      "ae_kw": 1820.0
+    },
+    {
+      "refs": {
+        "name": "Model!BT25",
+        "loa_m": "Model!BT27",
+        "beam_m": "Model!BT28",
+        "draft_m": "Model!BT29",
+        "depth_m": "Model!BT30",
+        "speed_kn": "Model!BT31",
+        "dwt_t": "Model!BT39",
+        "gt": "Model!BT37",
+        "me_kw": "Model!BT33",
+        "ae_kw": "Model!BT34",
+        "imo": "Data Kapal!C6",
+        "classification": "Data Kapal!E6",
+        "lpp_m": "Data Kapal!F6",
+        "model_id": "Kapal 35 (Model!BT24)"
+      },
+      "id": "ship.al_amal",
+      "name": "AL AMAL",
+      "ship_type": "general_cargo_ship",
+      "imo": "9178094",
+      "classification": "ClassNK",
+      "lpp_m": 105.4,
+      "loa_m": 113.22,
+      "beam_m": 19.6,
+      "draft_m": 8.619,
+      "depth_m": 13.2,
+      "speed_kn": 15.8,
+      "dwt_t": 11308.0,
+      "gt": 7762.0,
+      "me_kw": 3883.0,
+      "ae_kw": 1941.5
+    },
+    {
+      "refs": {
+        "name": "Model!BU25",
+        "loa_m": "Model!BU27",
+        "beam_m": "Model!BU28",
+        "draft_m": "Model!BU29",
+        "depth_m": "Model!BU30",
+        "speed_kn": "Model!BU31",
+        "dwt_t": "Model!BU39",
+        "gt": "Model!BU37",
+        "me_kw": "Model!BU33",
+        "ae_kw": "Model!BU34",
+        "imo": "Data Kapal!C7",
+        "classification": "Data Kapal!E7",
+        "lpp_m": "Data Kapal!F7",
+        "model_id": "Kapal 36 (Model!BU24)"
+      },
+      "id": "ship.21_panda",
+      "name": "21 PANDA",
+      "ship_type": "general_cargo_ship",
+      "imo": "9477608",
+      "classification": "ClassNK",
+      "lpp_m": 111.5,
+      "loa_m": 120.0,
+      "beam_m": 20.0,
+      "draft_m": 8.9,
+      "depth_m": 14.3,
+      "speed_kn": 15.7,
+      "dwt_t": 13007.0,
+      "gt": 9680.0,
+      "me_kw": 4200.0,
+      "ae_kw": 2100.0
+    },
+    {
+      "refs": {
+        "name": "Model!BV25",
+        "loa_m": "Model!BV27",
+        "beam_m": "Model!BV28",
+        "draft_m": "Model!BV29",
+        "depth_m": "Model!BV30",
+        "speed_kn": "Model!BV31",
+        "dwt_t": "Model!BV39",
+        "gt": "Model!BV37",
+        "me_kw": "Model!BV33",
+        "ae_kw": "Model!BV34",
+        "imo": "Data Kapal!C8",
+        "classification": "Data Kapal!E8",
+        "lpp_m": "Data Kapal!F8",
+        "model_id": "Kapal 37 (Model!BV24)"
+      },
+      "id": "ship.simas",
+      "name": "SIMAS",
+      "ship_type": "general_cargo_ship",
+      "imo": "9000314",
+      "classification": "ClassNK",
+      "lpp_m": 140.0,
+      "loa_m": 149.0,
+      "beam_m": 23.0,
+      "draft_m": 8.52,
+      "depth_m": 10.5,
+      "speed_kn": 16.3,
+      "dwt_t": 17012.0,
+      "gt": 11878.0,
+      "me_kw": 5295.0,
+      "ae_kw": 2647.5
+    },
+    {
+      "refs": {
+        "name": "Model!BW25",
+        "loa_m": "Model!BW27",
+        "beam_m": "Model!BW28",
+        "draft_m": "Model!BW29",
+        "depth_m": "Model!BW30",
+        "speed_kn": "Model!BW31",
+        "dwt_t": "Model!BW39",
+        "gt": "Model!BW37",
+        "me_kw": "Model!BW33",
+        "ae_kw": "Model!BW34",
+        "imo": "Data Kapal!C9",
+        "classification": "Data Kapal!E9",
+        "lpp_m": "Data Kapal!F9",
+        "model_id": "Kapal 38 (Model!BW24)"
+      },
+      "id": "ship.han_ren",
+      "name": "HAN REN",
+      "ship_type": "general_cargo_ship",
+      "imo": "9651955",
+      "classification": "ClassNK",
+      "lpp_m": 136.0,
+      "loa_m": 146.0,
+      "beam_m": 25.0,
+      "draft_m": 9.77,
+      "depth_m": 16.0,
+      "speed_kn": 16.3,
+      "dwt_t": 20107.0,
+      "gt": 15608.0,
+      "me_kw": 5000.0,
+      "ae_kw": 2500.0
+    },
+    {
+      "refs": {
+        "name": "Model!BX25",
+        "loa_m": "Model!BX27",
+        "beam_m": "Model!BX28",
+        "draft_m": "Model!BX29",
+        "depth_m": "Model!BX30",
+        "speed_kn": "Model!BX31",
+        "dwt_t": "Model!BX39",
+        "gt": "Model!BX37",
+        "me_kw": "Model!BX33",
+        "ae_kw": "Model!BX34",
+        "imo": "Data Kapal!C10",
+        "classification": "Data Kapal!E10",
+        "lpp_m": "Data Kapal!F10",
+        "model_id": "Kapal 39 (Model!BX24)"
+      },
+      "id": "ship.pacific_spike",
+      "name": "PACIFIC SPIKE",
+      "ship_type": "general_cargo_ship",
+      "imo": "9681998",
+      "classification": "ClassNK",
+      "lpp_m": 187.0,
+      "loa_m": 190.0,
+      "beam_m": 28.0,
+      "draft_m": 8.03,
+      "depth_m": 14.0,
+      "speed_kn": 15.1,
+      "dwt_t": 24041.0,
+      "gt": 20506.0,
+      "me_kw": 5100.0,
+      "ae_kw": 2550.0
+    },
+    {
+      "refs": {
+        "name": "Model!BY25",
+        "loa_m": "Model!BY27",
+        "beam_m": "Model!BY28",
+        "draft_m": "Model!BY29",
+        "depth_m": "Model!BY30",
+        "speed_kn": "Model!BY31",
+        "dwt_t": "Model!BY39",
+        "gt": "Model!BY37",
+        "me_kw": "Model!BY33",
+        "ae_kw": "Model!BY34",
+        "imo": "Data Kapal!C11",
+        "classification": "Data Kapal!E11",
+        "lpp_m": "Data Kapal!F11",
+        "model_id": "Kapal 40 (Model!BY24)"
+      },
+      "id": "ship.aetos",
+      "name": "AETOS",
+      "ship_type": "general_cargo_ship",
+      "imo": "9527960",
+      "classification": "ClassNK",
+      "lpp_m": 177.0,
+      "loa_m": 184.75,
+      "beam_m": 30.0,
+      "draft_m": 10.02,
+      "depth_m": 14.5,
+      "speed_kn": 15.6,
+      "dwt_t": 38395.0,
+      "gt": 23853.0,
+      "me_kw": 6780.0,
+      "ae_kw": 3390.0
+    },
+    {
+      "refs": {
+        "name": "Model!BZ25",
+        "loa_m": "Model!BZ27",
+        "beam_m": "Model!BZ28",
+        "draft_m": "Model!BZ29",
+        "depth_m": "Model!BZ30",
+        "speed_kn": "Model!BZ31",
+        "dwt_t": "Model!BZ39",
+        "gt": "Model!BZ37",
+        "me_kw": "Model!BZ33",
+        "ae_kw": "Model!BZ34",
+        "imo": "Data Kapal!C12",
+        "classification": "Data Kapal!E12",
+        "lpp_m": "Data Kapal!F12",
+        "model_id": "Kapal 41 (Model!BZ24)"
+      },
+      "id": "ship.acer_arrow",
+      "name": "ACER ARROW",
+      "ship_type": "general_cargo_ship",
+      "imo": "9720043",
+      "classification": "ClassNK",
+      "lpp_m": 197.0,
+      "loa_m": 199.9,
+      "beam_m": 32.24,
+      "draft_m": 13.03,
+      "depth_m": 18.6,
+      "speed_kn": 16.0,
+      "dwt_t": 61066.0,
+      "gt": 35503.0,
+      "me_kw": 8130.0,
+      "ae_kw": 4065.0
+    }
+  ],
+  "equipment": [
+    {
+      "refs": {
+        "name": "Alat BM!C6",
+        "prod_unload_t": "Alat BM!C7",
+        "prod_unload_box": "Alat BM!C8",
+        "prod_load_t": "Alat BM!C9",
+        "prod_load_box": "Alat BM!C10",
+        "price_usd": "Alat BM!C13",
+        "reach_m": "Alat BM!C11",
+        "lift_t": "Alat BM!C12"
+      },
+      "id": "eq.liebherr_lhm_180",
+      "name": "Liebherr LHM 180",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 90000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C7",
+            "load": "Alat BM!C9"
+          },
+          "unload": 800.0,
+          "load": 800.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C7",
+            "load": "Alat BM!C9"
+          },
+          "unload": 800.0,
+          "load": 800.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C8",
+            "load": "Alat BM!C10"
+          },
+          "unload": 35.0,
+          "load": 35.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 35.0,
+      "lift_t": 64.0,
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!C18",
+        "prod_unload_t": "Alat BM!C19",
+        "prod_unload_box": "Alat BM!C20",
+        "prod_load_t": "Alat BM!C21",
+        "prod_load_box": "Alat BM!C22",
+        "price_usd": "Alat BM!C25",
+        "reach_m": "Alat BM!C23",
+        "lift_t": "Alat BM!C24"
+      },
+      "id": "eq.liebherr_lhm_280",
+      "name": "Liebherr LHM 280",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 150000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C19",
+            "load": "Alat BM!C21"
+          },
+          "unload": 1000.0,
+          "load": 1000.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C19",
+            "load": "Alat BM!C21"
+          },
+          "unload": 1000.0,
+          "load": 1000.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C20",
+            "load": "Alat BM!C22"
+          },
+          "unload": 35.0,
+          "load": 35.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 40.0,
+      "lift_t": 84.0,
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!C30",
+        "prod_unload_t": "Alat BM!C31",
+        "prod_unload_box": "Alat BM!C32",
+        "prod_load_t": "Alat BM!C33",
+        "prod_load_box": "Alat BM!C34",
+        "price_usd": "Alat BM!C37",
+        "reach_m": "Alat BM!C35",
+        "lift_t": "Alat BM!C36"
+      },
+      "id": "eq.liebherr_lhm_420",
+      "name": "Liebherr LHM 420",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 220000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C31",
+            "load": "Alat BM!C33"
+          },
+          "unload": 1500.0,
+          "load": 1500.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C31",
+            "load": "Alat BM!C33"
+          },
+          "unload": 1500.0,
+          "load": 1500.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C32",
+            "load": "Alat BM!C34"
+          },
+          "unload": 38.0,
+          "load": 38.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 48.0,
+      "lift_t": 124.0,
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!C42",
+        "prod_unload_t": "Alat BM!C43",
+        "prod_unload_box": "Alat BM!C44",
+        "prod_load_t": "Alat BM!C45",
+        "prod_load_box": "Alat BM!C46",
+        "price_usd": "Alat BM!C49",
+        "reach_m": "Alat BM!C47",
+        "lift_t": "Alat BM!C48"
+      },
+      "id": "eq.liebherr_lhm_550",
+      "name": "Liebherr LHM 550",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 280000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C43",
+            "load": "Alat BM!C45"
+          },
+          "unload": 1500.0,
+          "load": 1500.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C43",
+            "load": "Alat BM!C45"
+          },
+          "unload": 1500.0,
+          "load": 1500.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C44",
+            "load": "Alat BM!C46"
+          },
+          "unload": 38.0,
+          "load": 38.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 54.0,
+      "lift_t": 154.0,
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!C54",
+        "prod_unload_t": "Alat BM!C55",
+        "prod_unload_box": "Alat BM!C56",
+        "prod_load_t": "Alat BM!C57",
+        "prod_load_box": "Alat BM!C58",
+        "price_usd": "Alat BM!C61",
+        "reach_m": "Alat BM!C59",
+        "lift_t": "Alat BM!C60"
+      },
+      "id": "eq.liebherr_lhm_600",
+      "name": "Liebherr LHM 600",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 370000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C55",
+            "load": "Alat BM!C57"
+          },
+          "unload": 2000.0,
+          "load": 2000.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C55",
+            "load": "Alat BM!C57"
+          },
+          "unload": 2000.0,
+          "load": 2000.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C56",
+            "load": "Alat BM!C58"
+          },
+          "unload": 38.0,
+          "load": 38.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 61.0,
+      "lift_t": 208.0,
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!C66",
+        "prod_unload_t": "Alat BM!C67",
+        "prod_unload_box": "Alat BM!C68",
+        "prod_load_t": "Alat BM!C69",
+        "prod_load_box": "Alat BM!C70",
+        "price_usd": "Alat BM!C73",
+        "reach_m": "Alat BM!C71",
+        "lift_t": "Alat BM!C72"
+      },
+      "note": "Ada di sheet Alat BM, tidak dipakai sheet Model (Alat 1–10).",
+      "id": "eq.liebherr_lhm_800",
+      "name": "Liebherr LHM 800",
+      "kind": "HMC",
+      "terminal_id": "MP",
+      "price_usd": 450000.0,
+      "productivity": {
+        "GC": {
+          "refs": {
+            "unload": "Alat BM!C67",
+            "load": "Alat BM!C69"
+          },
+          "unload": 2300.0,
+          "load": 2300.0,
+          "unit": "t/h"
+        },
+        "CK": {
+          "refs": {
+            "unload": "Alat BM!C67",
+            "load": "Alat BM!C69"
+          },
+          "unload": 2300.0,
+          "load": 2300.0,
+          "unit": "t/h"
+        },
+        "PK": {
+          "refs": {
+            "unload": "Alat BM!C68",
+            "load": "Alat BM!C70"
+          },
+          "unload": 48.0,
+          "load": 48.0,
+          "unit": "box/h"
+        }
+      },
+      "reach_m": 64.0,
+      "lift_t": 308.0,
+      "in_reference_model": false
+    },
+    {
+      "refs": {
+        "name": "Alat BM!J6",
+        "price_usd": "Alat BM!J9",
+        "prod_unload_t": "Alat BM!J7",
+        "prod_load_t": "Alat BM!J8"
+      },
+      "id": "eq.emco_wheaton_b0030_16",
+      "name": "EMCO Wheaton - B0030 16''",
+      "kind": "MLA",
+      "terminal_id": "CC",
+      "price_usd": 550000.0,
+      "productivity": {
+        "CC": {
+          "refs": {
+            "unload": "Alat BM!J7",
+            "load": "Alat BM!J8"
+          },
+          "unload": 3400.0,
+          "load": 3400.0,
+          "unit": "t/h"
+        }
+      },
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!J14",
+        "price_usd": "Alat BM!J17",
+        "prod_unload_t": "Alat BM!J15",
+        "prod_load_t": "Alat BM!J16"
+      },
+      "id": "eq.emco_wheaton_b0300_12",
+      "name": "EMCO Wheaton - B0300 12''",
+      "kind": "MLA",
+      "terminal_id": "CC",
+      "price_usd": 400000.0,
+      "productivity": {
+        "CC": {
+          "refs": {
+            "unload": "Alat BM!J15",
+            "load": "Alat BM!J16"
+          },
+          "unload": 2125.0,
+          "load": 2125.0,
+          "unit": "t/h"
+        }
+      },
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!J22",
+        "price_usd": "Alat BM!J25",
+        "prod_unload_t": "Alat BM!J23",
+        "prod_load_t": "Alat BM!J24"
+      },
+      "id": "eq.emco_wheaton_b0300_10",
+      "name": "EMCO Wheaton - B0300 10''",
+      "kind": "MLA",
+      "terminal_id": "CC",
+      "price_usd": 300000.0,
+      "productivity": {
+        "CC": {
+          "refs": {
+            "unload": "Alat BM!J23",
+            "load": "Alat BM!J24"
+          },
+          "unload": 1445.0,
+          "load": 1445.0,
+          "unit": "t/h"
+        }
+      },
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!J30",
+        "price_usd": "Alat BM!J33",
+        "prod_unload_t": "Alat BM!J31",
+        "prod_load_t": "Alat BM!J32"
+      },
+      "id": "eq.shanghai_eminent_dn350_14",
+      "name": "Shanghai Eminent - DN350 (14'')",
+      "kind": "MLA",
+      "terminal_id": "CC",
+      "price_usd": 450000.0,
+      "productivity": {
+        "CC": {
+          "refs": {
+            "unload": "Alat BM!J31",
+            "load": "Alat BM!J32"
+          },
+          "unload": 2720.0,
+          "load": 2720.0,
+          "unit": "t/h"
+        }
+      },
+      "in_reference_model": true
+    },
+    {
+      "refs": {
+        "name": "Alat BM!J38",
+        "price_usd": "Alat BM!J41",
+        "prod_unload_t": "Alat BM!J39",
+        "prod_load_t": "Alat BM!J40"
+      },
+      "id": "eq.shanghai_eminent_dn350_10",
+      "name": "Shanghai Eminent - DN350 (10'')",
+      "kind": "MLA",
+      "terminal_id": "CC",
+      "price_usd": 320000.0,
+      "productivity": {
+        "CC": {
+          "refs": {
+            "unload": "Alat BM!J39",
+            "load": "Alat BM!J40"
+          },
+          "unload": 1487.5,
+          "load": 1487.5,
+          "unit": "t/h"
+        }
+      },
+      "in_reference_model": true
+    }
+  ],
+  "equipment_rules": {
+    "refs": {
+      "MP": "Model!CH37",
+      "CC": "Model!CC22"
+    },
+    "note": "K15 Model!CC23 memakai ⌈LOA_maks / radius alat⌉ (maks 4) untuk jumlah alat per tambatan; keputusan A10 memakai tabel rentang LOA.",
+    "loa_bands": [
+      {
+        "refs": {
+          "loa_min_m": "Model!CF34",
+          "loa_max_m": "Model!CG34",
+          "per_berth": "Model!CH34"
+        },
+        "loa_min_m": 0.0,
+        "loa_max_m": 90.0,
+        "per_berth": 1
+      },
+      {
+        "refs": {
+          "loa_min_m": "Model!CF35",
+          "loa_max_m": "Model!CG35",
+          "per_berth": "Model!CH35"
+        },
+        "loa_min_m": 90.0,
+        "loa_max_m": 160.0,
+        "per_berth": 2
+      },
+      {
+        "refs": {
+          "loa_min_m": "Model!CF36",
+          "loa_max_m": "Model!CG36",
+          "per_berth": "Model!CH36"
+        },
+        "loa_min_m": 160.0,
+        "loa_max_m": 180.0,
+        "per_berth": 3
+      },
+      {
+        "refs": {
+          "loa_min_m": "Model!CF37",
+          "loa_max_m": "Model!CG37",
+          "per_berth": "Model!CH37"
+        },
+        "loa_min_m": 180.0,
+        "loa_max_m": 350.0,
+        "per_berth": 4
+      }
+    ],
+    "max_per_berth": {
+      "MP": 4,
+      "CC": 2
+    }
+  },
+  "tariffs": {
+    "refs": {},
+    "note": "Nilai 'foreign' dalam USD (dikonversi dengan params.usd_rate), 'domestic' dalam Rp; tarif B/M sudah dalam Rp.",
+    "classes": [
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C20",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D20",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E20",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F20",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G20",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H20",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I20",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J20",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K20",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L20",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M20",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P20",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N20",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O20"
+        },
+        "tariff_class": "utama",
+        "labuh_foreign_usd_per_gt": 0.115,
+        "labuh_domestic_rp_per_gt": 90.0,
+        "pandu_foreign_fixed_usd": 109.0,
+        "pandu_foreign_var_usd_per_gt": 0.04,
+        "pandu_domestic_fixed_rp": 107000.0,
+        "pandu_domestic_var_rp_per_gt": 30.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.11,
+          "dolphin": 0.09
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 90.0,
+          "dolphin": 60.0
+        },
+        "bm_foreign_rp_per_ton": 1500.0,
+        "bm_foreign_rp_per_teu": 2350000.0,
+        "bm_domestic_rp_per_ton": 750.0,
+        "bm_domestic_rp_per_teu": 1155000.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR33"
+            },
+            "fixed_foreign_usd": 200.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 367500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS33"
+            },
+            "fixed_foreign_usd": 232.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 486500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT33"
+            },
+            "fixed_foreign_usd": 563.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 755000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU33"
+            },
+            "fixed_foreign_usd": 851.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 1171000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV33"
+            },
+            "fixed_foreign_usd": 1144.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 1585000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW33"
+            },
+            "fixed_foreign_usd": 1746.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 2343000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX33"
+            },
+            "fixed_foreign_usd": 1855.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 2672000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY33"
+            },
+            "fixed_foreign_usd": 1952.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 3031000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG20",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH20",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ33",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ33"
+            },
+            "fixed_foreign_usd": 2343.0,
+            "var_foreign_usd_per_gt": 0.01,
+            "fixed_domestic_rp": 3629000.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      },
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C21",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D21",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E21",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F21",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G21",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H21",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I21",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J21",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K21",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L21",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M21",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P21",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N21",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O21"
+        },
+        "tariff_class": "1",
+        "labuh_foreign_usd_per_gt": 0.11,
+        "labuh_domestic_rp_per_gt": 87.0,
+        "pandu_foreign_fixed_usd": 106.0,
+        "pandu_foreign_var_usd_per_gt": 0.037,
+        "pandu_domestic_fixed_rp": 104000.0,
+        "pandu_domestic_var_rp_per_gt": 29.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.1,
+          "dolphin": 0.08
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 80.0,
+          "dolphin": 54.0
+        },
+        "bm_foreign_rp_per_ton": 1400.0,
+        "bm_domestic_rp_per_ton": 700.0,
+        "bm_domestic_rp_per_teu": 1043000.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR34"
+            },
+            "fixed_foreign_usd": 197.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 362500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS34"
+            },
+            "fixed_foreign_usd": 227.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 481500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT34"
+            },
+            "fixed_foreign_usd": 553.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 750000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU34"
+            },
+            "fixed_foreign_usd": 841.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 1166000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV34"
+            },
+            "fixed_foreign_usd": 1129.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 1577500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW34"
+            },
+            "fixed_foreign_usd": 1731.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 2333000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX34"
+            },
+            "fixed_foreign_usd": 1840.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 2660500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY34"
+            },
+            "fixed_foreign_usd": 1937.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 3018500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG21",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH21",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ34",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ34"
+            },
+            "fixed_foreign_usd": 2328.0,
+            "var_foreign_usd_per_gt": 0.009,
+            "fixed_domestic_rp": 3616500.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      },
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C22",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D22",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E22",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F22",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G22",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H22",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I22",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J22",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K22",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L22",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M22",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P22",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N22",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O22"
+        },
+        "tariff_class": "2",
+        "labuh_foreign_usd_per_gt": 0.105,
+        "labuh_domestic_rp_per_gt": 84.0,
+        "pandu_foreign_fixed_usd": 103.0,
+        "pandu_foreign_var_usd_per_gt": 0.034,
+        "pandu_domestic_fixed_rp": 101000.0,
+        "pandu_domestic_var_rp_per_gt": 28.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.09,
+          "dolphin": 0.07
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 70.0,
+          "dolphin": 48.0
+        },
+        "bm_foreign_rp_per_ton": 1300.0,
+        "bm_domestic_rp_per_ton": 650.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR35"
+            },
+            "fixed_foreign_usd": 194.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 357500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS35"
+            },
+            "fixed_foreign_usd": 222.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 476500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT35"
+            },
+            "fixed_foreign_usd": 543.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 745000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU35"
+            },
+            "fixed_foreign_usd": 831.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 1161000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV35"
+            },
+            "fixed_foreign_usd": 1114.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 1570000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW35"
+            },
+            "fixed_foreign_usd": 1716.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 2323000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX35"
+            },
+            "fixed_foreign_usd": 1825.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 2649000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY35"
+            },
+            "fixed_foreign_usd": 1922.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 3006000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG22",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH22",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ35",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ35"
+            },
+            "fixed_foreign_usd": 2313.0,
+            "var_foreign_usd_per_gt": 0.008,
+            "fixed_domestic_rp": 3604000.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      },
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C23",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D23",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E23",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F23",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G23",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H23",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I23",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J23",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K23",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L23",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M23",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P23",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N23",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O23"
+        },
+        "tariff_class": "3",
+        "labuh_foreign_usd_per_gt": 0.1,
+        "labuh_domestic_rp_per_gt": 81.0,
+        "pandu_foreign_fixed_usd": 100.0,
+        "pandu_foreign_var_usd_per_gt": 0.031,
+        "pandu_domestic_fixed_rp": 98000.0,
+        "pandu_domestic_var_rp_per_gt": 27.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.08,
+          "dolphin": 0.06
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 60.0,
+          "dolphin": 42.0
+        },
+        "bm_foreign_rp_per_ton": 1200.0,
+        "bm_domestic_rp_per_ton": 600.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR36"
+            },
+            "fixed_foreign_usd": 191.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 352500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS36"
+            },
+            "fixed_foreign_usd": 217.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 471500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT36"
+            },
+            "fixed_foreign_usd": 533.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 740000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU36"
+            },
+            "fixed_foreign_usd": 821.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 1156000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV36"
+            },
+            "fixed_foreign_usd": 1099.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 1562500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW36"
+            },
+            "fixed_foreign_usd": 1701.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 2313000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX36"
+            },
+            "fixed_foreign_usd": 1810.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 2637500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY36"
+            },
+            "fixed_foreign_usd": 1907.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 2993500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG23",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH23",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ36",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ36"
+            },
+            "fixed_foreign_usd": 2298.0,
+            "var_foreign_usd_per_gt": 0.007,
+            "fixed_domestic_rp": 3591500.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      },
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C24",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D24",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E24",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F24",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G24",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H24",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I24",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J24",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K24",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L24",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M24",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P24",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N24",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O24"
+        },
+        "tariff_class": "4",
+        "labuh_foreign_usd_per_gt": 0.095,
+        "labuh_domestic_rp_per_gt": 79.0,
+        "pandu_foreign_fixed_usd": 97.0,
+        "pandu_foreign_var_usd_per_gt": 0.028,
+        "pandu_domestic_fixed_rp": 95000.0,
+        "pandu_domestic_var_rp_per_gt": 26.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.07,
+          "dolphin": 0.05
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 50.0,
+          "dolphin": 36.0
+        },
+        "bm_foreign_rp_per_ton": 1100.0,
+        "bm_domestic_rp_per_ton": 550.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR37"
+            },
+            "fixed_foreign_usd": 188.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 347500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS37"
+            },
+            "fixed_foreign_usd": 212.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 466500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT37"
+            },
+            "fixed_foreign_usd": 523.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 735000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU37"
+            },
+            "fixed_foreign_usd": 811.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 1151000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV37"
+            },
+            "fixed_foreign_usd": 1084.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 1555000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW37"
+            },
+            "fixed_foreign_usd": 1686.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 2303000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX37"
+            },
+            "fixed_foreign_usd": 1795.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 2626000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY37"
+            },
+            "fixed_foreign_usd": 1892.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 2981000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG24",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH24",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ37",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ37"
+            },
+            "fixed_foreign_usd": 2283.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 3578000.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      },
+      {
+        "refs": {
+          "labuh_foreign_usd_per_gt": "Biaya Pelabuhan!C25",
+          "labuh_domestic_rp_per_gt": "Biaya Pelabuhan!D25",
+          "pandu_foreign_fixed_usd": "Biaya Pelabuhan!E25",
+          "pandu_foreign_var_usd_per_gt": "Biaya Pelabuhan!F25",
+          "pandu_domestic_fixed_rp": "Biaya Pelabuhan!G25",
+          "pandu_domestic_var_rp_per_gt": "Biaya Pelabuhan!H25",
+          "tambat_foreign_beton": "Biaya Pelabuhan!I25",
+          "tambat_foreign_dolphin": "Biaya Pelabuhan!J25",
+          "tambat_domestic_beton": "Biaya Pelabuhan!K25",
+          "tambat_domestic_dolphin": "Biaya Pelabuhan!L25",
+          "bm_foreign_rp_per_ton": "Biaya Pelabuhan!M25",
+          "bm_domestic_rp_per_ton": "Biaya Pelabuhan!P25",
+          "bm_foreign_rp_per_teu": "Biaya Pelabuhan!N25",
+          "bm_domestic_rp_per_teu": "Biaya Pelabuhan!O25"
+        },
+        "tariff_class": "5",
+        "labuh_foreign_usd_per_gt": 0.09,
+        "labuh_domestic_rp_per_gt": 76.0,
+        "pandu_foreign_fixed_usd": 94.0,
+        "pandu_foreign_var_usd_per_gt": 0.025,
+        "pandu_domestic_fixed_rp": 92000.0,
+        "pandu_domestic_var_rp_per_gt": 25.0,
+        "tambat_foreign_usd_per_gt_etmal": {
+          "beton": 0.06,
+          "dolphin": 0.04
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "beton": 40.0,
+          "dolphin": 30.0
+        },
+        "bm_foreign_rp_per_ton": 1000.0,
+        "bm_domestic_rp_per_ton": 500.0,
+        "tug": [
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Q25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!R25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AI38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AR38"
+            },
+            "fixed_foreign_usd": 185.0,
+            "var_foreign_usd_per_gt": 0.006,
+            "fixed_domestic_rp": 342500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!S25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!T25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AJ38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AS38"
+            },
+            "fixed_foreign_usd": 207.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 461500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!U25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!V25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AK38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AT38"
+            },
+            "fixed_foreign_usd": 513.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 730000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!W25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!X25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AL38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AU38"
+            },
+            "fixed_foreign_usd": 801.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 1146000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!Y25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!Z25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AM38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AV38"
+            },
+            "fixed_foreign_usd": 1069.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 1547500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AA25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AB25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AN38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AW38"
+            },
+            "fixed_foreign_usd": 1671.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 2293000.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AC25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AD25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AO38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AX38"
+            },
+            "fixed_foreign_usd": 1780.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 2614500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AE25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AF25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AP38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AY38"
+            },
+            "fixed_foreign_usd": 1877.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 2968500.0,
+            "var_domestic_rp_per_gt": 10.0
+          },
+          {
+            "refs": {
+              "fixed_foreign_usd": "Biaya Pelabuhan!AG25",
+              "var_foreign_usd_per_gt": "Biaya Pelabuhan!AH25",
+              "fixed_domestic_rp": "Biaya Pelabuhan!AQ38",
+              "var_domestic_rp_per_gt": "Biaya Pelabuhan!AZ38"
+            },
+            "fixed_foreign_usd": 2268.0,
+            "var_foreign_usd_per_gt": 0.005,
+            "fixed_domestic_rp": 3566500.0,
+            "var_domestic_rp_per_gt": 10.0
+          }
+        ]
+      }
+    ],
+    "tug_gt_bands": [
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K3",
+          "gt_min": "Biaya Pelabuhan!J3"
+        },
+        "gt_min": 0.0,
+        "gt_max": 2000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K4",
+          "gt_min": "Biaya Pelabuhan!J4"
+        },
+        "gt_min": 2001.0,
+        "gt_max": 3500.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K5",
+          "gt_min": "Biaya Pelabuhan!J5"
+        },
+        "gt_min": 3501.0,
+        "gt_max": 8000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K6",
+          "gt_min": "Biaya Pelabuhan!J6"
+        },
+        "gt_min": 8001.0,
+        "gt_max": 14000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K7",
+          "gt_min": "Biaya Pelabuhan!J7"
+        },
+        "gt_min": 14001.0,
+        "gt_max": 18000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K8",
+          "gt_min": "Biaya Pelabuhan!J8"
+        },
+        "gt_min": 18001.0,
+        "gt_max": 26000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K9",
+          "gt_min": "Biaya Pelabuhan!J9"
+        },
+        "gt_min": 26001.0,
+        "gt_max": 40000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K10",
+          "gt_min": "Biaya Pelabuhan!J10"
+        },
+        "gt_min": 40001.0,
+        "gt_max": 75000.0
+      },
+      {
+        "refs": {
+          "gt_max": "Biaya Pelabuhan!K11",
+          "gt_min": "Biaya Pelabuhan!J11"
+        },
+        "gt_min": 75001.0
+      }
+    ]
+  },
+  "storage": {
+    "refs": {
+      "dwell_time_mode": "Fasilitas Daratan Rata2!F134 = MAX(Model!M350:AF350)",
+      "inbound_share": "Fasilitas Daratan Rata2!F128 (100% muatan inbound)",
+      "outbound_share": "Fasilitas Daratan Rata2!F12 (100% muatan outbound)"
+    },
+    "dwell_time_mode": "from_consumption",
+    "fixed_dwell_days": {},
+    "inbound_share": 1.0,
+    "outbound_share": 1.0,
+    "container_yard": {
+      "refs": {
+        "area_per_teu_m2": "Fasilitas Daratan Rata2!F18",
+        "height_ratio": "Fasilitas Daratan Rata2!F19",
+        "yor_max": "Fasilitas Daratan Rata2!F20",
+        "max_tiers": "Fasilitas Daratan Rata2!F34",
+        "empty_share": "Fasilitas Daratan Rata2!F29"
+      },
+      "area_per_teu_m2": 15.0,
+      "height_ratio": 0.9,
+      "yor_max": 0.7,
+      "max_tiers": 5,
+      "empty_share": 1.0
+    },
+    "general_cargo": {
+      "refs": {
+        "f_area": "Fasilitas Daratan Rata2!F132",
+        "f_bulk": "Fasilitas Daratan Rata2!F133",
+        "stack_height_m": "Fasilitas Daratan Rata2!F138",
+        "sor_max": "Fasilitas Daratan Rata2!F137"
+      },
+      "f_area": 1.5,
+      "f_bulk": 1.2,
+      "stack_height_m": 5.0,
+      "sor_max": 0.7
+    },
+    "dry_bulk": {
+      "refs": {
+        "f_area": "Fasilitas Daratan Rata2!F92",
+        "capacity_ratio": "Fasilitas Daratan Rata2!F93",
+        "stack_height_m": "Fasilitas Daratan Rata2!F97",
+        "sor_max": "Fasilitas Daratan Rata2!F96",
+        "silo_capacity_m3": "Fasilitas Daratan!AC140",
+        "silo_price_usd": "Fasilitas Daratan!AC143",
+        "gross_volume_factor": "Fasilitas Daratan Rata2!F101 = (30%+1)*F100",
+        "silo_fill_ratio": "Fasilitas Daratan!F139 (×80%)"
+      },
+      "f_area": 1.25,
+      "capacity_ratio": 1.2,
+      "stack_height_m": 10.0,
+      "sor_max": 0.7,
+      "gross_volume_factor": 1.3,
+      "silo_capacity_m3": 23379.0,
+      "silo_fill_ratio": 0.8,
+      "silo_price_usd": 31950.0
+    },
+    "liquid": {
+      "refs": {
+        "occupancy": "Fasilitas Daratan!F228",
+        "tank_capacity_m3": "Fasilitas Daratan!F231"
+      },
+      "occupancy": 0.65,
+      "tank_capacity_m3": 20000.0
+    },
+    "yard_equipment": [
+      {
+        "refs": {
+          "productivity": "Fasilitas Daratan Rata2!F67 (konstanta di rumus)",
+          "utilization": "Fasilitas Daratan Rata2!F69"
+        },
+        "id": "rtg",
+        "name": "Rubber tyred gantry (RTG)",
+        "cargo_form": "PK",
+        "productivity": 5.0,
+        "productivity_unit": "TEU/jam",
+        "utilization": 0.75,
+        "unit_price_key": "rtg",
+        "params": {}
+      },
+      {
+        "refs": {
+          "speed_kmh": "Fasilitas Daratan Rata2!F80",
+          "productivity": "Fasilitas Daratan Rata2!F82",
+          "utilization": "asumsi 100% (tidak ada di Excel)"
+        },
+        "id": "truk_petikemas",
+        "name": "Truk petikemas",
+        "cargo_form": "PK",
+        "productivity": 35.0,
+        "productivity_unit": "box/jam",
+        "utilization": 1.0,
+        "unit_price_key": "headtruck",
+        "params": {
+          "speed_kmh": 30.0
+        }
+      },
+      {
+        "refs": {
+          "productivity": "Fasilitas Daratan Rata2!F108 (konstanta di rumus)",
+          "utilization": "Fasilitas Daratan Rata2!F110"
+        },
+        "id": "dozer",
+        "name": "Bull dozer",
+        "cargo_form": "CK",
+        "productivity": 50.0,
+        "productivity_unit": "ton/jam",
+        "utilization": 0.7,
+        "unit_price_key": "bull_dozer",
+        "params": {}
+      },
+      {
+        "refs": {
+          "params": "Fasilitas Daratan Rata2!F115:F124",
+          "productivity": "Fasilitas Daratan Rata2!F116",
+          "utilization": "asumsi 100% (tidak ada di Excel)"
+        },
+        "id": "truk_curah",
+        "name": "Truk curah",
+        "cargo_form": "CK",
+        "productivity": 80.0,
+        "productivity_unit": "ton/jam",
+        "utilization": 1.0,
+        "params": {
+          "capacity_t": 40.0,
+          "cycles_per_hour": 10.0,
+          "speed_kmh": 15.0,
+          "load_min": 3.0,
+          "unload_min": 3.0
+        }
+      },
+      {
+        "refs": {
+          "productivity": "Fasilitas Daratan Rata2!F162",
+          "utilization": "Fasilitas Daratan Rata2!F164"
+        },
+        "id": "forklift",
+        "name": "Forklift",
+        "cargo_form": "GC",
+        "productivity": 20.0,
+        "productivity_unit": "ton/jam",
+        "utilization": 0.7,
+        "unit_price_key": "forklift",
+        "params": {}
+      }
+    ]
+  },
+  "unit_prices": [
+    {
+      "refs": {
+        "price_rp": "Investasi!H3",
+        "year": "Investasi!H2"
+      },
+      "key": "jetty_curah_cair",
+      "label": "Jetty Curah Cair",
+      "unit": "unit",
+      "price_rp": 8800000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H4",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_multipurpose",
+      "label": "Dermaga Multipurpose",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H5",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_penumpang",
+      "label": "Dermaga Penumpang",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H6",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_general_cargo",
+      "label": "Dermaga General Cargo",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H7",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_curah_kering",
+      "label": "Dermaga Curah Kering",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H8",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_lng",
+      "label": "Dermaga LNG",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H9",
+        "year": "Investasi!H2"
+      },
+      "key": "dermaga_curah_cair",
+      "label": "Dermaga Curah Cair",
+      "unit": "m",
+      "price_rp": 25000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H10",
+        "year": "Investasi!H2"
+      },
+      "key": "breakwater",
+      "label": "Breakwater",
+      "unit": "m3",
+      "price_rp": 3500000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H11",
+        "year": "Investasi!H2"
+      },
+      "key": "trestle",
+      "label": "Trestle",
+      "unit": "m²",
+      "price_rp": 20000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H12",
+        "year": "Investasi!H2"
+      },
+      "key": "causeway",
+      "label": "Causeway",
+      "unit": "m",
+      "price_rp": 3500000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H13",
+        "year": "Investasi!H2"
+      },
+      "key": "pengerasan_bibir_sungai",
+      "label": "Pengerasan Bibir Sungai",
+      "unit": "m²",
+      "price_rp": 3500000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H14",
+        "year": "Investasi!H2"
+      },
+      "key": "perkerasan_causeway",
+      "label": "Perkerasan Causeway",
+      "unit": "m",
+      "price_rp": 5100000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H15",
+        "year": "Investasi!H2"
+      },
+      "key": "akses_jalan",
+      "label": "Akses Jalan",
+      "unit": "m",
+      "price_rp": 2300000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H16",
+        "year": "Investasi!H2"
+      },
+      "key": "reklamasi",
+      "label": "Reklamasi",
+      "unit": "m3",
+      "price_rp": 500000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H17",
+        "year": "Investasi!H2"
+      },
+      "key": "dredging",
+      "label": "Dredging",
+      "unit": "m3",
+      "price_rp": 150000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H18",
+        "year": "Investasi!H2"
+      },
+      "key": "zona_petikemas",
+      "label": "Zona Petikemas",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H19",
+        "year": "Investasi!H2"
+      },
+      "key": "zona_general_cargo",
+      "label": "Zona General Cargo",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H20",
+        "year": "Investasi!H2"
+      },
+      "key": "terminal_penumpang",
+      "label": "Terminal Penumpang",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H21",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_penumpukan_multipurpose",
+      "label": "Lapangan Penumpukan Multipurpose",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H22",
+        "year": "Investasi!H2"
+      },
+      "key": "cfs",
+      "label": "CFS",
+      "unit": "m²",
+      "price_rp": 5000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H23",
+        "year": "Investasi!H2"
+      },
+      "key": "gudang",
+      "label": "Gudang",
+      "unit": "m²",
+      "price_rp": 5000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H24",
+        "year": "Investasi!H2"
+      },
+      "key": "close_storage",
+      "label": "Close Storage",
+      "unit": "m²",
+      "price_rp": 3500000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H25",
+        "year": "Investasi!H2"
+      },
+      "key": "zona_curah_cair",
+      "label": "Zona Curah Cair",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H26",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_penumpukan_general_cargo",
+      "label": "Lapangan Penumpukan General Cargo",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H27",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_penumpukan_petikemas",
+      "label": "Lapangan Penumpukan Petikemas",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H28",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_penumpukan_curah_kering",
+      "label": "Lapangan Penumpukan Curah Kering",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H29",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_penumpukan_curah_cair",
+      "label": "Lapangan Penumpukan Curah Cair",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H30",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_parkir_truk",
+      "label": "Lapangan Parkir Truk",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H31",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_parkir_umum",
+      "label": "Lapangan Parkir  Umum",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H32",
+        "year": "Investasi!H2"
+      },
+      "key": "lapangan_parkir_truk_petikemas",
+      "label": "Lapangan Parkir Truk Petikemas",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H33",
+        "year": "Investasi!H2"
+      },
+      "key": "area_parkir_kendaraan",
+      "label": "Area Parkir Kendaraan",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H34",
+        "year": "Investasi!H2"
+      },
+      "key": "area_industri",
+      "label": "Area Industri",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H35",
+        "year": "Investasi!H2"
+      },
+      "key": "area_konsolidasi_dan_distribusi_barang",
+      "label": "Area Konsolidasi dan Distribusi Barang",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H36",
+        "year": "Investasi!H2"
+      },
+      "key": "area_perkantoran",
+      "label": "Area Perkantoran",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H37",
+        "year": "Investasi!H2"
+      },
+      "key": "zona_bisnis_dan_perdagangan",
+      "label": "Zona Bisnis dan Perdagangan",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H38",
+        "year": "Investasi!H2"
+      },
+      "key": "area_parkir_kendaraan_2",
+      "label": "Area Parkir Kendaraan",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H39",
+        "year": "Investasi!H2"
+      },
+      "key": "tanki_curah_cair",
+      "label": "Tanki Curah Cair",
+      "unit": "Unit",
+      "price_rp": 7000000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H40",
+        "year": "Investasi!H2"
+      },
+      "key": "tanki_lng",
+      "label": "Tanki LNG",
+      "unit": "m²",
+      "price_rp": 15000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H41",
+        "year": "Investasi!H2"
+      },
+      "key": "catwalk",
+      "label": "Catwalk",
+      "unit": "m",
+      "price_rp": 30000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H42",
+        "year": "Investasi!H2"
+      },
+      "key": "mooring_dolphin",
+      "label": "Mooring Dolphin",
+      "unit": "unit",
+      "price_rp": 2000000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H43",
+        "year": "Investasi!H2"
+      },
+      "key": "breasthing_dolphin",
+      "label": "Breasthing Dolphin",
+      "unit": "unit",
+      "price_rp": 3000000000.0,
+      "category": "infrastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H44",
+        "year": "Investasi!H2"
+      },
+      "key": "zona_perkantoran",
+      "label": "Zona Perkantoran",
+      "unit": "m²",
+      "price_rp": 2000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H45",
+        "year": "Investasi!H2"
+      },
+      "key": "fasilitas_umum",
+      "label": "Fasilitas Umum",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H46",
+        "year": "Investasi!H2"
+      },
+      "key": "pengolahan_limbah",
+      "label": "Pengolahan Limbah",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H47",
+        "year": "Investasi!H2"
+      },
+      "key": "tangki_timbun",
+      "label": "Tangki Timbun",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H48",
+        "year": "Investasi!H2"
+      },
+      "key": "rumah_pompa_dan_tandon_air_bersih",
+      "label": "Rumah Pompa dan Tandon Air Bersih",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H49",
+        "year": "Investasi!H2"
+      },
+      "key": "pemadam_kebakaran",
+      "label": "Pemadam Kebakaran",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H50",
+        "year": "Investasi!H2"
+      },
+      "key": "gardu_induk_listrik",
+      "label": "Gardu Induk Listrik",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H51",
+        "year": "Investasi!H2"
+      },
+      "key": "gudang_perbaikan",
+      "label": "Gudang Perbaikan",
+      "unit": "m²",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H52",
+        "year": "Investasi!H2"
+      },
+      "key": "container_crane",
+      "label": "Container Crane",
+      "unit": "unit",
+      "price_rp": 130000000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H53",
+        "year": "Investasi!H2"
+      },
+      "key": "mobile_crane",
+      "label": "Mobile Crane",
+      "unit": "unit",
+      "price_rp": 48000000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H54",
+        "year": "Investasi!H2"
+      },
+      "key": "mla",
+      "label": "MLA",
+      "unit": "unit",
+      "price_rp": 7000000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H55",
+        "year": "Investasi!H2"
+      },
+      "key": "pompa_cpo",
+      "label": "Pompa CPO",
+      "unit": "unit",
+      "price_rp": 301500000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H56",
+        "year": "Investasi!H2"
+      },
+      "key": "grab",
+      "label": "Grab",
+      "unit": "unit",
+      "price_rp": 500000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H57",
+        "year": "Investasi!H2"
+      },
+      "key": "sling",
+      "label": "Sling",
+      "unit": "unit",
+      "price_rp": 70000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H58",
+        "year": "Investasi!H2"
+      },
+      "key": "spreader",
+      "label": "Spreader",
+      "unit": "unit",
+      "price_rp": 420000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H59",
+        "year": "Investasi!H2"
+      },
+      "key": "tandon",
+      "label": "Tandon",
+      "unit": "unit",
+      "price_rp": 3000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H60",
+        "year": "Investasi!H2"
+      },
+      "key": "genset",
+      "label": "Genset",
+      "unit": "unit",
+      "price_rp": 3000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H61",
+        "year": "Investasi!H2"
+      },
+      "key": "mobil_pmk",
+      "label": "Mobil PMK",
+      "unit": "unit",
+      "price_rp": 3000000.0,
+      "category": "kendaraaan",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H62",
+        "year": "Investasi!H2"
+      },
+      "key": "jembatan_timbang",
+      "label": "Jembatan Timbang",
+      "unit": "unit",
+      "price_rp": 3000000.0,
+      "category": "suprastuktur",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H63",
+        "year": "Investasi!H2"
+      },
+      "key": "pompa_lng",
+      "label": "Pompa LNG",
+      "unit": "unit",
+      "price_rp": 490000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H64",
+        "year": "Investasi!H2"
+      },
+      "key": "headtruck",
+      "label": "Headtruck",
+      "unit": "unit",
+      "price_rp": 1200000000.0,
+      "category": "kendaraaan",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H65",
+        "year": "Investasi!H2"
+      },
+      "key": "rtg",
+      "label": "RTG",
+      "unit": "unit",
+      "price_rp": 14000000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H66",
+        "year": "Investasi!H2"
+      },
+      "key": "excavator",
+      "label": "Excavator",
+      "unit": "unit",
+      "price_rp": 1300000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H67",
+        "year": "Investasi!H2"
+      },
+      "key": "forklift",
+      "label": "Forklift",
+      "unit": "unit",
+      "price_rp": 750000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H68",
+        "year": "Investasi!H2"
+      },
+      "key": "reach_stacker",
+      "label": "Reach Stacker",
+      "unit": "unit",
+      "price_rp": 6000000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H69",
+        "year": "Investasi!H2"
+      },
+      "key": "bull_dozer",
+      "label": "Bull Dozer",
+      "unit": "unit",
+      "price_rp": 500000000.0,
+      "category": "alat",
+      "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Investasi!H70",
+        "year": "Investasi!H2"
+      },
+      "key": "pipa",
+      "label": "Pipa",
+      "unit": "M",
+      "price_rp": 5000000.0,
+      "category": "alat",
+      "year": 2024
+    }
+  ],
+  "plans": [
+    {
+      "refs": {
+        "ship_by_flow": "Model!CG8:CG17",
+        "MP": "Model!DB9",
+        "CC": "Model!DB8",
+        "waterside_mode": "Model!K395 = 415,000,000,000 (cabang trestle penuh)"
+      },
+      "id": "k15-excel",
+      "name": "Hasil optimasi K15 (Evolver)",
+      "description": "Kapal & alat terpilih di workbook K15. Dihitung ulang dengan engine v2 akan berbeda karena koreksi audit.",
+      "ship_by_flow": {
+        "in.damai": "ship.aetos",
+        "in.fantasi": "ship.als_ceres",
+        "in.esa": "ship.aetos",
+        "in.baru": "ship.adelante",
+        "in.adi": "ship.madonna_sun",
+        "out.damai": "ship.integra",
+        "out.fantasi": "ship.ever_bliss",
+        "out.esa": "ship.aetos",
+        "out.baru": "ship.integra",
+        "out.adi": "ship.thea"
+      },
+      "equipment_by_terminal": {
+        "MP": "eq.liebherr_lhm_280",
+        "CC": "eq.emco_wheaton_b0300_10"
+      },
+      "waterside_mode": "trestle"
+    }
+  ],
+  "assumptions": [
+    {
+      "refs": {},
+      "id": "bathymetry",
+      "topic": "Batimetri tapak KEK",
+      "text": "K15 tidak punya profil batimetri; dipakai profil DUMMY 17 titik (kek_site.bathymetry_source = 'dummy') yang dikunci ke angka K15: 10 m pada 250 m (opsi trestle + keruk) dan kedalaman perlu 21,3 m pertama tercapai pada 500 m (trestle penuh). Ganti dengan data survei/peta navigasi.",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "kek_existing_port",
+      "topic": "Data Pelabuhan Batu Ampar",
+      "text": "Data Pelabuhan!H5:H12 (panjang/kedalaman/kapasitas dermaga eksisting) bernilai 0. TERSUS dibangun baru (greenfield).",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "port_productivity_mode",
+      "topic": "Produktivitas pelabuhan asal/tujuan (A3)",
+      "text": "Semua pelabuhan diisi mode 'total per kapal' (tidak dikali jumlah alat). Bisa diubah per pelabuhan ke 'per_equipment'.",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "max_loa",
+      "topic": "Batas LOA pelabuhan",
+      "text": "Dermaga boleh lebih pendek dari kapal: kapal layak bila dermaga terpanjang ≥ 85% LOA (params.berth_loa_min_ratio), wajar terutama untuk dermaga dolphin (1 dermaga 1 kapal). Lampia: angka 80 m di tabel ringkas berasal dari baris 'Pelabuhan Makasar', jadi tidak dipakai (longest_berth_m kosong, tidak dicek) sampai ada data.",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "draft_source",
+      "topic": "Draft pelabuhan",
+      "text": "Ada dua sumber draft (tabel ringkas Data Pelabuhan!F21:P25 dan blok detail). Dipakai blok detail karena itulah yang dirujuk sheet Model.",
+      "status": "dari_excel"
+    },
+    {
+      "refs": {},
+      "id": "teu_capacity",
+      "topic": "Kapasitas TEU kapal petikemas",
+      "text": "Kapasitas TEU default = ⌊teu_capacity_dwt_ratio·DWT / teu_nominal_weight_t⌋ = ⌊0,85·DWT / 20⌋ seperti K15 (Data Kapal!O32). Isi ships[].teu_capacity bila kapasitas riil kapal diketahui.",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "port_cost_static",
+      "topic": "Biaya pelabuhan Excel (A11)",
+      "text": "Sheet Biaya Pelabuhan berisi nilai statis (tidak ikut berubah saat kapal diganti) dan memakai voyage maks per kapal (65) bukan frekuensi aktual (92). Engine v2 menghitung dari tarif × frekuensi aktual (sejalan keputusan A9). Di TERSUS KEK tidak dikenakan jasa kepelabuhanan.",
+      "status": "dikonfirmasi"
+    },
+    {
+      "refs": {},
+      "id": "melbourne_productivity",
+      "topic": "Produktivitas Melbourne",
+      "text": "Excel memakai 1.500 t/jam; laporan menulis 40.000 t/jam. Dipakai nilai Excel.",
+      "status": "dari_excel"
+    },
+    {
+      "refs": {},
+      "id": "sfoc_source",
+      "topic": "SFOC",
+      "text": "SFOC diambil dari tabel rentang daya (Data Kapal!V8:Z21) seperti sheet Model; kolom S Data Kapal (0,135) tidak dipakai.",
+      "status": "dari_excel"
+    },
+    {
+      "refs": {},
+      "id": "lct",
+      "topic": "LCT/tongkang",
+      "text": "Tipe kapal LCT ditambahkan dan boleh membawa GC, tapi belum ada kandidat kapal & tarif charter.",
+      "status": "asumsi"
+    },
+    {
+      "refs": {},
+      "id": "lhm800",
+      "topic": "Liebherr LHM 800",
+      "text": "Ada di sheet Alat BM tapi tidak dipakai Model; tetap dimasukkan sebagai kandidat alat.",
+      "status": "asumsi"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "openpencil": {
+      "type": "stdio",
+      "command": "C:\\Users\\Sabdo Palon\\AppData\\Local\\Author Software\\nvm\\.nodejs\\openpencil-mcp.exe",
+      "args": [],
+      "env": {
+        "OPENPENCIL_MCP_ROOT": "D:\\LAH\\TPT"
+      }
+    }
+  }
+}

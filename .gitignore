@@ -1,0 +1,44 @@
+# ── Bahan milik orang lain (laporan, PPT, workbook TPT kelompok lain) ──
+referensi/
+*.xlsx
+*.xls
+*.xlsm
+*.pptx
+*.ppt
+*.pdf
+~$*
+
+# ── v1 (repo git tersendiri, hanya referensi) & arsip catatan lama ──
+apps/
+arsip/
+
+# ── Claude Code: skill pihak ketiga (besar) & setelan lokal ──
+.claude/skills/
+.claude/settings.local.json
+
+# ── Python / uv ──
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ── Node / Vite ──
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+
+# ── Alat lain ──
+.taste-skill/
+.env
+.env.*
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+desktop.ini
+.directory
+.idea/
+.vscode/

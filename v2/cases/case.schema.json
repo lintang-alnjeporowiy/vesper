@@ -1,0 +1,3675 @@
+{
+  "$defs": {
+    "Assumption": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "topic": {
+          "title": "Topic",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "dari_excel",
+            "asumsi",
+            "perlu_konfirmasi",
+            "dikonfirmasi"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "topic",
+        "text",
+        "status"
+      ],
+      "title": "Assumption",
+      "type": "object"
+    },
+    "BathyPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "distance_m": {
+          "description": "jarak dari garis pantai",
+          "minimum": 0,
+          "title": "Distance M",
+          "type": "number",
+          "unit": "m"
+        },
+        "depth_m": {
+          "minimum": 0,
+          "title": "Depth M",
+          "type": "number",
+          "unit": "m LWS"
+        }
+      },
+      "required": [
+        "distance_m",
+        "depth_m"
+      ],
+      "title": "BathyPoint",
+      "type": "object"
+    },
+    "CargoFlow": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "tenant_id": {
+          "title": "Tenant Id",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "inbound",
+            "outbound"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "commodity_id": {
+          "title": "Commodity Id",
+          "type": "string"
+        },
+        "cargo_form": {
+          "title": "Cargo Form",
+          "type": "string"
+        },
+        "unit": {
+          "description": "satuan definisi volume",
+          "enum": [
+            "ton",
+            "TEU"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "route_id": {
+          "title": "Route Id",
+          "type": "string"
+        },
+        "volume": {
+          "discriminator": {
+            "mapping": {
+              "independent": "#/$defs/VolumeIndependent",
+              "ratio": "#/$defs/VolumeRatio"
+            },
+            "propertyName": "mode"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/VolumeIndependent"
+            },
+            {
+              "$ref": "#/$defs/VolumeRatio"
+            }
+          ],
+          "title": "Volume"
+        }
+      },
+      "required": [
+        "id",
+        "tenant_id",
+        "direction",
+        "commodity_id",
+        "cargo_form",
+        "unit",
+        "route_id",
+        "volume"
+      ],
+      "title": "CargoFlow",
+      "type": "object"
+    },
+    "CargoForm": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "code": {
+          "description": "CC, CK, PK, GC, …",
+          "title": "Code",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "default_unit": {
+          "enum": [
+            "ton",
+            "TEU"
+          ],
+          "title": "Default Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "default_unit"
+      ],
+      "title": "CargoForm",
+      "type": "object"
+    },
+    "CaseMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kek_name": {
+          "description": "nama kawasan, mis. 'KI Batam'",
+          "title": "Kek Name",
+          "type": "string"
+        },
+        "kek_port_name": {
+          "description": "nama pelabuhan/TERSUS di KEK",
+          "title": "Kek Port Name",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "source_files": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Source Files",
+          "type": "array"
+        },
+        "extracted_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Extracted At"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kek_name",
+        "kek_port_name"
+      ],
+      "title": "CaseMeta",
+      "type": "object"
+    },
+    "Commodity": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "cargo_form": {
+          "title": "Cargo Form",
+          "type": "string"
+        },
+        "density_t_m3": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Density T M3",
+          "unit": "t/m³"
+        },
+        "stowage_factor_m3_t": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stowage Factor M3 T",
+          "unit": "m³/t"
+        },
+        "packaging": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Packaging"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "cargo_form"
+      ],
+      "title": "Commodity",
+      "type": "object"
+    },
+    "ContainerSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "inner_length_m": {
+          "exclusiveMinimum": 0,
+          "title": "Inner Length M",
+          "type": "number",
+          "unit": "m"
+        },
+        "inner_width_m": {
+          "exclusiveMinimum": 0,
+          "title": "Inner Width M",
+          "type": "number",
+          "unit": "m"
+        },
+        "inner_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Inner Height M",
+          "type": "number",
+          "unit": "m"
+        },
+        "tare_t": {
+          "exclusiveMinimum": 0,
+          "title": "Tare T",
+          "type": "number",
+          "unit": "ton"
+        },
+        "max_gross_t": {
+          "exclusiveMinimum": 0,
+          "title": "Max Gross T",
+          "type": "number",
+          "unit": "ton"
+        },
+        "max_net_t": {
+          "exclusiveMinimum": 0,
+          "title": "Max Net T",
+          "type": "number",
+          "unit": "ton"
+        },
+        "share_20ft": {
+          "default": 1.0,
+          "description": "porsi petikemas 20' (sisanya 40')",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Share 20Ft",
+          "type": "number"
+        }
+      },
+      "required": [
+        "inner_length_m",
+        "inner_width_m",
+        "inner_height_m",
+        "tare_t",
+        "max_gross_t",
+        "max_net_t"
+      ],
+      "title": "ContainerSpec",
+      "type": "object"
+    },
+    "ContainerYardParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "area_per_teu_m2": {
+          "exclusiveMinimum": 0,
+          "title": "Area Per Teu M2",
+          "type": "number",
+          "unit": "m²/TEU"
+        },
+        "height_ratio": {
+          "description": "rasio tinggi rata-rata / rencana",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Height Ratio",
+          "type": "number"
+        },
+        "yor_max": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Yor Max",
+          "type": "number"
+        },
+        "max_tiers": {
+          "minimum": 1,
+          "title": "Max Tiers",
+          "type": "integer"
+        },
+        "empty_share": {
+          "description": "porsi petikemas kosong terhadap isi",
+          "minimum": 0,
+          "title": "Empty Share",
+          "type": "number"
+        }
+      },
+      "required": [
+        "area_per_teu_m2",
+        "height_ratio",
+        "yor_max",
+        "max_tiers",
+        "empty_share"
+      ],
+      "title": "ContainerYardParams",
+      "type": "object"
+    },
+    "DryBulkStorageParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "f_area": {
+          "exclusiveMinimum": 0,
+          "title": "F Area",
+          "type": "number"
+        },
+        "capacity_ratio": {
+          "description": "Rc",
+          "exclusiveMinimum": 0,
+          "title": "Capacity Ratio",
+          "type": "number"
+        },
+        "stack_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Stack Height M",
+          "type": "number",
+          "unit": "m"
+        },
+        "sor_max": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Sor Max",
+          "type": "number"
+        },
+        "gross_volume_factor": {
+          "default": 1.0,
+          "description": "volume bruto = faktor × netto",
+          "exclusiveMinimum": 0,
+          "title": "Gross Volume Factor",
+          "type": "number"
+        },
+        "silo_capacity_m3": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Silo Capacity M3",
+          "unit": "m³"
+        },
+        "silo_fill_ratio": {
+          "default": 0.8,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Silo Fill Ratio",
+          "type": "number"
+        },
+        "silo_price_usd": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Silo Price Usd",
+          "unit": "USD/unit"
+        }
+      },
+      "required": [
+        "f_area",
+        "capacity_ratio",
+        "stack_height_m",
+        "sor_max"
+      ],
+      "title": "DryBulkStorageParams",
+      "type": "object"
+    },
+    "Equipment": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "description": "HMC, MLA, …",
+          "title": "Kind",
+          "type": "string"
+        },
+        "terminal_id": {
+          "title": "Terminal Id",
+          "type": "string"
+        },
+        "price_usd": {
+          "exclusiveMinimum": 0,
+          "title": "Price Usd",
+          "type": "number",
+          "unit": "USD"
+        },
+        "productivity": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ProdRate"
+          },
+          "description": "kode bentuk muatan -> laju",
+          "title": "Productivity",
+          "type": "object"
+        },
+        "reach_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reach M",
+          "unit": "m"
+        },
+        "lift_t": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lift T",
+          "unit": "ton"
+        },
+        "in_reference_model": {
+          "default": true,
+          "description": "False = ada di data, tapi tidak dipakai model Excel",
+          "title": "In Reference Model",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "terminal_id",
+        "price_usd",
+        "productivity"
+      ],
+      "title": "Equipment",
+      "type": "object"
+    },
+    "EquipmentRules": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "loa_bands": {
+          "description": "A10: jumlah alat per tambatan dari LOA kapal",
+          "items": {
+            "$ref": "#/$defs/LoaBand"
+          },
+          "title": "Loa Bands",
+          "type": "array"
+        },
+        "max_per_berth": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "description": "terminal_id -> batas alat per tambatan",
+          "title": "Max Per Berth",
+          "type": "object"
+        }
+      },
+      "required": [
+        "loa_bands",
+        "max_per_berth"
+      ],
+      "title": "EquipmentRules",
+      "type": "object"
+    },
+    "ExternalPort": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "country": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Country"
+        },
+        "kind": {
+          "enum": [
+            "domestic",
+            "foreign"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "terminal_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Terminal Type"
+        },
+        "max_draft_m": {
+          "description": "kedalaman/draft maksimum yang diizinkan",
+          "exclusiveMinimum": 0,
+          "title": "Max Draft M",
+          "type": "number",
+          "unit": "m"
+        },
+        "max_loa_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "batas LOA eksplisit bila diketahui; None = tidak ada",
+          "title": "Max Loa M",
+          "unit": "m"
+        },
+        "longest_berth_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "dermaga terpanjang; batasan: ≥ params.berth_loa_min_ratio × LOA. None = tidak dicek",
+          "title": "Longest Berth M",
+          "unit": "m"
+        },
+        "productivity": {
+          "$ref": "#/$defs/PortProductivity"
+        },
+        "tariff_class": {
+          "enum": [
+            "utama",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "title": "Tariff Class",
+          "type": "string"
+        },
+        "berth_type": {
+          "enum": [
+            "beton",
+            "dolphin"
+          ],
+          "title": "Berth Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "max_draft_m",
+        "productivity",
+        "tariff_class",
+        "berth_type"
+      ],
+      "title": "ExternalPort",
+      "type": "object"
+    },
+    "Fuel": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "price_rp_per_l": {
+          "exclusiveMinimum": 0,
+          "title": "Price Rp Per L",
+          "type": "number",
+          "unit": "Rp/l"
+        },
+        "density_kg_m3": {
+          "exclusiveMinimum": 0,
+          "title": "Density Kg M3",
+          "type": "number",
+          "unit": "kg/m³"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "price_rp_per_l",
+        "density_kg_m3"
+      ],
+      "title": "Fuel",
+      "type": "object"
+    },
+    "GeneralCargoStorageParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "f_area": {
+          "exclusiveMinimum": 0,
+          "title": "F Area",
+          "type": "number"
+        },
+        "f_bulk": {
+          "exclusiveMinimum": 0,
+          "title": "F Bulk",
+          "type": "number"
+        },
+        "stack_height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Stack Height M",
+          "type": "number",
+          "unit": "m"
+        },
+        "sor_max": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Sor Max",
+          "type": "number"
+        }
+      },
+      "required": [
+        "f_area",
+        "f_bulk",
+        "stack_height_m",
+        "sor_max"
+      ],
+      "title": "GeneralCargoStorageParams",
+      "type": "object"
+    },
+    "GlobalParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "at_hours": {
+          "description": "approach time",
+          "minimum": 0,
+          "title": "At Hours",
+          "type": "number",
+          "unit": "jam/call"
+        },
+        "wt_hours": {
+          "description": "waiting time",
+          "minimum": 0,
+          "title": "Wt Hours",
+          "type": "number",
+          "unit": "jam/call"
+        },
+        "it_hours": {
+          "description": "idle time",
+          "minimum": 0,
+          "title": "It Hours",
+          "type": "number",
+          "unit": "jam/call"
+        },
+        "working_days_per_year": {
+          "exclusiveMinimum": 0,
+          "title": "Working Days Per Year",
+          "type": "number",
+          "unit": "hari"
+        },
+        "working_hours_per_day": {
+          "exclusiveMinimum": 0,
+          "title": "Working Hours Per Day",
+          "type": "number",
+          "unit": "jam"
+        },
+        "commission_days": {
+          "description": "hari operasi kapal per tahun",
+          "exclusiveMinimum": 0,
+          "title": "Commission Days",
+          "type": "number",
+          "unit": "hari/th"
+        },
+        "bor_max": {
+          "description": "berth occupancy ratio maksimum",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Bor Max",
+          "type": "number"
+        },
+        "mcr": {
+          "description": "maximum continuous rating mesin",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Mcr",
+          "type": "number"
+        },
+        "fuel_share_me_sea": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Fuel Share Me Sea",
+          "type": "number"
+        },
+        "fuel_share_me_port": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Fuel Share Me Port",
+          "type": "number"
+        },
+        "fuel_share_ae_sea": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Fuel Share Ae Sea",
+          "type": "number"
+        },
+        "fuel_share_ae_port": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Fuel Share Ae Port",
+          "type": "number"
+        },
+        "fuels": {
+          "items": {
+            "$ref": "#/$defs/Fuel"
+          },
+          "title": "Fuels",
+          "type": "array"
+        },
+        "me_fuel": {
+          "description": "kode BBM mesin induk (A6)",
+          "title": "Me Fuel",
+          "type": "string"
+        },
+        "ae_fuel": {
+          "description": "kode BBM mesin bantu (A6)",
+          "title": "Ae Fuel",
+          "type": "string"
+        },
+        "sfoc_me_bands": {
+          "items": {
+            "$ref": "#/$defs/PowerBand"
+          },
+          "title": "Sfoc Me Bands",
+          "type": "array"
+        },
+        "sfoc_ae_bands": {
+          "items": {
+            "$ref": "#/$defs/PowerBand"
+          },
+          "title": "Sfoc Ae Bands",
+          "type": "array"
+        },
+        "ae_me_power_ratio": {
+          "default": 0.5,
+          "description": "daya AE default bila data kapal kosong",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Ae Me Power Ratio",
+          "type": "number"
+        },
+        "usd_rate": {
+          "exclusiveMinimum": 0,
+          "title": "Usd Rate",
+          "type": "number",
+          "unit": "Rp/USD"
+        },
+        "discount_rate": {
+          "description": "WACC",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Discount Rate",
+          "type": "number"
+        },
+        "escalation_infra": {
+          "description": "kenaikan harga satuan infrastruktur",
+          "minimum": 0,
+          "title": "Escalation Infra",
+          "type": "number",
+          "unit": "/th"
+        },
+        "escalation_equipment": {
+          "description": "kenaikan harga alat",
+          "minimum": 0,
+          "title": "Escalation Equipment",
+          "type": "number",
+          "unit": "/th"
+        },
+        "ballast_speed_ratio": {
+          "default": 1.0,
+          "description": "V_ballast / Vs default (A5)",
+          "exclusiveMinimum": 0,
+          "title": "Ballast Speed Ratio",
+          "type": "number"
+        },
+        "payload_dwt_ratio": {
+          "description": "α payload: payload = α·DWT (A8)",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Payload Dwt Ratio",
+          "type": "number"
+        },
+        "teu_weight_dwt_ratio": {
+          "description": "α batas berat per TEU: NetMax = α·DWT/TEU − tare (A8)",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Teu Weight Dwt Ratio",
+          "type": "number"
+        },
+        "teu_capacity_dwt_ratio": {
+          "description": "kapasitas TEU default = ⌊rasio·DWT / berat nominal per TEU⌋",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Teu Capacity Dwt Ratio",
+          "type": "number"
+        },
+        "teu_nominal_weight_t": {
+          "description": "berat nominal per TEU untuk kapasitas TEU default",
+          "exclusiveMinimum": 0,
+          "title": "Teu Nominal Weight T",
+          "type": "number",
+          "unit": "ton/TEU"
+        },
+        "berth_loa_min_ratio": {
+          "description": "kapal layak bila dermaga terpanjang ≥ rasio × LOA (mis. 0,85)",
+          "exclusiveMinimum": 0,
+          "title": "Berth Loa Min Ratio",
+          "type": "number"
+        },
+        "cargo_per_call_mode": {
+          "default": "interval",
+          "description": "interval: q = D/F (K15); full_load: q = payload",
+          "enum": [
+            "interval",
+            "full_load"
+          ],
+          "title": "Cargo Per Call Mode",
+          "type": "string"
+        },
+        "container": {
+          "$ref": "#/$defs/ContainerSpec"
+        }
+      },
+      "required": [
+        "at_hours",
+        "wt_hours",
+        "it_hours",
+        "working_days_per_year",
+        "working_hours_per_day",
+        "commission_days",
+        "bor_max",
+        "mcr",
+        "fuel_share_me_sea",
+        "fuel_share_me_port",
+        "fuel_share_ae_sea",
+        "fuel_share_ae_port",
+        "fuels",
+        "me_fuel",
+        "ae_fuel",
+        "sfoc_me_bands",
+        "sfoc_ae_bands",
+        "usd_rate",
+        "discount_rate",
+        "escalation_infra",
+        "escalation_equipment",
+        "payload_dwt_ratio",
+        "teu_weight_dwt_ratio",
+        "teu_capacity_dwt_ratio",
+        "teu_nominal_weight_t",
+        "berth_loa_min_ratio",
+        "container"
+      ],
+      "title": "GlobalParams",
+      "type": "object"
+    },
+    "GtBand": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "gt_min": {
+          "minimum": 0,
+          "title": "Gt Min",
+          "type": "number"
+        },
+        "gt_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gt Max"
+        }
+      },
+      "required": [
+        "gt_min"
+      ],
+      "title": "GtBand",
+      "type": "object"
+    },
+    "Horizon": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "years": {
+          "default": 20,
+          "description": "periode tinjauan",
+          "maximum": 60,
+          "minimum": 1,
+          "title": "Years",
+          "type": "integer",
+          "unit": "th"
+        },
+        "phases": {
+          "description": "tahap perencanaan (pendek/menengah/panjang)",
+          "items": {
+            "$ref": "#/$defs/Phase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "construction_lead_years": {
+          "default": 1,
+          "description": "masa konstruksi sebelum dipakai",
+          "minimum": 0,
+          "title": "Construction Lead Years",
+          "type": "integer",
+          "unit": "th"
+        },
+        "berth_lookahead_years": {
+          "default": 7,
+          "description": "dermaga dibangun untuk kebutuhan N tahun ke depan",
+          "minimum": 0,
+          "title": "Berth Lookahead Years",
+          "type": "integer",
+          "unit": "th"
+        },
+        "storage_lookahead_years": {
+          "default": 5,
+          "description": "penyimpanan dibangun untuk kebutuhan N tahun ke depan",
+          "minimum": 0,
+          "title": "Storage Lookahead Years",
+          "type": "integer",
+          "unit": "th"
+        }
+      },
+      "required": [
+        "phases"
+      ],
+      "title": "Horizon",
+      "type": "object"
+    },
+    "KekSite": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "terminals": {
+          "items": {
+            "$ref": "#/$defs/KekTerminal"
+          },
+          "title": "Terminals",
+          "type": "array"
+        },
+        "bathymetry": {
+          "items": {
+            "$ref": "#/$defs/BathyPoint"
+          },
+          "title": "Bathymetry",
+          "type": "array"
+        },
+        "bathymetry_source": {
+          "default": "dummy",
+          "description": "asal profil batimetri; 'dummy' = data contoh yang harus diganti",
+          "enum": [
+            "survei",
+            "peta_navigasi",
+            "dummy"
+          ],
+          "title": "Bathymetry Source",
+          "type": "string"
+        },
+        "trestle": {
+          "$ref": "#/$defs/TrestleSpec"
+        },
+        "trestle_dredge": {
+          "$ref": "#/$defs/TrestleDredgeSpec"
+        },
+        "waterside": {
+          "$ref": "#/$defs/WatersideConditions"
+        },
+        "port_charges": {
+          "default": "none",
+          "description": "TERSUS milik sendiri: tanpa jasa kepelabuhanan",
+          "enum": [
+            "none",
+            "tariff"
+          ],
+          "title": "Port Charges",
+          "type": "string"
+        },
+        "tariff_class": {
+          "anyOf": [
+            {
+              "enum": [
+                "utama",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tariff Class"
+        }
+      },
+      "required": [
+        "name",
+        "terminals",
+        "bathymetry",
+        "trestle",
+        "trestle_dredge",
+        "waterside"
+      ],
+      "title": "KekSite",
+      "type": "object"
+    },
+    "KekTerminal": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "cargo_forms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Cargo Forms",
+          "type": "array"
+        },
+        "berth_unit_length_m": {
+          "exclusiveMinimum": 0,
+          "title": "Berth Unit Length M",
+          "type": "number",
+          "unit": "m"
+        },
+        "berth_width_m": {
+          "exclusiveMinimum": 0,
+          "title": "Berth Width M",
+          "type": "number",
+          "unit": "m"
+        },
+        "equipment_kind": {
+          "description": "HMC, MLA, …",
+          "title": "Equipment Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "cargo_forms",
+        "berth_unit_length_m",
+        "berth_width_m",
+        "equipment_kind"
+      ],
+      "title": "KekTerminal",
+      "type": "object"
+    },
+    "Leg": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "origin": {
+          "description": "id pelabuhan atau 'KEK'",
+          "title": "Origin",
+          "type": "string"
+        },
+        "destination": {
+          "title": "Destination",
+          "type": "string"
+        },
+        "distance_nm": {
+          "exclusiveMinimum": 0,
+          "title": "Distance Nm",
+          "type": "number",
+          "unit": "NM"
+        },
+        "laden": {
+          "description": "True = bermuatan (Vs), False = ballast",
+          "title": "Laden",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "origin",
+        "destination",
+        "distance_nm",
+        "laden"
+      ],
+      "title": "Leg",
+      "type": "object"
+    },
+    "LiquidStorageParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "occupancy": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Occupancy",
+          "type": "number"
+        },
+        "tank_capacity_m3": {
+          "exclusiveMinimum": 0,
+          "title": "Tank Capacity M3",
+          "type": "number",
+          "unit": "m³"
+        }
+      },
+      "required": [
+        "occupancy",
+        "tank_capacity_m3"
+      ],
+      "title": "LiquidStorageParams",
+      "type": "object"
+    },
+    "LoaBand": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "loa_min_m": {
+          "minimum": 0,
+          "title": "Loa Min M",
+          "type": "number",
+          "unit": "m"
+        },
+        "loa_max_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Loa Max M",
+          "unit": "m"
+        },
+        "per_berth": {
+          "minimum": 1,
+          "title": "Per Berth",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "loa_min_m",
+        "per_berth"
+      ],
+      "title": "LoaBand",
+      "type": "object"
+    },
+    "Packaging": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "kind": {
+          "description": "karung, kardus, batang, pelat, …",
+          "title": "Kind",
+          "type": "string"
+        },
+        "length_m": {
+          "exclusiveMinimum": 0,
+          "title": "Length M",
+          "type": "number",
+          "unit": "m"
+        },
+        "width_m": {
+          "exclusiveMinimum": 0,
+          "title": "Width M",
+          "type": "number",
+          "unit": "m"
+        },
+        "height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Height M",
+          "type": "number",
+          "unit": "m"
+        },
+        "weight_kg": {
+          "description": "berat per kemasan",
+          "exclusiveMinimum": 0,
+          "title": "Weight Kg",
+          "type": "number",
+          "unit": "kg"
+        },
+        "pieces_per_pack": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pieces Per Pack"
+        }
+      },
+      "required": [
+        "kind",
+        "length_m",
+        "width_m",
+        "height_m",
+        "weight_kg"
+      ],
+      "title": "Packaging",
+      "type": "object"
+    },
+    "Phase": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "start_year": {
+          "minimum": 1,
+          "title": "Start Year",
+          "type": "integer"
+        },
+        "end_year": {
+          "minimum": 1,
+          "title": "End Year",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "start_year",
+        "end_year"
+      ],
+      "title": "Phase",
+      "type": "object"
+    },
+    "Plan": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "ship_by_flow": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "flow_id -> ship_id",
+          "title": "Ship By Flow",
+          "type": "object"
+        },
+        "equipment_by_terminal": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "terminal_id -> equipment_id",
+          "title": "Equipment By Terminal",
+          "type": "object"
+        },
+        "waterside_mode": {
+          "enum": [
+            "trestle",
+            "dredge",
+            "mixed"
+          ],
+          "title": "Waterside Mode",
+          "type": "string"
+        },
+        "trestle_fraction": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trestle Fraction"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ship_by_flow",
+        "equipment_by_terminal",
+        "waterside_mode"
+      ],
+      "title": "Plan",
+      "type": "object"
+    },
+    "PortProductivity": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "mode": {
+          "description": "A3: total per kapal, atau per alat × jumlah alat",
+          "enum": [
+            "total",
+            "per_equipment"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "value": {
+          "exclusiveMinimum": 0,
+          "title": "Value",
+          "type": "number"
+        },
+        "unit": {
+          "enum": [
+            "t/h",
+            "TEU/h"
+          ],
+          "title": "Unit",
+          "type": "string"
+        },
+        "equipment_count": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "wajib bila mode per_equipment",
+          "title": "Equipment Count"
+        }
+      },
+      "required": [
+        "mode",
+        "value",
+        "unit"
+      ],
+      "title": "PortProductivity",
+      "type": "object"
+    },
+    "PowerBand": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "min_kw": {
+          "minimum": 0,
+          "title": "Min Kw",
+          "type": "number",
+          "unit": "kW"
+        },
+        "max_kw": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None = tanpa batas atas",
+          "title": "Max Kw",
+          "unit": "kW"
+        },
+        "sfoc_g_kwh": {
+          "exclusiveMinimum": 0,
+          "title": "Sfoc G Kwh",
+          "type": "number",
+          "unit": "g/kWh"
+        }
+      },
+      "required": [
+        "min_kw",
+        "sfoc_g_kwh"
+      ],
+      "title": "PowerBand",
+      "type": "object"
+    },
+    "ProdRate": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "unload": {
+          "exclusiveMinimum": 0,
+          "title": "Unload",
+          "type": "number"
+        },
+        "load": {
+          "exclusiveMinimum": 0,
+          "title": "Load",
+          "type": "number"
+        },
+        "unit": {
+          "enum": [
+            "t/h",
+            "box/h"
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "unload",
+        "load",
+        "unit"
+      ],
+      "title": "ProdRate",
+      "type": "object"
+    },
+    "Route": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "pattern": {
+          "default": "round_trip",
+          "enum": [
+            "round_trip",
+            "triangle"
+          ],
+          "title": "Pattern",
+          "type": "string"
+        },
+        "legs": {
+          "items": {
+            "$ref": "#/$defs/Leg"
+          },
+          "minItems": 2,
+          "title": "Legs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "legs"
+      ],
+      "title": "Route",
+      "type": "object"
+    },
+    "Ship": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "ship_type": {
+          "title": "Ship Type",
+          "type": "string"
+        },
+        "imo": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Imo"
+        },
+        "classification": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Classification"
+        },
+        "lpp_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lpp M",
+          "unit": "m"
+        },
+        "loa_m": {
+          "exclusiveMinimum": 0,
+          "title": "Loa M",
+          "type": "number",
+          "unit": "m"
+        },
+        "beam_m": {
+          "exclusiveMinimum": 0,
+          "title": "Beam M",
+          "type": "number",
+          "unit": "m"
+        },
+        "draft_m": {
+          "exclusiveMinimum": 0,
+          "title": "Draft M",
+          "type": "number",
+          "unit": "m"
+        },
+        "depth_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "tinggi geladak H",
+          "title": "Depth M",
+          "unit": "m"
+        },
+        "speed_kn": {
+          "exclusiveMinimum": 0,
+          "title": "Speed Kn",
+          "type": "number",
+          "unit": "knot"
+        },
+        "ballast_speed_kn": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None = Vs × ballast_speed_ratio",
+          "title": "Ballast Speed Kn",
+          "unit": "knot"
+        },
+        "dwt_t": {
+          "exclusiveMinimum": 0,
+          "title": "Dwt T",
+          "type": "number",
+          "unit": "ton"
+        },
+        "payload_t": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "override; None = payload_dwt_ratio × DWT",
+          "title": "Payload T",
+          "unit": "ton"
+        },
+        "teu_capacity": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "override bila data riil diketahui; None = ⌊teu_capacity_dwt_ratio·DWT / teu_nominal_weight_t⌋",
+          "title": "Teu Capacity",
+          "unit": "TEU"
+        },
+        "gt": {
+          "exclusiveMinimum": 0,
+          "title": "Gt",
+          "type": "number",
+          "unit": "GT"
+        },
+        "me_kw": {
+          "exclusiveMinimum": 0,
+          "title": "Me Kw",
+          "type": "number",
+          "unit": "kW"
+        },
+        "ae_kw": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ae Kw",
+          "unit": "kW"
+        },
+        "sfoc_me_g_kwh": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "override; None = dari rentang daya",
+          "title": "Sfoc Me G Kwh",
+          "unit": "g/kWh"
+        },
+        "sfoc_ae_g_kwh": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sfoc Ae G Kwh",
+          "unit": "g/kWh"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ship_type",
+        "loa_m",
+        "beam_m",
+        "draft_m",
+        "speed_kn",
+        "dwt_t",
+        "gt",
+        "me_kw"
+      ],
+      "title": "Ship",
+      "type": "object"
+    },
+    "ShipType": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "size_basis": {
+          "description": "ukuran untuk regresi TCH",
+          "enum": [
+            "dwt",
+            "teu"
+          ],
+          "title": "Size Basis",
+          "type": "string"
+        },
+        "tch_points": {
+          "default": [],
+          "description": "tabel tarif charter pasar; engine membuat regresi linier",
+          "items": {
+            "$ref": "#/$defs/TchPoint"
+          },
+          "title": "Tch Points",
+          "type": "array"
+        }
+      },
+      "required": [
+        "code",
+        "name",
+        "size_basis"
+      ],
+      "title": "ShipType",
+      "type": "object"
+    },
+    "StorageParams": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "dwell_time_mode": {
+          "default": "from_consumption",
+          "description": "K15: dwelling time = lama konsumsi per pengapalan",
+          "enum": [
+            "from_consumption",
+            "fixed"
+          ],
+          "title": "Dwell Time Mode",
+          "type": "string"
+        },
+        "fixed_dwell_days": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {},
+          "description": "commodity_id -> hari (mode fixed)",
+          "title": "Fixed Dwell Days",
+          "type": "object"
+        },
+        "inbound_share": {
+          "default": 1.0,
+          "description": "porsi muatan inbound yang masuk penyimpanan",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Inbound Share",
+          "type": "number"
+        },
+        "outbound_share": {
+          "default": 1.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Outbound Share",
+          "type": "number"
+        },
+        "container_yard": {
+          "$ref": "#/$defs/ContainerYardParams"
+        },
+        "general_cargo": {
+          "$ref": "#/$defs/GeneralCargoStorageParams"
+        },
+        "dry_bulk": {
+          "$ref": "#/$defs/DryBulkStorageParams"
+        },
+        "liquid": {
+          "$ref": "#/$defs/LiquidStorageParams"
+        },
+        "yard_equipment": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/YardEquipment"
+          },
+          "title": "Yard Equipment",
+          "type": "array"
+        }
+      },
+      "required": [
+        "container_yard",
+        "general_cargo",
+        "dry_bulk",
+        "liquid"
+      ],
+      "title": "StorageParams",
+      "type": "object"
+    },
+    "TariffBook": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "classes": {
+          "items": {
+            "$ref": "#/$defs/TariffClassRow"
+          },
+          "title": "Classes",
+          "type": "array"
+        },
+        "tug_gt_bands": {
+          "items": {
+            "$ref": "#/$defs/GtBand"
+          },
+          "title": "Tug Gt Bands",
+          "type": "array"
+        }
+      },
+      "required": [
+        "classes",
+        "tug_gt_bands"
+      ],
+      "title": "TariffBook",
+      "type": "object"
+    },
+    "TariffClassRow": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "tariff_class": {
+          "enum": [
+            "utama",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "title": "Tariff Class",
+          "type": "string"
+        },
+        "labuh_foreign_usd_per_gt": {
+          "minimum": 0,
+          "title": "Labuh Foreign Usd Per Gt",
+          "type": "number",
+          "unit": "USD/GT/kunjungan"
+        },
+        "labuh_domestic_rp_per_gt": {
+          "minimum": 0,
+          "title": "Labuh Domestic Rp Per Gt",
+          "type": "number",
+          "unit": "Rp/GT/kunjungan"
+        },
+        "pandu_foreign_fixed_usd": {
+          "minimum": 0,
+          "title": "Pandu Foreign Fixed Usd",
+          "type": "number",
+          "unit": "USD/gerakan"
+        },
+        "pandu_foreign_var_usd_per_gt": {
+          "minimum": 0,
+          "title": "Pandu Foreign Var Usd Per Gt",
+          "type": "number",
+          "unit": "USD/GT/gerakan"
+        },
+        "pandu_domestic_fixed_rp": {
+          "minimum": 0,
+          "title": "Pandu Domestic Fixed Rp",
+          "type": "number",
+          "unit": "Rp/gerakan"
+        },
+        "pandu_domestic_var_rp_per_gt": {
+          "minimum": 0,
+          "title": "Pandu Domestic Var Rp Per Gt",
+          "type": "number",
+          "unit": "Rp/GT/gerakan"
+        },
+        "tambat_foreign_usd_per_gt_etmal": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "propertyNames": {
+            "enum": [
+              "beton",
+              "dolphin"
+            ]
+          },
+          "title": "Tambat Foreign Usd Per Gt Etmal",
+          "type": "object"
+        },
+        "tambat_domestic_rp_per_gt_etmal": {
+          "additionalProperties": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "propertyNames": {
+            "enum": [
+              "beton",
+              "dolphin"
+            ]
+          },
+          "title": "Tambat Domestic Rp Per Gt Etmal",
+          "type": "object"
+        },
+        "bm_foreign_rp_per_ton": {
+          "minimum": 0,
+          "title": "Bm Foreign Rp Per Ton",
+          "type": "number",
+          "unit": "Rp/ton"
+        },
+        "bm_foreign_rp_per_teu": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bm Foreign Rp Per Teu",
+          "unit": "Rp/TEU"
+        },
+        "bm_domestic_rp_per_ton": {
+          "minimum": 0,
+          "title": "Bm Domestic Rp Per Ton",
+          "type": "number",
+          "unit": "Rp/ton"
+        },
+        "bm_domestic_rp_per_teu": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bm Domestic Rp Per Teu",
+          "unit": "Rp/TEU"
+        },
+        "tug": {
+          "description": "satu entri per rentang GT (urutan = tug_gt_bands)",
+          "items": {
+            "$ref": "#/$defs/TugTariff"
+          },
+          "title": "Tug",
+          "type": "array"
+        }
+      },
+      "required": [
+        "tariff_class",
+        "labuh_foreign_usd_per_gt",
+        "labuh_domestic_rp_per_gt",
+        "pandu_foreign_fixed_usd",
+        "pandu_foreign_var_usd_per_gt",
+        "pandu_domestic_fixed_rp",
+        "pandu_domestic_var_rp_per_gt",
+        "tambat_foreign_usd_per_gt_etmal",
+        "tambat_domestic_rp_per_gt_etmal",
+        "bm_foreign_rp_per_ton",
+        "bm_domestic_rp_per_ton",
+        "tug"
+      ],
+      "title": "TariffClassRow",
+      "type": "object"
+    },
+    "TchPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "size": {
+          "description": "DWT atau TEU sesuai size_basis",
+          "exclusiveMinimum": 0,
+          "title": "Size",
+          "type": "number"
+        },
+        "usd_per_day": {
+          "exclusiveMinimum": 0,
+          "title": "Usd Per Day",
+          "type": "number",
+          "unit": "USD/hari"
+        }
+      },
+      "required": [
+        "size",
+        "usd_per_day"
+      ],
+      "title": "TchPoint",
+      "type": "object"
+    },
+    "Tenant": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "sector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sector"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Tenant",
+      "type": "object"
+    },
+    "TrestleDredgeSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "trestle_length_m": {
+          "exclusiveMinimum": 0,
+          "title": "Trestle Length M",
+          "type": "number",
+          "unit": "m"
+        },
+        "trestle_width_m": {
+          "exclusiveMinimum": 0,
+          "title": "Trestle Width M",
+          "type": "number",
+          "unit": "m"
+        },
+        "existing_depth_m": {
+          "minimum": 0,
+          "title": "Existing Depth M",
+          "type": "number",
+          "unit": "m"
+        }
+      },
+      "required": [
+        "trestle_length_m",
+        "trestle_width_m",
+        "existing_depth_m"
+      ],
+      "title": "TrestleDredgeSpec",
+      "type": "object"
+    },
+    "TrestleSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "max_length_m": {
+          "exclusiveMinimum": 0,
+          "title": "Max Length M",
+          "type": "number",
+          "unit": "m"
+        },
+        "width_mp_m": {
+          "exclusiveMinimum": 0,
+          "title": "Width Mp M",
+          "type": "number",
+          "unit": "m"
+        },
+        "width_jetty_m": {
+          "exclusiveMinimum": 0,
+          "title": "Width Jetty M",
+          "type": "number",
+          "unit": "m"
+        },
+        "height_m": {
+          "exclusiveMinimum": 0,
+          "title": "Height M",
+          "type": "number",
+          "unit": "m"
+        }
+      },
+      "required": [
+        "max_length_m",
+        "width_mp_m",
+        "width_jetty_m",
+        "height_m"
+      ],
+      "title": "TrestleSpec",
+      "type": "object"
+    },
+    "TugTariff": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "fixed_foreign_usd": {
+          "minimum": 0,
+          "title": "Fixed Foreign Usd",
+          "type": "number",
+          "unit": "USD/gerakan"
+        },
+        "var_foreign_usd_per_gt": {
+          "minimum": 0,
+          "title": "Var Foreign Usd Per Gt",
+          "type": "number",
+          "unit": "USD/GT"
+        },
+        "fixed_domestic_rp": {
+          "minimum": 0,
+          "title": "Fixed Domestic Rp",
+          "type": "number",
+          "unit": "Rp/gerakan"
+        },
+        "var_domestic_rp_per_gt": {
+          "minimum": 0,
+          "title": "Var Domestic Rp Per Gt",
+          "type": "number",
+          "unit": "Rp/GT"
+        }
+      },
+      "required": [
+        "fixed_foreign_usd",
+        "var_foreign_usd_per_gt",
+        "fixed_domestic_rp",
+        "var_domestic_rp_per_gt"
+      ],
+      "title": "TugTariff",
+      "type": "object"
+    },
+    "UnitPrice": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "price_rp": {
+          "minimum": 0,
+          "title": "Price Rp",
+          "type": "number",
+          "unit": "Rp"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "unit",
+        "price_rp"
+      ],
+      "title": "UnitPrice",
+      "type": "object"
+    },
+    "VolumeIndependent": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "mode": {
+          "const": "independent",
+          "default": "independent",
+          "title": "Mode",
+          "type": "string"
+        },
+        "start_year": {
+          "minimum": 1,
+          "title": "Start Year",
+          "type": "integer",
+          "unit": "th-ke"
+        },
+        "initial": {
+          "description": "volume tahun mulai, satuan = unit flow",
+          "exclusiveMinimum": 0,
+          "title": "Initial",
+          "type": "number"
+        },
+        "maximum": {
+          "description": "batas volume",
+          "exclusiveMinimum": 0,
+          "title": "Maximum",
+          "type": "number"
+        },
+        "growth_rate": {
+          "minimum": 0,
+          "title": "Growth Rate",
+          "type": "number",
+          "unit": "/th"
+        }
+      },
+      "required": [
+        "start_year",
+        "initial",
+        "maximum",
+        "growth_rate"
+      ],
+      "title": "VolumeIndependent",
+      "type": "object"
+    },
+    "VolumeRatio": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "mode": {
+          "const": "ratio",
+          "default": "ratio",
+          "title": "Mode",
+          "type": "string"
+        },
+        "basis_flow_id": {
+          "description": "flow acuan (biasanya inbound tenant yang sama)",
+          "title": "Basis Flow Id",
+          "type": "string"
+        },
+        "ratio": {
+          "description": "volume = ratio × volume flow acuan (awal & maks); growth & tahun mulai ikut acuan",
+          "exclusiveMinimum": 0,
+          "title": "Ratio",
+          "type": "number"
+        }
+      },
+      "required": [
+        "basis_flow_id",
+        "ratio"
+      ],
+      "title": "VolumeRatio",
+      "type": "object"
+    },
+    "WatersideConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "wind_kn": {
+          "minimum": 0,
+          "title": "Wind Kn",
+          "type": "number",
+          "unit": "knot"
+        },
+        "cross_current_kn": {
+          "minimum": 0,
+          "title": "Cross Current Kn",
+          "type": "number",
+          "unit": "knot"
+        },
+        "longitudinal_current_kn": {
+          "minimum": 0,
+          "title": "Longitudinal Current Kn",
+          "type": "number",
+          "unit": "knot"
+        },
+        "wave_height_m": {
+          "minimum": 0,
+          "title": "Wave Height M",
+          "type": "number",
+          "unit": "m"
+        },
+        "exposure": {
+          "enum": [
+            "terbuka",
+            "terlindungi"
+          ],
+          "title": "Exposure",
+          "type": "string"
+        },
+        "maneuverability": {
+          "enum": [
+            "baik",
+            "sedang",
+            "buruk"
+          ],
+          "title": "Maneuverability",
+          "type": "string"
+        },
+        "nav_aids": {
+          "enum": [
+            "sangat_baik",
+            "baik",
+            "cukup"
+          ],
+          "title": "Nav Aids",
+          "type": "string"
+        },
+        "seabed": {
+          "enum": [
+            "tanah_lunak",
+            "tanah_keras"
+          ],
+          "title": "Seabed",
+          "type": "string"
+        },
+        "channel_slope": {
+          "enum": [
+            "landai",
+            "sedang",
+            "curam"
+          ],
+          "title": "Channel Slope",
+          "type": "string"
+        },
+        "lanes": {
+          "default": 2,
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Lanes",
+          "type": "integer"
+        },
+        "long_channel": {
+          "default": false,
+          "description": "alur relatif panjang (menentukan rumus panjang alur)",
+          "title": "Long Channel",
+          "type": "boolean"
+        },
+        "high_frequency": {
+          "default": true,
+          "description": "frekuensi kapal tinggi (menentukan rumus panjang alur)",
+          "title": "High Frequency",
+          "type": "boolean"
+        },
+        "tug_assisted": {
+          "default": true,
+          "title": "Tug Assisted",
+          "type": "boolean"
+        },
+        "depth_factor_of_draft": {
+          "description": "kedalaman perlu = faktor × T kapal penentu (K15: 1,5)",
+          "exclusiveMinimum": 0,
+          "title": "Depth Factor Of Draft",
+          "type": "number"
+        }
+      },
+      "required": [
+        "wind_kn",
+        "cross_current_kn",
+        "longitudinal_current_kn",
+        "wave_height_m",
+        "exposure",
+        "maneuverability",
+        "nav_aids",
+        "seabed",
+        "channel_slope",
+        "depth_factor_of_draft"
+      ],
+      "title": "WatersideConditions",
+      "type": "object"
+    },
+    "YardEquipment": {
+      "additionalProperties": false,
+      "properties": {
+        "refs": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+          "title": "Refs",
+          "type": "object"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "cargo_form": {
+          "title": "Cargo Form",
+          "type": "string"
+        },
+        "productivity": {
+          "exclusiveMinimum": 0,
+          "title": "Productivity",
+          "type": "number"
+        },
+        "productivity_unit": {
+          "description": "TEU/jam, ton/jam, …",
+          "title": "Productivity Unit",
+          "type": "string"
+        },
+        "utilization": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Utilization",
+          "type": "number"
+        },
+        "unit_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci di unit_prices",
+          "title": "Unit Price Key"
+        },
+        "params": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {},
+          "title": "Params",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "cargo_form",
+        "productivity",
+        "productivity_unit",
+        "utilization"
+      ],
+      "title": "YardEquipment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "refs": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "default": {},
+      "description": "nama field -> sel Excel asal, mis. {'dwt_t': 'Data Kapal!M4'}",
+      "title": "Refs",
+      "type": "object"
+    },
+    "note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Note"
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "meta": {
+      "$ref": "#/$defs/CaseMeta"
+    },
+    "horizon": {
+      "$ref": "#/$defs/Horizon"
+    },
+    "params": {
+      "$ref": "#/$defs/GlobalParams"
+    },
+    "cargo_forms": {
+      "items": {
+        "$ref": "#/$defs/CargoForm"
+      },
+      "title": "Cargo Forms",
+      "type": "array"
+    },
+    "ship_types": {
+      "items": {
+        "$ref": "#/$defs/ShipType"
+      },
+      "title": "Ship Types",
+      "type": "array"
+    },
+    "compatibility": {
+      "additionalProperties": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "description": "kode bentuk muatan -> kode tipe kapal yang boleh",
+      "title": "Compatibility",
+      "type": "object"
+    },
+    "commodities": {
+      "items": {
+        "$ref": "#/$defs/Commodity"
+      },
+      "title": "Commodities",
+      "type": "array"
+    },
+    "tenants": {
+      "items": {
+        "$ref": "#/$defs/Tenant"
+      },
+      "title": "Tenants",
+      "type": "array"
+    },
+    "flows": {
+      "items": {
+        "$ref": "#/$defs/CargoFlow"
+      },
+      "title": "Flows",
+      "type": "array"
+    },
+    "ports": {
+      "items": {
+        "$ref": "#/$defs/ExternalPort"
+      },
+      "title": "Ports",
+      "type": "array"
+    },
+    "routes": {
+      "items": {
+        "$ref": "#/$defs/Route"
+      },
+      "title": "Routes",
+      "type": "array"
+    },
+    "kek_site": {
+      "$ref": "#/$defs/KekSite"
+    },
+    "ships": {
+      "items": {
+        "$ref": "#/$defs/Ship"
+      },
+      "title": "Ships",
+      "type": "array"
+    },
+    "equipment": {
+      "items": {
+        "$ref": "#/$defs/Equipment"
+      },
+      "title": "Equipment",
+      "type": "array"
+    },
+    "equipment_rules": {
+      "$ref": "#/$defs/EquipmentRules"
+    },
+    "tariffs": {
+      "$ref": "#/$defs/TariffBook"
+    },
+    "storage": {
+      "$ref": "#/$defs/StorageParams"
+    },
+    "unit_prices": {
+      "items": {
+        "$ref": "#/$defs/UnitPrice"
+      },
+      "title": "Unit Prices",
+      "type": "array"
+    },
+    "plans": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Plan"
+      },
+      "title": "Plans",
+      "type": "array"
+    },
+    "assumptions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Assumption"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "meta",
+    "horizon",
+    "params",
+    "cargo_forms",
+    "ship_types",
+    "compatibility",
+    "commodities",
+    "tenants",
+    "flows",
+    "ports",
+    "routes",
+    "kek_site",
+    "ships",
+    "equipment",
+    "equipment_rules",
+    "tariffs",
+    "storage",
+    "unit_prices"
+  ],
+  "title": "Case",
+  "type": "object"
+}

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPT v2 Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6f4; --surface:#ffffff; --surface-2:#eef0ec; --line:#d9ddd6; --line-strong:#b9bfb4;
+  --text:#1b2420; --muted:#5c6862; --faint:#8a948e;
+  --accent:#0f6b5c; --accent-soft:#d6ece7; --accent-ink:#0a4a40;
+  --decision:#b4530c; --decision-soft:#fbe7d6;
+  --up:#2456a6; --up-soft:#dbe5f6; --down:#0f6b5c; --down-soft:#d6ece7;
+  --warn:#9a2f1f; --warn-soft:#f6dcd6; --ok:#2f6b1f;
+  --c-input:#e9ece6; --c-muted-node:#f1f3ef;
+  --shadow:0 1px 2px rgba(20,30,25,.06),0 4px 16px rgba(20,30,25,.05);
+  --radius:10px;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111614; --surface:#181f1c; --surface-2:#1f2824; --line:#2c3732; --line-strong:#3d4a44;
+    --text:#e4ebe7; --muted:#a3b0a9; --faint:#748079;
+    --accent:#4fbfa8; --accent-soft:#163a33; --accent-ink:#9fe3d4;
+    --decision:#f0a060; --decision-soft:#3b2614;
+    --up:#7ea6ee; --up-soft:#1b2a45; --down:#4fbfa8; --down-soft:#163a33;
+    --warn:#f08a76; --warn-soft:#3d1f19; --ok:#8fd17a;
+    --c-input:#222b27; --c-muted-node:#1c2421;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111614; --surface:#181f1c; --surface-2:#1f2824; --line:#2c3732; --line-strong:#3d4a44;
+  --text:#e4ebe7; --muted:#a3b0a9; --faint:#748079;
+  --accent:#4fbfa8; --accent-soft:#163a33; --accent-ink:#9fe3d4;
+  --decision:#f0a060; --decision-soft:#3b2614;
+  --up:#7ea6ee; --up-soft:#1b2a45; --down:#4fbfa8; --down-soft:#163a33;
+  --warn:#f08a76; --warn-soft:#3d1f19; --ok:#8fd17a;
+  --c-input:#222b27; --c-muted-node:#1c2421;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+header.top .wrap{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;padding-top:22px;padding-bottom:0;flex-wrap:wrap}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:26px;line-height:1.15;margin:8px 0 6px;font-weight:700;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:720px;margin:0 0 14px}
+.facts{display:flex;gap:18px;flex-wrap:wrap;margin:0 0 14px;padding:0;list-style:none}
+.facts li{font:500 13px var(--mono);color:var(--muted)}
+.facts b{color:var(--text);font-weight:600}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;width:100%;margin-top:4px}
+nav.tabs button{appearance:none;border:0;background:none;font:600 14px var(--sans);color:var(--muted);padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+nav.tabs button:hover{color:var(--text)}
+.theme-btn{appearance:none;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:500 12px var(--mono);padding:6px 10px;border-radius:8px;cursor:pointer;margin-bottom:14px}
+main{padding:22px 0 60px}
+section.panel{display:none}
+section.panel.active{display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.muted{color:var(--muted)} .faint{color:var(--faint)}
+.mono{font-family:var(--mono)}
+.tag{display:inline-block;font:500 11px/1 var(--mono);padding:4px 6px;border-radius:5px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.tag.ph{background:var(--decision-soft);color:var(--decision);border-color:transparent}
+.tag.ok{background:var(--accent-soft);color:var(--accent-ink);border-color:transparent}
+.tag.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+h2{font-size:18px;margin:0 0 6px}
+h3{font-size:15px;margin:0 0 4px}
+p{margin:0 0 10px}
+
+/* ---------- Graph ---------- */
+.graph-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+@media (max-width:980px){.graph-layout{grid-template-columns:minmax(0,1fr)}}
+.stories{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.stories button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--text);font:500 13px var(--sans);padding:6px 10px;border-radius:999px;cursor:pointer}
+.stories button:hover{border-color:var(--accent)}
+.stories button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.graph-scroll{overflow-x:auto;overflow-y:hidden;padding:4px 0 8px}
+.graph{position:relative}
+.graph svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.colhead{position:absolute;top:0;font:600 11px/1.2 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+.node{position:absolute;width:172px;min-height:36px;padding:6px 9px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:12.5px;line-height:1.25;cursor:pointer;transition:opacity .15s,background .15s,border-color .15s;user-select:none}
+.node.k-input{background:var(--c-input)}
+.node.k-decision{border:1.5px dashed var(--decision);background:var(--decision-soft);color:var(--text)}
+.node.k-objective{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.node:hover{border-color:var(--line-strong)}
+.node .u{display:block;font:400 10.5px var(--mono);color:var(--faint);margin-top:2px}
+.graph.focus .node{opacity:.28}
+.graph.focus .node.sel,.graph.focus .node.up,.graph.focus .node.down{opacity:1}
+.node.sel{outline:2px solid var(--text);outline-offset:1px}
+.node.up{border-color:var(--up);background:var(--up-soft)}
+.node.down{border-color:var(--down);background:var(--down-soft)}
+path.edge{fill:none;stroke:var(--line-strong);stroke-width:1.1;opacity:.55}
+.graph.focus path.edge{opacity:.08}
+.graph.focus path.edge.up{stroke:var(--up);opacity:.9;stroke-width:1.6}
+.graph.focus path.edge.down{stroke:var(--down);opacity:.9;stroke-width:1.6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1px solid var(--line)}
+.detail{position:sticky;top:12px;padding:16px}
+.detail .kind{margin-bottom:8px}
+.detail dl{margin:10px 0 0;display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:13px}
+.detail dt{color:var(--faint);font:500 11px/1.8 var(--mono);text-transform:uppercase;letter-spacing:.04em}
+.detail dd{margin:0}
+.formula{font:13px/1.45 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:8px 10px;margin:8px 0;white-space:pre-wrap;word-break:break-word}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:12px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);cursor:pointer;background:var(--surface)}
+.chip.up{border-color:var(--up);color:var(--up)}
+.chip.down{border-color:var(--down);color:var(--down)}
+
+/* ---------- Screens ---------- */
+.screens{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.screen{padding:14px;display:flex;flex-direction:column;gap:10px}
+.screen .head{display:flex;gap:10px;align-items:baseline}
+.screen .num{font:600 13px var(--mono);color:var(--accent);min-width:22px}
+.wf{height:118px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);display:grid;grid-template-columns:34px 1fr;overflow:hidden}
+.wf .side{background:var(--c-input);border-right:1px solid var(--line);padding:6px 5px;display:flex;flex-direction:column;gap:4px}
+.wf .side span{height:5px;border-radius:2px;background:var(--line-strong);opacity:.6}
+.wf .side span.on{background:var(--accent);opacity:1}
+.wf .body{padding:7px;display:grid;gap:5px;grid-auto-rows:minmax(0,1fr)}
+.blk{border-radius:4px;background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden}
+.blk.table{background:repeating-linear-gradient(to bottom,var(--surface) 0 7px,var(--surface-2) 7px 8px)}
+.blk.chart::after{content:"";position:absolute;left:6%;right:6%;bottom:18%;top:22%;background:linear-gradient(135deg,transparent 48%,var(--accent) 49% 52%,transparent 53%);opacity:.7}
+.blk.bars{display:flex;align-items:flex-end;gap:3px;padding:4px 6px}
+.blk.bars i{flex:1;background:var(--accent);opacity:.55;border-radius:2px 2px 0 0}
+.blk.chain{display:flex;align-items:center;gap:3px;padding:0 5px}
+.blk.chain i{flex:1;height:52%;border:1px solid var(--accent);border-radius:3px;background:var(--accent-soft)}
+.blk.form{background:repeating-linear-gradient(to bottom,transparent 0 5px,var(--line) 5px 6px,transparent 6px 12px);background-size:60% 12px;background-repeat:repeat-y;background-position:8px 6px}
+.blk.kpi{display:flex;gap:4px;padding:4px}
+.blk.kpi i{flex:1;border-radius:3px;background:var(--accent-soft);border:1px solid var(--line)}
+.blk.graphwf::after{content:"";position:absolute;inset:18%;background:radial-gradient(circle at 15% 30%,var(--decision) 0 4px,transparent 5px),radial-gradient(circle at 50% 70%,var(--accent) 0 4px,transparent 5px),radial-gradient(circle at 85% 35%,var(--accent) 0 4px,transparent 5px),linear-gradient(20deg,transparent 47%,var(--line-strong) 48% 50%,transparent 51%)}
+.blk.depth::after{content:"";position:absolute;left:0;right:0;top:30%;bottom:0;background:linear-gradient(170deg,var(--surface) 30%,var(--up-soft) 31%);border-top:1px dashed var(--warn)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.row3{display:grid;grid-template-columns:2fr 1fr;gap:5px}
+.screen ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+.screen .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.shell-note{padding:14px 16px;margin-bottom:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:13.5px}
+.shell-note b{display:block;font-size:13px;margin-bottom:2px}
+
+/* ---------- Mini model ---------- */
+.mm-grid{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.mm-grid{grid-template-columns:minmax(0,1fr)}}
+.controls{padding:16px;display:flex;flex-direction:column;gap:14px;position:sticky;top:12px}
+@media (max-width:980px){.controls{position:static}}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px}
+.ctl label span{font:500 12px var(--mono);color:var(--muted);font-weight:500}
+.ctl select,.ctl input[type=range]{width:100%}
+.ctl select{font:14px var(--sans);padding:7px 8px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--text)}
+.ctl .hint{font-size:12px;color:var(--faint);margin-top:3px}
+.toggle{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.toggle input{margin-top:3px}
+input[type=range]{accent-color:var(--accent)}
+.chain-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:10px}
+.step{padding:10px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surface)}
+.step .lbl{font-size:12px;color:var(--muted);font-weight:600}
+.step .val{font:600 19px/1.25 var(--mono);margin:3px 0 2px;letter-spacing:-.01em}
+.step .val small{font:500 12px var(--mono);color:var(--muted);margin-left:3px}
+.step .f{font:11.5px/1.4 var(--mono);color:var(--faint);word-break:break-word}
+.step.total{border-color:var(--accent);background:var(--accent-soft)}
+.step.flag{border-color:var(--warn)}
+.block-title{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin:18px 0 8px}
+.block-title:first-child{margin-top:0}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px}
+table.cmp th,table.cmp td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.cmp th{font:600 11px var(--mono);color:var(--faint);text-transform:uppercase;letter-spacing:.04em;position:sticky;top:0;background:var(--surface)}
+table.cmp td:first-child,table.cmp th:first-child{text-align:left}
+table.cmp tr.sel td{background:var(--accent-soft)}
+table.cmp tr.inf td{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--warn)}
+table.cmp tr.inf td:first-child{text-decoration:none}
+table.cmp tr{cursor:pointer}
+table.cmp tr:hover td{background:var(--surface-2)}
+.tbl-scroll{overflow-x:auto}
+.chart-box{padding:14px}
+.note{font-size:12.5px;color:var(--muted);padding:10px 12px;border-left:3px solid var(--decision);background:var(--decision-soft);border-radius:0 7px 7px 0;margin-top:12px}
+.best{color:var(--accent);font-weight:700}
+footer{border-top:1px solid var(--line);padding:18px 0;color:var(--faint);font-size:12.5px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Perencanaan Transportasi Laut · v2 · draf 1</div>
+      <h1>TPT Planner v2 — Blueprint</h1>
+      <p class="lede">Gambaran besar aplikasi: bagaimana variabel saling mempengaruhi, layar apa saja yang dibangun lebih dulu (dengan placeholder), dan satu prototipe rantai hitung untuk satu rute. Data contoh: <b>K15 — KI Batam</b>.</p>
+      <ul class="facts">
+        <li><b>5</b> tenant · <b>10</b> aliran muatan</li>
+        <li><b>41</b> kandidat kapal (4 tipe)</li>
+        <li><b>10</b> alat B/M</li>
+        <li><b>20</b> tahun tinjauan</li>
+      </ul>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button">tema: otomatis</button>
+    <nav class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="graph">1 · Peta variabel</button>
+      <button role="tab" aria-selected="false" data-tab="screens">2 · Peta layar</button>
+      <button role="tab" aria-selected="false" data-tab="mini">3 · Prototipe 1 rute</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ================= GRAPH ================= -->
+  <section class="panel active" id="panel-graph">
+    <p class="muted" style="max-width:820px">Setiap kotak adalah satu variabel di Registry v2 (SPEC §9.3). Klik kotak untuk melihat <b style="color:var(--up)">hulu</b> (yang mempengaruhinya) dan <b style="color:var(--down)">hilir</b> (yang dipengaruhinya). Tombol cerita di bawah menyorot interaksi I1–I9 dari SPEC §7.</p>
+    <div class="stories" id="stories"></div>
+    <div class="graph-layout">
+      <div class="card" style="padding:12px 12px 6px">
+        <div class="graph-scroll"><div class="graph" id="graph"><svg id="edges"></svg></div></div>
+        <div class="legend">
+          <span><i style="background:var(--c-input)"></i>input / parameter</span>
+          <span><i style="background:var(--decision-soft);border:1.5px dashed var(--decision)"></i>variabel keputusan</span>
+          <span><i style="background:var(--surface)"></i>turunan</span>
+          <span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>objektif</span>
+        </div>
+      </div>
+      <aside class="card detail" id="detail">
+        <div class="tag">pilih variabel</div>
+        <h2 style="margin-top:10px">Klik sebuah kotak</h2>
+        <p class="muted">Panel ini adalah bentuk awal <b>panel jejak</b> v2: rumus, satuan, asal sel Excel, layar tempat variabel tampil, dan tahap engine yang menghidupkannya.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= SCREENS ================= -->
+  <section class="panel" id="panel-screens">
+    <div class="card shell-note">
+      <div><b>Sidebar kiri</b>langkah pengerjaan 0–11 dengan status ✓ dihitung · ◐ sebagian · ○ placeholder</div>
+      <div><b>Bar atas</b>pemilih kasus &amp; skenario, tombol <span class="mono">Hitung</span> dan <span class="mono">Optimasi</span>, indikator "perlu hitung ulang"</div>
+      <div><b>Laci kanan</b>panel jejak: klik angka mana pun → rumus, input, turunan</div>
+      <div><b>Aturan placeholder</b>angka yang belum dihitung engine selalu berlabel <span class="tag ph">placeholder</span></div>
+    </div>
+    <div class="screens" id="screens"></div>
+  </section>
+
+  <!-- ================= MINI MODEL ================= -->
+  <section class="panel" id="panel-mini">
+    <p class="muted" style="max-width:860px">Rute <b>Badas → Batu Ampar (Batam)</b>, PT Damai Sejahtera, jagung dalam karung (GC), 992,2 NM. Default memakai <b>keputusan v2</b> (SPEC §11: voyage maks ⌊⌋, BBM dari frekuensi aktual, alat dari LOA, produktivitas Badas total per kapal, V ballast = Vs, ME &amp; AE = HSD). Centang pembanding untuk melihat angka Excel K15 — AETOS tahun-1 = <b>Rp 734,3 M</b>, sama dengan <span class="mono">Model!M338</span>. Ini contoh bagaimana layar <b>6 Armada &amp; Operasi</b> akan terasa.</p>
+    <div class="mm-grid">
+      <div class="card controls">
+        <div class="ctl"><label>Kapal <span id="shipLbl"></span></label><select id="shipSel"></select><div class="hint">9 kandidat general cargo dari data K15</div></div>
+        <div class="ctl"><label>Tahun <span id="yearLbl"></span></label><input type="range" id="year" min="1" max="20" value="1"><div class="hint" id="demandHint"></div></div>
+        <div class="ctl"><label>Alat B/M di KEK <span id="eqLbl"></span></label><select id="eqSel"></select></div>
+        <div class="ctl"><label>Kecepatan <span id="spdLbl"></span></label><input type="range" id="spd" min="70" max="100" value="100"><div class="hint">% dari Vs. Daya ME diskalakan pangkat 3 — ekstensi v2, belum ada di Excel.</div></div>
+        <div class="ctl"><label>Harga HSD <span id="hsdLbl"></span></label><input type="range" id="hsd" min="12000" max="36000" step="500" value="24000"></div>
+        <div class="ctl"><label>Kurs USD <span id="fxLbl"></span></label><input type="range" id="fx" min="12000" max="20000" step="100" value="15521"></div>
+        <label class="toggle"><input type="checkbox" id="excel"><span><b>Pembanding: rumus Excel K15</b><br><span class="muted">memakai perilaku lama A1, A3, A5, A6, A9, A10 — hanya untuk melihat selisih, tidak ada di engine v2</span></span></label>
+      </div>
+      <div>
+        <div class="block-title"><h2>Rantai hitung</h2><span class="tag" id="modeTag">mode Excel K15</span></div>
+        <div class="chain-grid" id="chain"></div>
+        <div class="block-title"><h2>Bandingkan kandidat</h2><span class="muted" style="font-size:13px">klik baris untuk memilih · dicoret = gugur draft (Badas 11,5 m)</span></div>
+        <div class="card chart-box"><svg id="ucChart" width="100%" height="230" role="img" aria-label="Unit cost per kandidat kapal"></svg>
+          <div class="legend" style="margin-top:4px"><span>ukuran kapal (DWT) →</span><span><i style="background:var(--accent)"></i>terpilih</span><span><i style="background:var(--decision)"></i>termurah feasible</span><span><i style="background:var(--line-strong)"></i>gugur draft</span></div></div>
+        <div class="card tbl-scroll" style="margin-top:10px"><table class="cmp" id="cmp"></table></div>
+        <div class="note"><b>Placeholder:</b> biaya pelabuhan memakai tarif rata-rata 764 Rp/GT/call yang dikalibrasi dari K15 tahun-1 (detail tarif labuh/pandu/tambat/tunda menyusul di Tahap 6). Investasi terminal tidak termasuk — itu kopling antar rute (Tahap 7–8).</div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">Sumber: laporan, PPT, dan workbook TPT K15/K21/K24/K7 di <span class="mono">D:\LAH\TPT</span>. Spesifikasi: <span class="mono">v2/docs/01_SPEC.md</span> · Tahapan: <span class="mono">v2/docs/02_ROADMAP.md</span>.</div></footer>
+
+<script>
+/* ======================= Tabs & theme ======================= */
+document.querySelectorAll('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+b.dataset.tab));
+  if(b.dataset.tab==='graph') drawEdges();
+  if(b.dataset.tab==='mini') renderMini();
+}));
+(function(){
+  const btn=document.getElementById('themeBtn'); const modes=['otomatis','terang','gelap']; let i=0;
+  try{const s=localStorage.getItem('tpt-theme'); if(s) i=Math.max(0,modes.indexOf(s));}catch(e){}
+  const apply=()=>{const m=modes[i]; btn.textContent='tema: '+m;
+    if(m==='otomatis') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme',m==='terang'?'light':'dark');};
+  apply();
+  btn.addEventListener('click',()=>{i=(i+1)%3; apply(); try{localStorage.setItem('tpt-theme',modes[i]);}catch(e){} });
+})();
+
+/* ======================= Variable registry ======================= */
+const COLS=['Input soal','Keputusan & muatan','Kapal','Operasi','Biaya pelayaran','Terminal KEK','Investasi & objektif'];
+const V=[
+ // col 0 — inputs
+ {id:'in.vol',c:0,k:'input',l:'Volume awal, maks, growth, tahun mulai',u:'ton|TEU · %/th',f:'data soal per flow',x:'Proyeksi Muatan!B:F',s:2,t:1},
+ {id:'in.konv',c:0,k:'input',l:'Aturan konversi in→out',u:'rasio',f:'85% berat · 1 TEU Al = 2 TEU baja · …',x:'Proyeksi Muatan!C12',s:2,t:1},
+ {id:'in.kom',c:0,k:'input',l:'Komoditas: ρ, SF, kemasan',u:'t/m³ · m³/t',f:'data komoditas',x:'Muatan!B:M',s:2,t:1},
+ {id:'in.port',c:0,k:'input',l:'Pelabuhan asal/tujuan: draft, LOA maks, prod. B/M',u:'m · t/j',f:'data pelabuhan',x:'Data Pelabuhan',s:3,t:1},
+ {id:'in.jarak',c:0,k:'input',l:'Jarak rute',u:'NM',f:'data rute',x:'Rute!Y20:Y29',s:3,t:1},
+ {id:'in.kapal',c:0,k:'input',l:'Data kapal: DWT/TEU, LOA, B, T, Vs, GT, daya, SFOC',u:'',f:'database kandidat',x:'Data Kapal',s:4,t:1},
+ {id:'in.tch',c:0,k:'input',l:'Tabel tarif charter',u:'USD/hari',f:'tabel pasar per tipe',x:'TCH!B4:W12',s:4,t:1},
+ {id:'in.alat',c:0,k:'input',l:'Alat B/M: harga, produktivitas, radius',u:'Rp · t/j · m',f:'database alat',x:'Alat BM',s:5,t:1},
+ {id:'in.tarif',c:0,k:'input',l:'Tarif pelabuhan (labuh, pandu, tambat, tunda, B/M)',u:'Rp/GT · Rp/t',f:'tarif per pelabuhan',x:'Biaya Pelabuhan',s:1,t:1},
+ {id:'in.glob',c:0,k:'input',l:'AT/WT/IT, BOR maks, hari kerja, MCR',u:'jam · %',f:'asumsi global',x:'Model!E36:F54',s:1,t:1},
+ {id:'in.bbm',c:0,k:'input',l:'Harga BBM, kurs',u:'Rp/l · Rp/USD',f:'asumsi global',x:'Model!F45:F47',s:1,t:1},
+ {id:'in.stor',c:0,k:'input',l:'Parameter penyimpanan (Tdw, YOR, H)',u:'hari · %',f:'per komoditas',x:'Fasilitas Daratan',s:8,t:1},
+ {id:'in.bat',c:0,k:'input',l:'Batimetri tapak KEK',u:'m vs m',f:'profil kedalaman',x:'Trestle!B34:B46',s:3,t:1},
+ {id:'in.harga',c:0,k:'input',l:'Harga satuan dermaga/trestle/keruk',u:'Rp/m² · Rp/m³',f:'asumsi investasi',x:'Investasi!B2:F34',s:1,t:1},
+ {id:'in.wacc',c:0,k:'input',l:'WACC & periode tinjauan',u:'% · th',f:'asumsi finansial',x:'Model!J403',s:1,t:1},
+ // col 1 — decisions & demand
+ {id:'dv.kapal',c:1,k:'decision',l:'Kapal terpilih per flow',u:'y[f,k] ∈ {0,1}',f:'Σk y[f,k] = 1 · hanya kapal feasible',x:'Model!AL8:BZ17',s:6,t:9},
+ {id:'dv.alat',c:1,k:'decision',l:'Alat B/M per terminal',u:'z[τ,e] ∈ {0,1}',f:'Σe z[τ,e] = 1',x:'Model!CX9:CY18',s:8,t:9},
+ {id:'dv.mode',c:1,k:'decision',l:'Trestle vs keruk',u:'w[m] | θ ∈ [0,1]',f:'pilih biaya perairan termurah',x:'K21 Model!IF26:II30',s:8,t:9},
+ {id:'dv.spd',c:1,k:'decision',l:'Kecepatan (opsional)',u:'% Vs',f:'slow steaming — ekstensi v2',x:'catatan K21',s:6,t:9},
+ {id:'d.dem',c:1,k:'derived',l:'Demand D[f,t]',u:'ton | TEU per th',f:'D[t] = min(Dmax, D[t−1]·(1+g)), 0 sebelum t₀',x:'Proyeksi Muatan!G4:Z24',s:2,t:4,deps:['in.vol','in.konv']},
+ {id:'d.tpt',c:1,k:'derived',l:'Ton per TEU',u:'ton/TEU',f:'min(stuffing kemasan, NetMax kapal)',x:'Muatan!L19:L22',s:2,t:4,deps:['in.kom','dv.kapal']},
+ {id:'d.unit',c:1,k:'derived',l:'Demand dalam satuan kapal',u:'ton | TEU',f:'⌈D_ton / tonPerTEU⌉ untuk PK',x:'Proyeksi Muatan!G20:Z24',s:2,t:4,deps:['d.dem','d.tpt']},
+ // col 2 — ship
+ {id:'v.pay',c:2,k:'derived',l:'Payload efektif',u:'ton | TEU',f:'α·DWT (α 0,85–0,9) atau kapasitas TEU; opsional dibatasi volume',x:'Data Kapal!N · Model!AL26',s:4,t:5,deps:['dv.kapal','in.kapal']},
+ {id:'v.feas',c:2,k:'derived',l:'Kelayakan kapal',u:'boolean + alasan',f:'tipe cocok ∧ T ≤ draft ∧ LOA ≤ LOA maks',x:'Model!CH24:CJ32',s:4,t:5,deps:['dv.kapal','in.kapal','in.port']},
+ {id:'v.neq',c:2,k:'derived',l:'Alat per tambatan',u:'unit',f:'dari rentang LOA: <90→1, 90–160→2, 160–180→3, ≥180→4',x:'Model!CF34:CH37',s:5,t:5,deps:['dv.kapal','in.kapal']},
+ {id:'v.tchr',c:2,k:'derived',l:'Tarif TCH per hari',u:'USD/hari',f:'a_tipe · ukuran + b_tipe (regresi)',x:'TCH!C15:U16',s:4,t:6,deps:['in.tch','dv.kapal']},
+ // col 3 — operations
+ {id:'o.F',c:3,k:'derived',l:'Frekuensi F',u:'call/th',f:'⌈D / payload⌉',x:'Model!M28',s:6,t:5,deps:['d.unit','v.pay']},
+ {id:'o.q',c:3,k:'derived',l:'Cargo per call q',u:'ton | TEU',f:'D / F (atau payload pada mode full-load)',x:'Model!N41',s:6,t:5,deps:['d.unit','o.F']},
+ {id:'o.tk',c:3,k:'derived',l:'Port time KEK',u:'hari/call',f:'q / (prod_alat · nEq) / 24',x:'Model!M68',s:6,t:5,deps:['o.q','dv.alat','in.alat','v.neq']},
+ {id:'o.te',c:3,k:'derived',l:'Port time asal/tujuan',u:'hari/call',f:'q / (prod_pelabuhan · nEq) / 24',x:'Model!M82',s:6,t:5,deps:['o.q','in.port','v.neq']},
+ {id:'o.ts',c:3,k:'derived',l:'Sea time',u:'hari/call',f:'(jarak/Vs + jarak/V_ballast) / 24',x:'Model!M156',s:6,t:5,deps:['in.jarak','in.kapal','dv.kapal','dv.spd']},
+ {id:'o.rtd',c:3,k:'derived',l:'Round trip days',u:'hari',f:'sea time + port time KEK + port time ext + (AT+WT+IT)/24',x:'Model!M195',s:6,t:5,deps:['o.ts','o.tk','o.te','in.glob']},
+ {id:'o.fmax',c:3,k:'derived',l:'Voyage maks per kapal',u:'call/kapal/th',f:'⌊commission days / RTD⌋   (Excel: ⌈⌉ — A1)',x:'Model!M208',s:6,t:5,deps:['o.rtd','in.glob']},
+ {id:'o.n',c:3,k:'derived',l:'Jumlah kapal',u:'unit',f:'⌈F / F_max⌉',x:'Model!M221',s:6,t:5,deps:['o.F','o.fmax']},
+ {id:'o.lk',c:3,k:'derived',l:'Lama konsumsi',u:'hari stok/pengapalan',f:'q / (D/365)',x:'Model!M350',s:6,t:5,deps:['o.q','d.dem']},
+ // col 4 — shipping cost
+ {id:'c.fuel',c:4,k:'derived',l:'Biaya BBM (ME + AE)',u:'Rp/th',f:'daya·MCR·SFOC·jam·voyage → liter × harga',x:'Model!M247:M299',s:7,t:6,deps:['in.kapal','dv.kapal','o.ts','o.tk','o.te','o.F','in.bbm','in.glob','dv.spd']},
+ {id:'c.tch',c:4,k:'derived',l:'Biaya time charter',u:'Rp/th',f:'tarif TCH · kurs · 365 · jumlah kapal',x:'Model!M312',s:7,t:6,deps:['v.tchr','o.n','in.bbm']},
+ {id:'c.port',c:4,k:'derived',l:'Biaya pelabuhan',u:'Rp/th',f:'F · Σ(labuh + pandu + tambat + tunda + B/M) di dua ujung',x:'Model!M325 · Biaya Pelabuhan',s:7,t:6,deps:['in.tarif','o.F','o.q','dv.kapal','o.tk','o.te']},
+ {id:'c.ship',c:4,k:'derived',l:'Shipping cost',u:'Rp/th',f:'BBM + TCH + biaya pelabuhan',x:'Model!M338',s:7,t:6,deps:['c.fuel','c.tch','c.port']},
+ // col 5 — terminal
+ {id:'t.sd',c:5,k:'derived',l:'Ship-days di KEK',u:'hari/th',f:'F · port time KEK',x:'Model!M100:M102',s:8,t:7,deps:['o.F','o.tk']},
+ {id:'t.bd',c:5,k:'derived',l:'Berth-days required',u:'hari/th',f:'⌈ship-days · LOA / panjang unit tambatan⌉',x:'Model!M106',s:8,t:7,deps:['t.sd','dv.kapal']},
+ {id:'t.nb',c:5,k:'derived',l:'Jumlah tambatan (MP, CC)',u:'unit',f:'⌈Σ berth-days / (BOR_maks · hari kerja)⌉',x:'Model!K124:K125',s:8,t:7,deps:['t.bd','in.glob']},
+ {id:'t.bor',c:5,k:'derived',l:'BOR realisasi',u:'%',f:'Σ ship-days / (n · rasio · hari kerja)',x:'Model!K144',s:8,t:7,deps:['t.sd','t.bd','t.nb']},
+ {id:'t.na',c:5,k:'derived',l:'Jumlah alat B/M',u:'unit',f:'tambatan · alat per tambatan',x:'Model!K362',s:8,t:7,deps:['t.nb','v.neq','dv.alat']},
+ {id:'t.st',c:5,k:'derived',l:'Penyimpanan (CY, gudang, silo, tangki)',u:'m² | m³ | unit',f:'Q · Tdw · faktor / (365 · ρ · H · YOR)',x:'Fasilitas Daratan',s:8,t:7,deps:['d.dem','in.stor','in.kom','o.lk']},
+ {id:'t.gov',c:5,k:'derived',l:'Kapal penentu (T, LOA, B maks)',u:'m',f:'maks atas kapal terpilih yang singgah KEK',x:'Fasilitas Perairan',s:8,t:8,deps:['dv.kapal','in.kapal']},
+ {id:'t.dep',c:5,k:'derived',l:'Kedalaman perlu',u:'m LWS',f:'T_maks · (1 + clearance 20%)',x:'Fasilitas Perairan!…',s:8,t:8,deps:['t.gov']},
+ {id:'t.ws',c:5,k:'derived',l:'Dimensi alur & kolam',u:'m · m²',f:'lebar alur, kolam putar, stopping distance … dari LOA/B',x:'Fasilitas Perairan',s:8,t:8,deps:['t.gov']},
+ {id:'t.tr',c:5,k:'derived',l:'Panjang trestle / volume keruk',u:'m | m³',f:'x* : batimetri(x*) ≥ kedalaman perlu',x:'Trestle!B86:K108',s:8,t:8,deps:['t.dep','in.bat','dv.mode']},
+ // col 6 — investment & objective
+ {id:'i.drm',c:6,k:'derived',l:'Investasi dermaga & jetty',u:'Rp',f:'tambatan · panjang · lebar · harga satuan (bertahap)',x:'Investasi!K5:N14',s:9,t:8,deps:['t.nb','in.harga']},
+ {id:'i.alat',c:6,k:'derived',l:'Investasi alat',u:'Rp',f:'Δ jumlah alat · harga · eskalasi',x:'Investasi!K17:N28',s:9,t:8,deps:['t.na','dv.alat','in.alat']},
+ {id:'i.st',c:6,k:'derived',l:'Investasi penyimpanan',u:'Rp',f:'luas/volume · harga satuan',x:'Investasi!L43:N90',s:9,t:8,deps:['t.st','in.harga']},
+ {id:'i.per',c:6,k:'derived',l:'Investasi trestle / keruk',u:'Rp',f:'panjang·lebar·Rp/m²  atau  volume·Rp/m³',x:'Model!K395',s:9,t:8,deps:['t.tr','t.ws','in.harga']},
+ {id:'a.tc',c:6,k:'derived',l:'Total cost TC[t]',u:'Rp/th',f:'Σ shipping cost + investasi (teranualisasi / bertahap)',x:'Model!K399:K403',s:9,t:8,deps:['c.ship','i.drm','i.alat','i.st','i.per']},
+ {id:'a.uc',c:6,k:'derived',l:'Unit cost UC[t]',u:'Rp/ton',f:'TC[t] / muatan[t]  (satuan diseragamkan — A7)',x:'Model!K404',s:9,t:8,deps:['a.tc','d.dem']},
+ {id:'a.pv',c:6,k:'derived',l:'PV & anuitas',u:'Rp/ton',f:'Σ UC[t]/(1+r)^t → PMT(r, 20, ΣPV)',x:'Model!K405:K407',s:9,t:8,deps:['a.uc','in.wacc']},
+ {id:'obj',c:6,k:'objective',l:'Objektif: min anuitas PV unit cost | min NPV',u:'',f:'dioptimasi atas y, z, w (dan kecepatan)',x:'Model!K407',s:10,t:9,deps:['a.pv']},
+];
+const SCREEN_NAMES={0:'Beranda',1:'Soal & Asumsi',2:'Tenant & Muatan',3:'Pelabuhan & Rute',4:'Kapal',5:'Alat B/M',6:'Armada & Operasi',7:'Biaya Pelayaran',8:'Terminal KEK',9:'Investasi & Ringkasan',10:'Optimasi',11:'Skenario & Laporan'};
+const STORIES=[
+ ['I1 Kapal lebih besar','dv.kapal'],['I2 Kecepatan','dv.spd'],['I3 Alat B/M','dv.alat'],['I4 Growth & volume','in.vol'],
+ ['I5 Konversi muatan','in.konv'],['I6 BOR & hari kerja','in.glob'],['I7 BBM & kurs','in.bbm'],['I8 Batimetri','in.bat'],['I9 Discount rate','in.wacc']
+];
+const byId=Object.fromEntries(V.map(v=>[v.id,v]));
+V.forEach(v=>{v.deps=v.deps||[]; v.kids=[];});
+V.forEach(v=>v.deps.forEach(d=>byId[d].kids.push(v.id)));
+function closure(id,key){const out=new Set(); const st=[id]; while(st.length){const n=st.pop(); byId[n][key].forEach(m=>{if(!out.has(m)){out.add(m);st.push(m);}});} return out;}
+
+const NODE_W=172, COL_W=206, TOP=26, GAP=8;
+const graph=document.getElementById('graph'), svg=document.getElementById('edges');
+const nodeEl={};
+(function build(){
+  COLS.forEach((name,i)=>{const h=document.createElement('div'); h.className='colhead'; h.style.left=(i*COL_W)+'px'; h.textContent=name; graph.appendChild(h);});
+  V.forEach(v=>{const el=document.createElement('div'); el.className='node k-'+v.k; el.tabIndex=0;
+    el.innerHTML=`${v.l}<span class="u">${v.u||'&nbsp;'}</span>`; el.addEventListener('click',()=>select(v.id));
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(v.id);}});
+    graph.appendChild(el); nodeEl[v.id]=el;});
+})();
+function layout(){
+  const y=COLS.map(()=>TOP); let maxH=0;
+  V.forEach(v=>{const el=nodeEl[v.id]; el.style.left=(v.c*COL_W)+'px'; el.style.top=y[v.c]+'px'; v._y=y[v.c]; v._h=el.offsetHeight; y[v.c]+=v._h+GAP; maxH=Math.max(maxH,y[v.c]);});
+  graph.style.width=((COLS.length-1)*COL_W+NODE_W+4)+'px'; graph.style.height=(maxH+4)+'px';
+}
+function drawEdges(){
+  layout(); let s='';
+  V.forEach(v=>v.deps.forEach(d=>{const a=byId[d]; const x1=a.c*COL_W+NODE_W, y1=a._y+a._h/2, x2=v.c*COL_W, y2=v._y+v._h/2; const mx=(x1+x2)/2;
+    s+=`<path class="edge" data-from="${d}" data-to="${v.id}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;}));
+  svg.setAttribute('width',graph.style.width); svg.setAttribute('height',graph.style.height); svg.innerHTML=s;
+  if(current) select(current,true);
+}
+let current=null;
+function select(id,keep){
+  if(!keep && current===id){current=null; clearSel(); return;}
+  current=id; const up=closure(id,'deps'), down=closure(id,'kids');
+  graph.classList.add('focus');
+  V.forEach(v=>{const el=nodeEl[v.id]; el.classList.toggle('sel',v.id===id); el.classList.toggle('up',up.has(v.id)); el.classList.toggle('down',down.has(v.id));});
+  svg.querySelectorAll('path').forEach(p=>{const f=p.dataset.from,t=p.dataset.to;
+    p.classList.toggle('up',(up.has(f)||f===id)&&(up.has(t)||t===id)&&!(f===id));
+    p.classList.toggle('down',(down.has(t)||t===id)&&(down.has(f)||f===id)&&!(t===id));});
+  showDetail(byId[id],up,down);
+}
+function clearSel(){graph.classList.remove('focus'); V.forEach(v=>nodeEl[v.id].classList.remove('sel','up','down')); svg.querySelectorAll('path').forEach(p=>p.classList.remove('up','down'));
+  document.querySelectorAll('#stories button').forEach(b=>b.classList.remove('on'));}
+const KIND={input:['input / parameter',''],decision:['variabel keputusan','ph'],derived:['turunan (dihitung engine)','ok'],objective:['objektif','ok']};
+function showDetail(v,up,down){
+  const chip=(id,cls)=>`<span class="chip ${cls}" data-go="${id}">${byId[id].l}</span>`;
+  const direct=v.deps.map(d=>chip(d,'up')).join('')||'<span class="faint">— (input langsung)</span>';
+  const kids=v.kids.map(d=>chip(d,'down')).join('')||'<span class="faint">—</span>';
+  document.getElementById('detail').innerHTML=`
+    <div class="kind"><span class="tag ${KIND[v.k][1]}">${KIND[v.k][0]}</span></div>
+    <h2>${v.l}</h2>
+    <div class="formula">${v.f}</div>
+    <dl>
+      <dt>satuan</dt><dd class="mono">${v.u||'—'}</dd>
+      <dt>Excel</dt><dd class="mono">${v.x||'—'}</dd>
+      <dt>layar</dt><dd>${v.s} · ${SCREEN_NAMES[v.s]}</dd>
+      <dt>hidup</dt><dd>${v.k==='input'?'Tahap 1 (data)':v.k==='decision'?'dipilih manual sejak Tahap 5 · dioptimasi Tahap 9':'Tahap '+v.t}</dd>
+      <dt>dampak</dt><dd>${up.size} variabel hulu · ${down.size} hilir</dd>
+    </dl>
+    <h3 style="margin-top:14px">Dipengaruhi langsung oleh</h3><div class="chips">${direct}</div>
+    <h3 style="margin-top:12px">Mempengaruhi langsung</h3><div class="chips">${kids}</div>`;
+  document.querySelectorAll('#detail [data-go]').forEach(c=>c.addEventListener('click',()=>select(c.dataset.go)));
+}
+(function stories(){const box=document.getElementById('stories');
+  STORIES.forEach(([lbl,id])=>{const b=document.createElement('button'); b.type='button'; b.textContent=lbl;
+    b.addEventListener('click',()=>{const on=b.classList.contains('on'); document.querySelectorAll('#stories button').forEach(x=>x.classList.remove('on'));
+      if(on){current=null; clearSel(); return;} b.classList.add('on'); current=null; select(id);
+      nodeEl[id].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});});
+    box.appendChild(b);});})();
+window.addEventListener('resize',()=>{if(document.getElementById('panel-graph').classList.contains('active')) drawEdges();});
+document.fonts && document.fonts.ready.then(drawEdges);
+drawEdges();
+
+/* ======================= Screens ======================= */
+const SCREENS=[
+ {n:0,name:'Beranda',p:'Daftar kasus & kasus contoh.',wf:[['kpi'],['table']],in:['buka / duplikat / import kasus JSON'],out:['K15 Batam, K21 Gresik, K24 Palu'],i:[],t:'2'},
+ {n:1,name:'Soal & Asumsi',p:'Identitas KEK, periode, parameter global, tarif.',wf:[['form'],['form','table']],in:['AT/WT/IT, BOR, hari kerja, MCR, BBM, kurs, WACC, harga satuan, tarif'],out:['badge "perlu hitung ulang"'],i:['I6','I7','I9'],t:'2'},
+ {n:2,name:'Tenant & Muatan',p:'Tenant, flow inbound/outbound, konversi, ton/TEU, proyeksi 20 th.',wf:[['table'],['chart','form']],in:['volume awal, maks, growth, tahun mulai, aturan konversi, kemasan'],out:['D[f,t], ton/TEU, grafik proyeksi'],i:['I4','I5'],t:'4'},
+ {n:3,name:'Pelabuhan & Rute',p:'Pelabuhan asal/tujuan, jarak, tapak KEK & batimetri.',wf:[['graphwf','table'],['depth']],in:['draft, LOA maks, produktivitas, jarak, profil batimetri'],out:['ringkasan batasan per rute'],i:['I8'],t:'5'},
+ {n:4,name:'Kapal',p:'Database kandidat, kompatibilitas, kelayakan per flow, regresi TCH.',wf:[['table'],['table','chart']],in:['data kapal, matriks bentuk muatan × tipe kapal'],out:['kandidat feasible + alasan gugur, tarif TCH'],i:['I1'],t:'5'},
+ {n:5,name:'Alat B/M',p:'Database alat, produktivitas per bentuk muatan, aturan alat per tambatan.',wf:[['table'],['form','bars']],in:['harga, produktivitas, radius, tabel LOA→jumlah alat'],out:['alat kompatibel per terminal'],i:['I3'],t:'5'},
+ {n:6,name:'Armada & Operasi',p:'Pilih kapal per flow → rantai frekuensi s.d. jumlah kapal; bandingkan kandidat.',wf:[['chain'],['bars','table']],in:['kapal (manual), tahun, kecepatan'],out:['F, q, port time, sea time, RTD, F_max, jumlah kapal, lama konsumsi'],i:['I1','I2'],t:'5',demo:true},
+ {n:7,name:'Biaya Pelayaran',p:'BBM, TCH, biaya pelabuhan, shipping cost per flow per tahun.',wf:[['kpi'],['bars','table']],in:['—'],out:['komposisi biaya, shipping cost'],i:['I7'],t:'6'},
+ {n:8,name:'Terminal KEK',p:'Tambatan & BOR, alat, penyimpanan, perairan, trestle vs keruk, staging.',wf:[['kpi'],['bars','depth']],in:['alat per terminal, mode trestle/keruk'],out:['jumlah tambatan, BOR, alat, luas/volume, kedalaman, panjang trestle'],i:['I3','I6','I8'],t:'7–8'},
+ {n:9,name:'Investasi & Ringkasan',p:'Jadwal investasi, total cost, unit cost, PV, anuitas.',wf:[['kpi'],['bars','table']],in:['—'],out:['TC[t], UC[t], PV, anuitas / NPV'],i:['I9'],t:'8'},
+ {n:10,name:'Optimasi',p:'Objektif, variabel, batasan → solusi + penjelasan per flow.',wf:[['form','kpi'],['table']],in:['objektif, batasan on/off'],out:['keputusan optimum, top-3 per flow, batasan aktif'],i:[],t:'9'},
+ {n:11,name:'Skenario & Laporan',p:'Bandingkan skenario, sensitivitas, rangkuman, export.',wf:[['kpi'],['bars','table']],in:['override parameter per skenario'],out:['KPI berdampingan, tornado, rangkuman ala sheet Rangkuman'],i:[],t:'10–11'},
+];
+function wfBlock(type){
+  if(type==='bars') return `<div class="blk bars">${[40,62,55,80,48,70,90].map(h=>`<i style="height:${h}%"></i>`).join('')}</div>`;
+  if(type==='chain') return `<div class="blk chain">${'<i></i>'.repeat(6)}</div>`;
+  if(type==='kpi') return `<div class="blk kpi"><i></i><i></i><i></i><i></i></div>`;
+  return `<div class="blk ${type}"></div>`;
+}
+document.getElementById('screens').innerHTML=SCREENS.map(s=>{
+  const rows=s.wf.map(r=>r.length===1?wfBlock(r[0]):`<div class="${r[0]==='graphwf'||r[0]==='form'?'row3':'row2'}">${r.map(wfBlock).join('')}</div>`).join('');
+  const side=Array.from({length:12},(_,i)=>`<span class="${i===s.n?'on':''}"></span>`).join('');
+  return `<article class="card screen">
+    <div class="head"><span class="num">${String(s.n).padStart(2,'0')}</span><div><h3>${s.name}</h3><div class="muted" style="font-size:13px">${s.p}</div></div></div>
+    <div class="wf"><div class="side">${side}</div><div class="body">${rows}</div></div>
+    <ul><li><b>Input:</b> ${s.in.join(', ')}</li><li><b>Output:</b> ${s.out.join(', ')}</li></ul>
+    <div class="meta"><span class="tag ph">placeholder di Tahap 2</span><span class="tag ok">dihitung di Tahap ${s.t}</span>${s.i.map(x=>`<span class="tag">${x}</span>`).join('')}${s.demo?'<span class="tag warn">lihat tab 3</span>':''}</div>
+  </article>`;}).join('');
+
+/* ======================= Mini model (K15, Badas → Batam, GC) ======================= */
+const SHIPS=[
+ {n:'GEMINI DREAM',dwt:8788,pay:7469.8,loa:110,b:18,t:8,vs:15,vb:19.5,me:3250,ae:1625,sme:206.568,sae:197.055,gt:7057},
+ {n:'ASHICO VICTORIA',dwt:10071,pay:8560.35,loa:103.64,b:18.8,t:9.065,vs:15,vb:19.5,me:3640,ae:1820,sme:206.568,sae:192.978,gt:6732},
+ {n:'AL AMAL',dwt:11308,pay:9611.8,loa:113.22,b:19.6,t:8.619,vs:15.8,vb:20.54,me:3883,ae:1941.5,sme:206.568,sae:192.978,gt:7762},
+ {n:'21 PANDA',dwt:13007,pay:11055.9,loa:120,b:20,t:8.9,vs:15.7,vb:20.41,me:4200,ae:2100,sme:194.337,sae:192.978,gt:9680},
+ {n:'SIMAS',dwt:17012,pay:14460.2,loa:149,b:23,t:8.52,vs:16.3,vb:21.19,me:5295,ae:2647.5,sme:194.337,sae:183.465,gt:11878},
+ {n:'HAN REN',dwt:20107,pay:17091,loa:146,b:25,t:9.77,vs:16.3,vb:21.19,me:5000,ae:2500,sme:194.337,sae:183.465,gt:15608},
+ {n:'PACIFIC SPIKE',dwt:24041,pay:20434.8,loa:190,b:28,t:8.03,vs:15.1,vb:19.63,me:5100,ae:2550,sme:194.337,sae:183.465,gt:20506},
+ {n:'AETOS',dwt:38395,pay:32635.8,loa:184.75,b:30,t:10.02,vs:15.6,vb:20.28,me:6780,ae:3390,sme:190.26,sae:183.465,gt:23853},
+ {n:'ACER ARROW',dwt:61066,pay:51906.1,loa:199.9,b:32.24,t:13.03,vs:16,vb:20.8,me:8130,ae:4065,sme:183.465,sae:183.465,gt:35503},
+];
+const EQUIP=[{n:'Liebherr LHM 180',p:800,price:1396926000},{n:'Liebherr LHM 280',p:1000,price:2328210000},{n:'Liebherr LHM 420',p:1500,price:3414708000},{n:'Liebherr LHM 550',p:1500,price:4345992000},{n:'Liebherr LHM 600',p:2000,price:5742918000}];
+const R={dist:992.2,depth:11.5,prod:1000,v0:3e6,g:0.05,max:7.9e6,mfo:18600,lHSD:1000/0.832,lMFO:1000/0.89,mcr:0.8,fix:0.25,cd:365,tchA:0.442,tchB:6595,portRate:764.05,ballast:1.0};
+const st={ship:7,year:1,eq:1,spd:100,hsd:24000,fx:15521.4,excel:false};
+const $=id=>document.getElementById(id);
+const nf=(x,d=0)=>Number(x).toLocaleString('id-ID',{maximumFractionDigits:d,minimumFractionDigits:d});
+const rp=x=>{const a=Math.abs(x); if(a>=1e12) return 'Rp '+nf(x/1e12,2)+' T'; if(a>=1e9) return 'Rp '+nf(x/1e9,1)+' M'; if(a>=1e6) return 'Rp '+nf(x/1e6,1)+' jt'; return 'Rp '+nf(x);};
+const demand=y=>{let d=R.v0; for(let i=1;i<y;i++) d=Math.min(R.max,d*(1+R.g)); return d;};
+const neqByLoa=l=>l<90?1:l<160?2:l<180?3:4;
+function calc(s,o){
+  const ex=o.excel; // true = rumus Excel K15 (pembanding); false = keputusan v2
+  const D=demand(o.year), F=Math.ceil(D/s.pay), q=D/F, nEq=ex?4:neqByLoa(s.loa), eq=EQUIP[o.eq];
+  const tK=q/(eq.p*nEq)/24, tE=ex?q/(R.prod*nEq)/24:q/R.prod/24, tPort=tK+tE+R.fix, k=o.spd/100;
+  const vb=ex?s.vb:s.vs*R.ballast, tSea=(R.dist/(s.vs*k)+R.dist/(vb*k))/24, rtd=tSea+tPort;
+  const fmax=ex?Math.ceil(R.cd/rtd):Math.floor(R.cd/rtd), N=Math.ceil(F/Math.max(1,fmax));
+  const voy=ex?fmax*N:F, meKW=s.me*k*k*k;
+  const meL=meKW*voy*s.sme/1e6*R.lHSD*tSea*R.mcr*24, aeL=s.ae*voy*s.sae/1e6*(ex?R.lMFO:R.lHSD)*tPort*R.mcr*24;
+  const fuel=meL*o.hsd+aeL*(ex?R.mfo:o.hsd), tchDay=R.tchA*s.dwt+R.tchB, tch=tchDay*o.fx*365*N, port=R.portRate*s.gt*F;
+  const total=fuel+tch+port;
+  return {D,F,q,nEq,tK,tE,tPort,vb,tSea,rtd,fmax,N,voy,meL,aeL,fuel,tchDay,tch,port,total,uc:total/D,lk:q/(D/365),feas:s.t<=R.depth};
+}
+function initMini(){
+  $('shipSel').innerHTML=SHIPS.map((s,i)=>`<option value="${i}">${s.n} — ${nf(s.dwt)} DWT${s.t>R.depth?' (gugur draft)':''}</option>`).join('');
+  $('eqSel').innerHTML=EQUIP.map((e,i)=>`<option value="${i}">${e.n} — ${nf(e.p)} t/j</option>`).join('');
+  $('shipSel').value=st.ship; $('eqSel').value=st.eq;
+  $('shipSel').onchange=e=>{st.ship=+e.target.value;renderMini();};
+  $('eqSel').onchange=e=>{st.eq=+e.target.value;renderMini();};
+  $('year').oninput=e=>{st.year=+e.target.value;renderMini();};
+  $('spd').oninput=e=>{st.spd=+e.target.value;renderMini();};
+  $('hsd').oninput=e=>{st.hsd=+e.target.value;renderMini();};
+  $('fx').oninput=e=>{st.fx=+e.target.value;renderMini();};
+  $('excel').onchange=e=>{st.excel=e.target.checked;renderMini();};
+}
+function renderMini(){
+  const s=SHIPS[st.ship], r=calc(s,st), e=EQUIP[st.eq];
+  $('shipLbl').textContent=nf(s.dwt)+' DWT'; $('yearLbl').textContent='th-'+st.year; $('eqLbl').textContent=nf(e.p)+' t/j';
+  $('spdLbl').textContent=st.spd+'%'; $('hsdLbl').textContent='Rp '+nf(st.hsd)+'/l'; $('fxLbl').textContent='Rp '+nf(st.fx);
+  $('demandHint').textContent='Demand th-'+st.year+': '+nf(r.D)+' ton (growth 5%, maks 7,9 jt)';
+  const ex=st.excel; $('modeTag').textContent=ex?'pembanding: rumus Excel K15':'keputusan v2'; $('modeTag').className='tag '+(ex?'warn':'ok');
+  const step=(lbl,val,unit,f,cls='')=>`<div class="step ${cls}"><div class="lbl">${lbl}</div><div class="val">${val}<small>${unit}</small></div><div class="f">${f}</div></div>`;
+  $('chain').innerHTML=[
+    step('Demand D',nf(r.D/1e6,2),'jt ton',`${nf(r.D)} ton/th`),
+    step('Frekuensi F',nf(r.F),'call/th',`⌈${nf(r.D)} / ${nf(s.pay,1)}⌉`),
+    step('Cargo per call q',nf(r.q),'ton',`D / F`),
+    step('Alat per tambatan',nf(r.nEq),'unit',ex?`Excel: selalu 4 (A10)`:`dari LOA ${nf(s.loa,1)} m (A10)`,ex?'flag':''),
+    step('Port time KEK',nf(r.tK,3),'hari',`q / (${nf(e.p)} × ${r.nEq}) / 24`),
+    step('Port time Badas',nf(r.tE,3),'hari',ex?`q / (${nf(R.prod)} × ${r.nEq}) / 24 (A3 Excel)`:`q / ${nf(R.prod)} / 24 — total per kapal (A3)`,ex?'flag':''),
+    step('Sea time',nf(r.tSea,3),'hari',`(992,2/${nf(s.vs*st.spd/100,2)} + 992,2/${nf(r.vb*st.spd/100,2)}) / 24${ex?' — V ballast 130% (A5)':' — V ballast = Vs (A5)'}`,ex?'flag':''),
+    step('RTD',nf(r.rtd,3),'hari',`sea + port KEK + port Badas + 0,25`),
+    step('Voyage maks/kapal',nf(r.fmax),'call',ex?`⌈365 / RTD⌉ (A1 Excel)`:`⌊365 / RTD⌋ (A1)`,ex?'flag':''),
+    step('Jumlah kapal',nf(r.N),'unit',`⌈F / F_max⌉ = ⌈${r.F} / ${r.fmax}⌉`),
+    step('Lama konsumsi',nf(r.lk,1),'hari',`q / (D/365)`),
+    step('Biaya BBM',rp(r.fuel),'',ex?`${nf(r.voy)} voyage = F_max × N (A9) · AE = MFO (A6)`:`${nf(r.voy)} voyage aktual (A9) · ME & AE = HSD (A6)`,ex?'flag':''),
+    step('Biaya TCH',rp(r.tch),'',`(${R.tchA}·DWT + ${nf(R.tchB)}) = ${nf(r.tchDay)} USD/hari × kurs × 365 × ${r.N}`),
+    step('Biaya pelabuhan',rp(r.port),'',`placeholder: 764 Rp/GT × ${nf(s.gt)} GT × F`,'flag'),
+    step('Shipping cost',rp(r.total),'',`BBM + TCH + pelabuhan`,'total'),
+    step('Unit cost',nf(r.uc),'Rp/ton',`shipping cost / D`,'total'),
+  ].join('');
+  // compare table + chart
+  const rows=SHIPS.map((sh,i)=>({i,sh,r:calc(sh,st)}));
+  const feas=rows.filter(x=>x.r.feas); const best=feas.reduce((a,b)=>b.r.uc<a.r.uc?b:a,feas[0]);
+  $('cmp').innerHTML=`<thead><tr><th>Kapal</th><th>DWT</th><th>T (m)</th><th>F</th><th>RTD</th><th>Kapal</th><th>BBM</th><th>TCH</th><th>Pelabuhan</th><th>Shipping</th><th>Rp/ton</th></tr></thead><tbody>`+
+    rows.map(x=>`<tr data-i="${x.i}" class="${x.i===st.ship?'sel':''} ${x.r.feas?'':'inf'}"><td>${x.sh.n}${x===best?' <span class="best">★ termurah</span>':''}${x.r.feas?'':' <span class="tag warn">T &gt; 11,5</span>'}</td><td>${nf(x.sh.dwt)}</td><td>${nf(x.sh.t,2)}</td><td>${nf(x.r.F)}</td><td>${nf(x.r.rtd,2)}</td><td>${x.r.N}</td><td>${rp(x.r.fuel)}</td><td>${rp(x.r.tch)}</td><td>${rp(x.r.port)}</td><td>${rp(x.r.total)}</td><td><b>${nf(x.r.uc)}</b></td></tr>`).join('')+'</tbody>';
+  $('cmp').querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>{st.ship=+tr.dataset.i; $('shipSel').value=st.ship; renderMini();});
+  drawChart(rows,best);
+}
+function drawChart(rows,best){
+  const svgc=$('ucChart'), W=svgc.clientWidth||700, H=230, padL=58, padB=46, padT=14, padR=10;
+  const max=Math.max(...rows.map(x=>x.r.uc))*1.08, bw=(W-padL-padR)/rows.length;
+  const cs=getComputedStyle(document.documentElement), col=n=>cs.getPropertyValue(n).trim();
+  let g=`<g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="${col('--faint')}">`;
+  for(let i=0;i<=4;i++){const v=max*i/4, y=H-padB-(H-padB-padT)*i/4; g+=`<line x1="${padL}" x2="${W-padR}" y1="${y}" y2="${y}" stroke="${col('--line')}"/><text x="${padL-6}" y="${y+3}" text-anchor="end">${nf(v/1000)}k</text>`;}
+  g+=`<text x="${padL}" y="${padT-2}" fill="${col('--muted')}">Rp/ton</text>`;
+  rows.forEach((x,i)=>{const h=(H-padB-padT)*x.r.uc/max, X=padL+i*bw+bw*0.18, w=bw*0.64, Y=H-padB-h;
+    const fill=!x.r.feas?col('--line-strong'):x.i===st.ship?col('--accent'):x===best?col('--decision'):col('--accent-soft');
+    const stroke=x.r.feas?col('--accent'):col('--line-strong');
+    g+=`<rect x="${X}" y="${Y}" width="${w}" height="${h}" rx="3" fill="${fill}" stroke="${stroke}" ${x.r.feas?'':'stroke-dasharray="3 2" opacity=".6"'} style="cursor:pointer" data-i="${x.i}"><title>${x.sh.n}: ${nf(x.r.uc)} Rp/ton</title></rect>`;
+    g+=`<text x="${X+w/2}" y="${H-padB+13}" text-anchor="middle">${nf(x.sh.dwt/1000,1)}k</text>`;
+    g+=`<text x="${X+w/2}" y="${H-padB+25}" text-anchor="middle" font-size="9">${x.sh.n.split(' ')[0].slice(0,8)}</text>`;});
+  g+=`</g>`;
+  svgc.setAttribute('viewBox',`0 0 ${W} ${H}`); svgc.innerHTML=g;
+  svgc.querySelectorAll('rect').forEach(r=>r.onclick=()=>{st.ship=+r.dataset.i; $('shipSel').value=st.ship; renderMini();});
+}
+initMini();
+window.addEventListener('resize',()=>{if(document.getElementById('panel-mini').classList.contains('active')) renderMini();});
+</script>
+</body>
+</html>

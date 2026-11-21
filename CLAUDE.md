@@ -1,0 +1,30 @@
+# TPT Planner — panduan agen
+
+Proyek ini memodernisasi model optimasi (MILP) tugas **Perencanaan Transportasi Laut (TPT)**, Teknik Transportasi Laut ITS, menjadi aplikasi untuk merencanakan armada kapal per rute dan terminal khusus (TERSUS) di kawasan industri/KEK.
+Pengguna adalah alumni TPT dan menguasai domainnya. **Jawab dalam Bahasa Indonesia**; istilah teknis tetap (RTD, BOR, TCH, DWT, LOA, GT).
+
+## Mulai dari sini
+- `v2/docs/01_SPEC.md` — **satu-satunya sumber kebenaran**: domain, kontrak data, rumus, arsitektur, keputusan (§11 audit Excel, §13). Baca hanya bagian yang relevan dengan tugas.
+- `v2/docs/02_ROADMAP.md` — tahapan, rekomendasi effort per tahap, dan **Progres** (lihat tahap berikutnya di sana).
+- `v2/blueprint/index.html` — peta variabel, peta layar, prototipe rantai hitung 1 rute.
+
+## Struktur
+- `v2/cases/k15-batam.json` — input kasus utama (K15, KI Batam); skema `v2/cases/case.schema.json`. Celah data & asumsi ada di field `assumptions`.
+- `v2/engine/` — engine Python (uv + Pydantic). Dari folder `v2/`: `uv run --project engine pytest engine/tests -q`. Python tidak ada di PATH; pakai `~/.local/bin/uv`.
+- `v2/tools/extract_k15.py` — membuat ulang kasus & data pembanding dari Excel K15; `v2/tools/export_schema.py` — JSON Schema.
+- `v2/web/` — UI React + Vite + Tailwind + Zustand (Tahap 2b). Jalankan: `npm --prefix v2/web run dev` (atau konfigurasi "web" di `.claude/launch.json`); cek: `npm --prefix v2/web run build`. Semua angka hasil dummy ada di `v2/web/src/mock/placeholders.ts`.
+- `apps/` — v1, **hanya referensi**; jangan diubah kecuali diminta. Repo git tersendiri; di-gitignore.
+- `referensi/K15|K21|K24|K7/` — bahan asli TPT milik kelompok lain (xlsx/pdf/pptx): K15 (utama), K21 & K24 (uji lanjutan), K7 (varian hub-spoke, di luar cakupan). **Di-gitignore; jangan pernah di-commit.**
+- `arsip/` — catatan lama era v1 (21 Juli) dan file lepas; di-gitignore.
+- Repo git di root (`main`); `.gitignore` juga mengecualikan semua `*.xlsx/*.pdf/*.pptx`, `.claude/skills/`, `node_modules/`, `.venv/`.
+
+## Aturan kerja
+1. Keputusan baru → perbarui `01_SPEC.md` dan Progres di `02_ROADMAP.md`. Jangan membuat dokumen baru.
+2. Angka hasil yang belum dihitung engine wajib berlabel `placeholder`.
+3. Engine hanya mengimplementasikan versi terkoreksi (tanpa mode kompatibel Excel); setiap selisih vs Excel dijelaskan dengan ID temuan audit A1–A11.
+4. Satu tahap (atau sub-tahap) per sesi; akhiri dengan memperbarui Progres.
+
+## OpenPencil (desain UI, Tahap 2a)
+- Server MCP `openpencil` terdaftar di `.mcp.json`. Aplikasi OpenPencil harus sudah terbuka sebelum sesi dimulai, kalau tidak tool-nya tidak tersedia.
+- Jangan pernah menampilkan atau menyalin token dari `%LOCALAPPDATA%\OpenPencil\mcp.json`.
+- Wireframe: satu halaman per layar SPEC §8 + satu halaman komponen bersama; isi dengan data `k15-batam.json`; pengguna mengoreksi lewat komentar di kanvas.
