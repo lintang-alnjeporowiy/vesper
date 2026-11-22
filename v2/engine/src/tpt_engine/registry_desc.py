@@ -136,7 +136,9 @@ DESC: dict[str, str] = {
     "vessel.reach_ok": "Apakah jangkauan alat cukup untuk lebar kapal ini.",
     "vessel.ballast_speed": "Kecepatan yang dipakai saat kapal berlayar kosong.",
     "vessel.ae_kw": "Daya mesin bantu yang dipakai hitungan (data kapal atau taksiran dari daya mesin induk).",
-    "vessel.sfoc": "Konsumsi BBM spesifik mesin induk dan bantu yang dipakai hitungan (gram per kWh).",
+    "in.param.fuel_density": "Berat jenis BBM (kg/m³) untuk mengubah ton BBM menjadi liter (HSD 832, MFO 890).",
+    "vessel.sfoc_me": "Konsumsi BBM spesifik mesin induk yang dipakai hitungan (gram per kWh).",
+    "vessel.sfoc_ae": "Konsumsi BBM spesifik mesin bantu (generator) yang dipakai hitungan (gram per kWh).",
     # ── Operasi ──
     "voyage.freq": "Berapa kali kapal harus datang per tahun untuk mengangkut seluruh demand flow.",
     "voyage.q": "Muatan yang dibawa per kunjungan (rata-rata, atau penuh pada mode full-load).",

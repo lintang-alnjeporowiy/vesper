@@ -2,7 +2,7 @@
 
 Untuk tiap flow (kapal & alat hasil Evolver K15) dan tiap seri operasi: nilai Excel vs engine pada tahun pertama
 beroperasi, selisih maksimum 20 tahun, dan efek koreksi audit satu per satu (tiruan rumus Excel di
-`engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13; hasil akhirnya = engine).
+`engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13 → A9 → A6 → A11 → A14 → A15; hasil akhirnya = engine).
 
 Jalankan dari folder v2:  uv run --project engine python tools/diff_k15.py [--flow in.damai] [--year 10]
 """
@@ -27,6 +27,9 @@ LABEL = {
     "port_days_ext_per_year": "Port ext (hr/th)", "sea_time_days_per_call": "Sea time (hr/call)",
     "port_days_per_year": "Port total (hr/th)", "port_days_per_call": "Port+fix (hr/call)", "rtd_days": "RTD (hr)",
     "voyages_max_per_ship": "F_max (call/kapal)", "ships": "Jumlah kapal", "consumption_days": "Lama konsumsi (hr)",
+    "fuel_me_l": "BBM ME (l/th)", "fuel_ae_l": "BBM AE (l/th)", "fuel_cost_me_rp": "Biaya BBM ME (Rp)",
+    "fuel_cost_ae_rp": "Biaya BBM AE (Rp)", "voyage_cost_rp": "Voyage cost (Rp)", "tch_cost_rp": "TCH (Rp/th)",
+    "port_cost_rp": "Pelabuhan (Rp/th)", "shipping_cost_rp": "Shipping cost (Rp)",
 }
 
 
@@ -41,7 +44,7 @@ def main() -> None:
     args = ap.parse_args()
     case = load_case(V2 / "cases" / "k15-batam.json")
     golden = json.loads((V2 / "engine" / "tests" / "golden" / "k15_excel.json").read_text(encoding="utf-8"))
-    res = calculate(case, ["voyage"], plan_id="k15-excel")
+    res = calculate(case, ["shipcost"], plan_id="k15-excel")
     v = res.values
     steps = ["A12", *FIXES]
 

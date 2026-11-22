@@ -82,6 +82,7 @@ INPUTS: tuple[VarDef, ...] = (
     _in("in.param.fuel_share_ae", "Porsi pemakaian AE (laut, pelabuhan)", "–", "params.fuel_share_ae_port", screens=(1,)),
     _in("in.param.fuel_price", "Harga BBM", "Rp/l", "params.fuels[fuel].price_rp_per_l", excel="Model!F45:F46", screens=(1, 7)),
     _in("in.param.fuel_choice", "Jenis BBM ME & AE", "kode", "params.me_fuel", screens=(1,), note="A6: default HSD untuk keduanya"),
+    _in("in.param.fuel_density", "Berat jenis BBM", "kg/m³", "params.fuels[fuel].density_kg_m3", excel="Model!F41:F43", screens=(1,)),
     _in("in.param.sfoc_bands", "Tabel SFOC per rentang daya", "g/kWh", "params.sfoc_me_bands", screens=(1,)),
     _in("in.param.ae_me_ratio", "Rasio daya AE/ME default", "–", "params.ae_me_power_ratio", screens=(1,)),
     _in("in.param.usd_rate", "Kurs", "Rp/USD", "params.usd_rate", excel="Model!F47", screens=(1, 7)),
@@ -236,8 +237,10 @@ DERIVED: tuple[VarDef, ...] = (
        ("in.ship.ballast_speed", "in.param.ballast_ratio", "dv.speed"), sec="5.3", audit=("A5",), screens=(4,)),
     _d("vessel.ae_kw", "Daya AE efektif", "kW", "ship", "P_AE isian; bila kosong rasio · P_ME",
        ("in.ship.ae_kw", "in.ship.me_kw", "in.param.ae_me_ratio"), sec="5.4", screens=(4,)),
-    _d("vessel.sfoc", "SFOC ME & AE", "g/kWh", "ship", "override kapal; bila kosong dari tabel rentang daya",
-       ("in.ship.sfoc", "in.param.sfoc_bands", "in.ship.me_kw", "vessel.ae_kw"), sec="5.4", screens=(4,)),
+    _d("vessel.sfoc_me", "SFOC mesin induk", "g/kWh", "ship", "override kapal; bila kosong dari tabel rentang daya ME",
+       ("in.ship.sfoc", "in.param.sfoc_bands", "in.ship.me_kw"), sec="5.4", excel="Model!AL35:BZ35", screens=(4,)),
+    _d("vessel.sfoc_ae", "SFOC mesin bantu", "g/kWh", "ship", "override kapal; bila kosong dari tabel rentang daya AE",
+       ("in.ship.sfoc", "in.param.sfoc_bands", "vessel.ae_kw"), sec="5.4", excel="Model!AL36:BZ36", screens=(4,)),
     # §5.3 operasi pelayaran
     _d("voyage.freq", "Frekuensi", "call/th", "flow×year", "F_req = ⌈D / payload⌉",
        ("cargo.demand_unit", "vessel.payload", "dv.ship"), sec="5.3", excel="Model!M28:AF28", screens=(6, 7), symbol="F_req"),
@@ -272,12 +275,14 @@ DERIVED: tuple[VarDef, ...] = (
     # §5.4 biaya pelayaran
     _d("shipcost.fuel_me_l", "Konsumsi BBM ME", "l/th", "flow×year",
        "P_ME · MCR · SFOC_ME · 24 · (tSea · %ME_laut + (tPort + tFix) · %ME_pelabuhan) · F ÷ berat jenis",
-       ("in.ship.me_kw", "in.param.mcr", "vessel.sfoc", "voyage.t_sea", "voyage.t_port", "voyage.t_fix", "voyage.freq",
-        "in.param.fuel_share_me", "in.param.fuel_choice"), sec="5.4", excel="Model!M247:AF247", audit=("A9",), screens=(7,)),
+       ("in.ship.me_kw", "in.param.mcr", "vessel.sfoc_me", "voyage.t_sea", "voyage.t_port", "voyage.t_fix", "voyage.freq",
+        "in.param.fuel_share_me", "in.param.fuel_choice", "in.param.fuel_density"), sec="5.4", excel="Model!M247:AF247",
+       audit=("A9",), screens=(7,)),
     _d("shipcost.fuel_ae_l", "Konsumsi BBM AE", "l/th", "flow×year",
-       "P_AE · SFOC_AE · 24 · (tPort + tFix) · %AE_pelabuhan (+ porsi laut) · F ÷ berat jenis",
-       ("vessel.ae_kw", "vessel.sfoc", "voyage.t_sea", "voyage.t_port", "voyage.t_fix", "voyage.freq", "in.param.fuel_share_ae",
-        "in.param.fuel_choice"), sec="5.4", excel="Model!M260:AF260", audit=("A9",), screens=(7,)),
+       "P_AE · MCR · SFOC_AE · 24 · (tSea · %AE_laut + (tPort + tFix) · %AE_pelabuhan) · F ÷ berat jenis",
+       ("vessel.ae_kw", "vessel.sfoc_ae", "in.param.mcr", "voyage.t_sea", "voyage.t_port", "voyage.t_fix", "voyage.freq",
+        "in.param.fuel_share_ae", "in.param.fuel_choice", "in.param.fuel_density"), sec="5.4", excel="Model!M260:AF260",
+       audit=("A6", "A9"), screens=(7,)),
     _d("shipcost.fuel_me", "Biaya BBM ME", "Rp/th", "flow×year", "liter ME × harga BBM ME",
        ("shipcost.fuel_me_l", "in.param.fuel_price", "in.param.fuel_choice"), sec="5.4", excel="Model!M273:AF273", audit=("A6",), screens=(7,)),
     _d("shipcost.fuel_ae", "Biaya BBM AE", "Rp/th", "flow×year", "liter AE × harga BBM AE",
@@ -290,10 +295,10 @@ DERIVED: tuple[VarDef, ...] = (
        ("shipcost.tch_rate", "in.param.usd_rate", "in.param.commission_days", "voyage.n_ship"), sec="5.4", excel="Model!M312:AF312",
        screens=(7,)),
     _d("shipcost.port_call", "Biaya pelabuhan per call", "Rp/call", "flow×ship",
-       "Σ_{ext, KEK} labuh(GT) + pandu(GT, gerakan) + tambat(GT, etmal) + tunda(GT) + B/M(q)",
+       "Σ_{ext, KEK} labuh(GT) + 2·pandu(GT) + tambat(GT, ⌈etmal⌉) + 2·tunda(GT) + B/M(q)",
        ("in.ship.gt", "in.tariff.labuh", "in.tariff.pandu", "in.tariff.tambat", "in.tariff.tunda", "in.tariff.bm", "in.tariff.gt_bands",
         "in.port.tariff_class", "in.port.kind", "in.port.berth_type", "in.site.port_charges", "in.param.usd_rate", "voyage.q",
-        "voyage.t_port_ext", "voyage.t_port_kek"), sec="5.4", excel="Biaya Pelabuhan", screens=(7,)),
+        "voyage.t_port_ext", "voyage.t_port_kek"), sec="5.4", excel="Biaya Pelabuhan!E71:E142", audit=("A14", "A15"), screens=(7,)),
     _d("shipcost.port", "Biaya pelabuhan per tahun", "Rp/th", "flow×year", "F · biaya pelabuhan per call",
        ("shipcost.port_call", "voyage.freq"), sec="5.4", excel="Model!M325:AF325", audit=("A11",), screens=(7,)),
     _d("shipcost.total", "Shipping cost", "Rp/th", "flow×year", "voyage cost + TCH + biaya pelabuhan",
@@ -411,6 +416,21 @@ IMPL: dict[str, str] = {
     "voyage.n_ship": "voyage:n_ship",
     "voyage.utilization": "voyage:utilization",
     "voyage.consumption": "voyage:consumption_days",
+    # Tahap 6 (§5.4)
+    "vessel.ae_kw": "shipcost:ae_kw",
+    "vessel.sfoc_me": "shipcost:sfoc",
+    "vessel.sfoc_ae": "shipcost:sfoc",
+    "shipcost.fuel_me_l": "shipcost:fuel_litres",
+    "shipcost.fuel_ae_l": "shipcost:fuel_litres",
+    "shipcost.fuel_me": "shipcost:fuel_cost",
+    "shipcost.fuel_ae": "shipcost:fuel_cost",
+    "shipcost.voyage": "shipcost:fuel_cost",
+    "shipcost.tch_rate": "shipcost:tch_rate",
+    "shipcost.tch": "shipcost:tch_cost",
+    "shipcost.port_call": "shipcost:port_call_cost",
+    "shipcost.port": "shipcost:port_call_cost",
+    "shipcost.total": "shipcost:unit_cost",
+    "shipcost.unit": "shipcost:unit_cost",
 }
 
 REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, ""), impl=IMPL.get(v.id))
@@ -480,6 +500,10 @@ AUDIT: dict[str, str] = {
     "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu "
            "dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15.",
     "A13": "Excel: lama konsumsi = ⌈payload / (D/365)⌉ (payload, dibulatkan ke hari). v2: q / (D/365) kontinu.",
+    "A14": "Excel: label 'Dalam Negeri' dibandingkan dengan 'Dalam' → semua pelabuhan kena tarif dalam negeri. "
+           "v2: tarif luar negeri (USD × kurs) untuk pelabuhan luar negeri.",
+    "A15": "Excel: pandu & tunda 1 gerakan/call, tunda tetap tidak dikali frekuensi, tambat × seluruh port time "
+           "(KEK + asal + waktu tetap). v2: 2 gerakan, tunda tetap per call, tambat ⌈port time asal/tujuan⌉ etmal.",
 }
 AUDIT_IDS = tuple(AUDIT)
 

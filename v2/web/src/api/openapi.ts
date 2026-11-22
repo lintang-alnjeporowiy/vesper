@@ -149,10 +149,11 @@ export interface components {
              * @description modul engine yang dihitung (dependensi ikut)
              * @default [
              *       "demand",
-             *       "voyage"
+             *       "voyage",
+             *       "shipcost"
              *     ]
              */
-            modules: ("demand" | "voyage")[];
+            modules: ("demand" | "voyage" | "shipcost")[];
             /**
              * Plan Id
              * @description rencana kapal & alat; default plan pertama kasus
@@ -235,6 +236,16 @@ export interface components {
             feasibility: {
                 [key: string]: {
                     [key: string]: components["schemas"]["FeasCell"];
+                };
+            };
+            /**
+             * Port Breakdown
+             * @description modul shipcost: biaya pelabuhan per call per komponen (labuh, pandu, tambat, tunda, bm; ext + KEK) per flow, seri tahunan Rp/call
+             * @default {}
+             */
+            port_breakdown: {
+                [key: string]: {
+                    [key: string]: number[];
                 };
             };
             /**

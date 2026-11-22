@@ -1,66 +1,119 @@
 import { useState } from 'react'
-import { BarRows, C } from '../charts/charts'
+import { BarRows, C, ColumnStack } from '../charts/charts'
 import { Tv } from '../components/trace'
 import { Badge, KpiStrip, Legend, Note, PH, ScreenHeader, Section, Slider, Table } from '../components/ui'
 import { portOfRoute, shortPortName, startYearOf } from '../lib/case'
+import { series, useCalc } from '../lib/engine'
 import { num } from '../lib/format'
-import { PORT_CALL_DAMAI, SHIPPING_DETAIL_DAMAI, SHIPPING_Y10 } from '../mock/placeholders'
+import { useField } from '../lib/useField'
 import { usePlanner } from '../store'
+
+const PART_VARS = ['shipcost.tch', 'shipcost.voyage', 'shipcost.port']
+const PART_LABEL = ['TCH', 'BBM', 'pelabuhan']
+const COLORS = [C.hitam, C.biru, C.hijau]
+
+/** Rupiah ringkas: miliar (M) atau triliun (T). */
+function rp(v: number | undefined): string {
+  if (v === undefined) return '–'
+  const a = Math.abs(v)
+  if (a >= 1e12) return `${num(v / 1e12, 2)} T`
+  if (a >= 1e9) return `${num(v / 1e9, 1)} M`
+  if (a >= 1e6) return `${num(v / 1e6, 1)} jt`
+  return num(v)
+}
+
+const PORT_ROWS: { key: string; comp: string; basis: string }[] = [
+  { key: 'labuh', comp: 'Jasa labuh', basis: 'tarif/GT per kunjungan × GT' },
+  { key: 'pandu', comp: 'Jasa pandu', basis: '(tetap + variabel × GT) × 2 gerakan' },
+  { key: 'tambat', comp: 'Jasa tambat', basis: 'tarif/GT/etmal × GT × ⌈port time asal/tujuan⌉ etmal' },
+  { key: 'tunda', comp: 'Jasa tunda', basis: '(tetap + variabel × GT, rentang GT) × 2 gerakan' },
+  { key: 'bm', comp: 'Bongkar muat', basis: 'muatan per call × tarif per ton atau per TEU' },
+]
 
 export default function S07Biaya() {
   const c = usePlanner((s) => s.caseData)
   const shipByFlow = usePlanner((s) => s.shipByFlow)
   const showTrace = usePlanner((s) => s.showTrace)
-  const PART_VARS = ['shipcost.tch', 'shipcost.voyage', 'shipcost.port']
-  const PART_LABEL = ['TCH', 'BBM', 'pelabuhan']
-  const ctxOf = (flow: string, year = 10) => ({ flow, ship: shipByFlow[flow], year })
-  const hsd = c.params.fuels.find((f) => f.code === 'HSD')
-  const total = Object.values(SHIPPING_Y10).reduce((a, p) => a + (p ? p[0] + p[1] + p[2] : 0), 0)
-  const bbm = Object.values(SHIPPING_Y10).reduce((a, p) => a + (p ? p[1] : 0), 0)
-  const flowsWithData = c.flows.filter((f) => SHIPPING_Y10[f.id])
+  const year = usePlanner((s) => s.year)
+  const calc = useCalc()
+  const res = calc.ok ? calc.result : undefined
+  const hsdIdx = c.params.fuels.findIndex((f) => f.code === 'HSD')
+  const hsd = useField(['params', 'fuels', hsdIdx, 'price_rp_per_l'], 'Harga HSD')
+  const usd = useField(['params', 'usd_rate'], 'Kurs USD')
+  const ctxOf = (flow: string, y = year) => ({ flow, ship: shipByFlow[flow], year: y })
+  const at = (id: string, flow: string, y = year) => series(res, id, flow)?.[y - 1]
+  const parts = (flow: string, y = year): number[] | null => {
+    const p = PART_VARS.map((id) => at(id, flow, y) ?? 0)
+    return p.some((v) => v > 0) ? p : null
+  }
+
+  const flowsActive = c.flows.filter((f) => (at('shipcost.total', f.id) ?? 0) > 0)
+  const total = flowsActive.reduce((a, f) => a + (at('shipcost.total', f.id) ?? 0), 0)
+  const bbm = flowsActive.reduce((a, f) => a + (at('shipcost.voyage', f.id) ?? 0), 0)
+  const unitOfFlow = (fid: string) => (c.flows.find((f) => f.id === fid)?.unit === 'TEU' ? 'TEU' : 't')
+  const tonFlows = flowsActive.filter((f) => unitOfFlow(f.id) === 't')
+  const worst = tonFlows.reduce<string | undefined>((w, f) => (w === undefined || (at('shipcost.unit', f.id) ?? 0) > (at('shipcost.unit', w) ?? 0) ? f.id : w), undefined)
+
   const [flow, setFlow] = useState('in.damai')
-  // placeholder: rincian flow lain = pola in.damai diskalakan dengan komposisi tahun 10 flow itu
-  const base = SHIPPING_Y10['in.damai']!
-  const target = SHIPPING_Y10[flow] ?? base
-  const k = target.map((v, i) => v / base[i])
-  const detail = SHIPPING_DETAIL_DAMAI.map((r) => ({ ...r, tch: Math.round(r.tch * k[0]), bbm: Math.round(r.bbm * k[1]), port: Math.round(r.port * k[2]) }))
   const flowObj = c.flows.find((f) => f.id === flow)
   const portName = flowObj ? shortPortName(portOfRoute(c, flowObj.route_id)?.name ?? '') : ''
-  const callTotal = PORT_CALL_DAMAI.reduce((a, r) => a + r.value, 0)
+  const port = flowObj ? portOfRoute(c, flowObj.route_id) : undefined
+  const shipName = c.ships.find((s) => s.id === (res?.ship_by_flow[flow] ?? shipByFlow[flow]))?.name ?? '–'
+  const years = Array.from({ length: c.horizon.years }, (_, i) => i + 1)
+  const rows = years.filter((y) => (at('voyage.freq', flow, y) ?? 0) > 0)
+  const breakdown = res?.port_breakdown[flow]
+  const callTotal = at('shipcost.port_call', flow)
+  const byYear = years.map((y) => PART_VARS.map((id) => c.flows.reduce((a, f) => a + (at(id, f.id, y) ?? 0), 0) / 1e9))
+  const badge = res ? <Badge kind="dihitung">dihitung · engine</Badge> : <PH>placeholder · API tidak aktif</PH>
 
   return (
     <>
-      <ScreenHeader step={7} kind="hasil" title="Biaya pelayaran" lead="TCH, BBM, dan biaya pelabuhan per flow per tahun, dari armada yang dipilih di layar 6." badge={<PH>placeholder · engine tahap 6</PH>} />
+      <ScreenHeader step={7} kind="hasil" title="Biaya pelayaran" lead="TCH, BBM, dan biaya pelabuhan per flow per tahun, dari armada yang dipilih di layar 6." badge={badge} />
 
       <div className="flex w-full gap-8 border-y border-garis py-4">
-        <Slider label="Harga HSD (I7)" value={hsd?.price_rp_per_l ?? 0} min={10000} max={40000} step={500} display={`Rp ${num(hsd?.price_rp_per_l ?? 0)} / l`} />
-        <Slider label="Kurs (I7)" value={c.params.usd_rate} min={12000} max={20000} step={50} display={num(c.params.usd_rate)} />
-        <Slider label="Pengali tarif (I7)" value={1} min={0.5} max={2} step={0.05} display="× 1,00" />
+        <Slider label="Harga HSD (I7)" value={hsd.value} min={10000} max={40000} step={500} display={`Rp ${num(hsd.value)} / l`} onChange={hsd.onChange} />
+        <Slider label="Kurs (I7)" value={usd.value} min={12000} max={20000} step={50} display={num(usd.value)} onChange={usd.onChange} />
       </div>
       <Note>
-        Slider menampilkan input saat ini: <Tv v="in.param.fuel_price">harga BBM</Tv>, <Tv v="in.param.usd_rate">kurs</Tv>, <Tv v="in.tariff.labuh">tarif pelabuhan</Tv> (edit nilainya di layar 1). Efek ke biaya muncul setelah engine tahap 6.
+        Geser untuk melihat efek <Tv v="in.param.fuel_price">harga BBM</Tv> dan <Tv v="in.param.usd_rate">kurs</Tv> (TCH dan tarif pelabuhan luar negeri dalam USD); engine menghitung ulang langsung. Tarif pelabuhan per kelas diedit di layar 3. Jenis BBM ME & AE = HSD (A6).
       </Note>
 
       <KpiStrip
-        ctx={{ year: 10 }}
+        ctx={{ year }}
         items={[
-          { label: 'Total shipping cost th 10', value: `Rp ${num(total / 1000, 2)} T`, v: 'shipcost.total' },
-          { label: 'Porsi BBM', value: `${num((bbm / total) * 100)} %`, v: 'shipcost.voyage' },
-          { label: 'Flow termahal per ton', value: 'in.baru', v: 'shipcost.unit' },
+          { label: `Total shipping cost th ${year}`, value: res ? `Rp ${rp(total)}` : '–', v: 'shipcost.total' },
+          { label: 'Porsi BBM', value: res && total ? `${num((bbm / total) * 100)} %` : '–', v: 'shipcost.voyage' },
+          { label: 'Flow termahal per ton', value: res && worst ? `${worst} · Rp ${num((at('shipcost.unit', worst) ?? 0) / 1000)} rb/t` : '–', v: 'shipcost.unit' },
         ]}
       />
 
-      <Section title="Komposisi per flow · tahun 10" aside={<Legend items={[{ color: C.hitam, label: 'TCH' }, { color: C.biru, label: 'BBM' }, { color: C.hijau, label: 'pelabuhan' }]} />}>
+      <Section title={`Komposisi per flow · tahun ${year}`} aside={<span className="flex items-center gap-3"><Legend items={[{ color: C.hitam, label: 'TCH' }, { color: C.biru, label: 'BBM' }, { color: C.hijau, label: 'pelabuhan' }]} />{badge}</span>}>
         <BarRows
-          colors={[C.hitam, C.biru, C.hijau]}
+          colors={COLORS}
           xUnit="Rp miliar/th"
-          onSegment={(flow, j, v) => showTrace(PART_VARS[j], ctxOf(flow), `Rp ${num(v)} M`)}
-          segmentTitle={(flow, j, v) => `${flow} · ${PART_LABEL[j]} Rp ${num(v)} M — klik untuk jejak`}
+          onSegment={(f, j, v) => showTrace(PART_VARS[j], ctxOf(f), `Rp ${num(v, 1)} M`)}
+          segmentTitle={(f, j, v) => `${f} · ${PART_LABEL[j]} Rp ${num(v, 1)} M — klik untuk jejak`}
           rows={c.flows.map((f) => {
-            const p = SHIPPING_Y10[f.id] ?? null
-            return { label: f.id, parts: p, total: p ? <Tv v="shipcost.total" ctx={ctxOf(f.id)}>{num(p[0] + p[1] + p[2])}</Tv> : undefined, emptyText: `mulai tahun ${startYearOf(c, f.id) ?? '?'}` }
+            const p = parts(f.id)
+            return {
+              label: f.id,
+              parts: p ? p.map((v) => v / 1e9) : null,
+              total: p ? <Tv v="shipcost.total" ctx={ctxOf(f.id)}>{rp(at('shipcost.total', f.id))}</Tv> : undefined,
+              emptyText: res ? `mulai tahun ${startYearOf(c, f.id) ?? '?'}` : 'API tidak aktif',
+            }
           })}
         />
+      </Section>
+
+      <Section title="Biaya pelayaran per tahun · semua flow" aside={badge}>
+        {res ? (
+          <>
+            <ColumnStack columns={byYear} colors={COLORS} height={220} labels={['th 1', 'th 5', 'th 10', 'th 15', 'th 20']} yUnit="Rp miliar/th" xUnit="tahun ke-" />
+            <Legend items={[{ color: C.hitam, label: 'TCH' }, { color: C.biru, label: 'BBM' }, { color: C.hijau, label: 'pelabuhan' }]} />
+          </>
+        ) : (
+          <Note>Grafik muncul setelah engine menjawab.</Note>
+        )}
       </Section>
 
       <Section
@@ -70,44 +123,54 @@ export default function S07Biaya() {
             <label className="flex items-center gap-1.5 text-[13px] text-abu">
               Flow (tenant · arah)
               <select aria-label="Flow yang dirinci" value={flow} onChange={(e) => setFlow(e.target.value)} className="h-8 rounded-kontrol border border-hitam bg-white px-2 text-[13px] text-hitam">
-                {flowsWithData.map((f) => <option key={f.id} value={f.id}>{f.id}</option>)}
+                {c.flows.map((f) => <option key={f.id} value={f.id}>{f.id}</option>)}
               </select>
             </label>
-            <Badge kind="audit">≠ Excel · A11</Badge>
+            <span className="text-[13px] text-abu">{shipName}</span>
+            <Badge kind="audit">≠ Excel · A9, A11, A14, A15</Badge>
           </span>
         }
       >
-        <Table
-          rowKey={(r) => String(r.year)}
-          rows={detail}
-          selected={(r) => r.year === 10}
-          columns={[
-            { key: 'y', head: 'Tahun', width: 70, mono: true, render: (r) => r.year },
-            { key: 's', head: 'Kapal', width: 80, mono: true, render: (r) => <Tv v="voyage.n_ship" ctx={ctxOf(flow, r.year)} className="text-abu">{String(r.ships)}</Tv> },
-            { key: 'c', head: 'Call/th', width: 90, mono: true, render: (r) => <Tv v="voyage.freq" ctx={ctxOf(flow, r.year)} className="text-abu">{String(r.calls)}</Tv> },
-            { key: 't', head: 'TCH, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.tch" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.tch} M`}</Tv> },
-            { key: 'b', head: 'BBM, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.voyage" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.bbm} M`}</Tv> },
-            { key: 'p', head: 'Pelabuhan, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.port" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.port} M`}</Tv> },
-            { key: 'tot', head: 'Total, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.total" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.tch + r.bbm + r.port} M`}</Tv> },
-            { key: 'u', head: 'Per satuan, Rp', mono: true, render: (r) => <Tv v="shipcost.unit" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.rpPerT} rb`}</Tv> },
-          ]}
-        />
-        <Note>Semua angka placeholder (M = miliar, rb = ribu; flow selain in.damai = contoh yang diskalakan); klik angka atau segmen batang untuk jejaknya. Biaya pelabuhan = biaya per call × frekuensi aktual (A11), bukan nilai statis Excel.</Note>
+        {rows.length === 0 ? (
+          <Note>{res ? `Flow ${flow} belum punya pelayaran (atau kapal/tarif belum lengkap).` : 'API tidak aktif.'}</Note>
+        ) : (
+          <Table
+            rowKey={(y) => String(y)}
+            rows={rows}
+            selected={(y) => y === year}
+            columns={[
+              { key: 'y', head: 'Tahun', width: 64, mono: true, render: (y) => y },
+              { key: 's', head: 'Kapal', width: 64, mono: true, render: (y) => <Tv v="voyage.n_ship" ctx={ctxOf(flow, y)}>{num(at('voyage.n_ship', flow, y))}</Tv> },
+              { key: 'c', head: 'Call/th', width: 72, mono: true, render: (y) => <Tv v="voyage.freq" ctx={ctxOf(flow, y)}>{num(at('voyage.freq', flow, y))}</Tv> },
+              { key: 't', head: 'TCH, Rp', width: 100, mono: true, render: (y) => <Tv v="shipcost.tch" ctx={ctxOf(flow, y)}>{rp(at('shipcost.tch', flow, y))}</Tv> },
+              { key: 'b', head: 'BBM, Rp', width: 100, mono: true, render: (y) => <Tv v="shipcost.voyage" ctx={ctxOf(flow, y)}>{rp(at('shipcost.voyage', flow, y))}</Tv> },
+              { key: 'p', head: 'Pelabuhan, Rp', width: 110, mono: true, render: (y) => <Tv v="shipcost.port" ctx={ctxOf(flow, y)}>{rp(at('shipcost.port', flow, y))}</Tv> },
+              { key: 'tot', head: 'Total, Rp', width: 100, mono: true, render: (y) => <Tv v="shipcost.total" ctx={ctxOf(flow, y)} className="font-medium">{rp(at('shipcost.total', flow, y))}</Tv> },
+              { key: 'u', head: `Per satuan, Rp/${unitOfFlow(flow)}`, mono: true, render: (y) => <Tv v="shipcost.unit" ctx={ctxOf(flow, y)}>{num(at('shipcost.unit', flow, y))}</Tv> },
+            ]}
+          />
+        )}
+        <Note>M = miliar, T = triliun. Klik angka untuk jejaknya. BBM dari frekuensi aktual (A9); biaya pelabuhan = biaya per call × frekuensi aktual (A11) dengan tarif luar negeri untuk pelabuhan luar negeri (A14). Per satuan = shipping cost ÷ demand dalam satuan flow (A7).</Note>
       </Section>
 
-      <Section title={`Biaya pelabuhan per call · in.damai di ${shortPortName(portOfRoute(c, c.flows.find((f) => f.id === 'in.damai')?.route_id ?? '')?.name ?? '')}`} aside={<PH>placeholder · engine tahap 6</PH>}>
-        <Table
-          rowKey={(r) => r.comp}
-          rows={PORT_CALL_DAMAI}
-          columns={[
-            { key: 'c', head: 'Komponen', width: 150, render: (r) => r.comp },
-            { key: 'b', head: 'Dasar perhitungan', render: (r) => <span className="text-[13px] text-abu">{r.basis}</span> },
-            { key: 'v', head: 'Per call, Rp juta', width: 140, mono: true, render: (r) => <Tv v="shipcost.port_call" ctx={ctxOf('in.damai')} className="text-abu">{num(r.value, 1)}</Tv> },
-          ]}
-        />
+      <Section title={`Biaya pelabuhan per call · ${flow} di ${portName} · tahun ${year}`} aside={badge}>
+        {breakdown && callTotal ? (
+          <Table
+            rowKey={(r) => r.key}
+            rows={PORT_ROWS}
+            columns={[
+              { key: 'c', head: 'Komponen', width: 150, render: (r) => r.comp },
+              { key: 'b', head: 'Dasar perhitungan', render: (r) => <span className="text-[13px] text-abu">{r.basis}</span> },
+              { key: 'v', head: 'Per call, Rp juta', width: 140, mono: true, render: (r) => <Tv v="shipcost.port_call" ctx={ctxOf(flow)}>{num((breakdown[r.key]?.[year - 1] ?? 0) / 1e6, 1)}</Tv> },
+            ]}
+          />
+        ) : (
+          <Note>{res ? `Tidak ada call di tahun ${year} untuk ${flow}.` : 'API tidak aktif.'}</Note>
+        )}
         <Note>
-          Total per call Rp {num(callTotal, 1)} juta (placeholder). Tarif per kelas pelabuhan diedit di layar 3; GT, lama tambat, dan muatan per call datang dari kapal terpilih (AETOS) dan port time.
-          Di KEK (TERSUS greenfield) tidak ada tarif pelabuhan. {flow !== 'in.damai' && `Rincian per call untuk ${flow} (${portName}) muncul setelah engine tahap 6.`}
+          {callTotal ? `Total per call Rp ${num(callTotal / 1e6, 1)} juta. ` : ''}
+          {port ? `${portName}: kelas tarif ${port.tariff_class}, ${port.kind === 'foreign' ? 'luar negeri (USD × kurs)' : 'dalam negeri'}, tambatan ${port.berth_type}. ` : ''}
+          GT dan muatan per call dari kapal terpilih ({shipName}); lama tambat = port time di pelabuhan itu, dibulatkan ke etmal (A15). Di KEK (TERSUS) {c.kek_site.port_charges === 'none' ? 'tidak ada tarif pelabuhan' : `dikenai tarif kelas ${c.kek_site.tariff_class}`}.
         </Note>
       </Section>
     </>

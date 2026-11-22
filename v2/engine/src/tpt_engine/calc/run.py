@@ -1,6 +1,6 @@
 """Orkestrasi kalkulasi per modul. Hasil berkunci id variabel registry (SPEC §9.3).
 
-Modul: `demand` (§5.1) → `voyage` (§5.2–5.3, butuh demand). Variabel bergantung kapal/alat memakai rencana kasus
+Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4); modul menarik modul sebelumnya. Variabel bergantung kapal/alat memakai rencana kasus
 (default plan pertama) + override dari UI.
 """
 
@@ -11,11 +11,11 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..domain.case import CargoFlow, Case, Ship, teu_forms
-from . import cargo, demand, vessel, voyage
+from . import cargo, demand, shipcost, vessel, voyage
 
-Module = Literal["demand", "voyage"]
-MODULES: tuple[str, ...] = ("demand", "voyage")
-REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",)}
+Module = Literal["demand", "voyage", "shipcost"]
+MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost")
+REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage")}
 
 #: modul → id variabel registry yang dihitungnya (dites terhadap registry)
 COMPUTES: dict[str, tuple[str, ...]] = {
@@ -25,7 +25,11 @@ COMPUTES: dict[str, tuple[str, ...]] = {
                "voyage.freq", "voyage.q", "voyage.t_port_kek", "voyage.t_port_ext", "voyage.t_port", "voyage.t_fix",
                "voyage.t_sea", "voyage.rtd", "voyage.f_max", "voyage.n_ship", "voyage.utilization",
                "voyage.consumption"),
+    "shipcost": ("vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.fuel_me_l", "shipcost.fuel_ae_l",
+                 "shipcost.fuel_me", "shipcost.fuel_ae", "shipcost.voyage", "shipcost.tch_rate", "shipcost.tch",
+                 "shipcost.port_call", "shipcost.port", "shipcost.total", "shipcost.unit"),
 }
+PORT_PARTS = ("labuh", "pandu", "tambat", "tunda", "bm")
 
 Value = float | list[float]
 ShipUnit = Literal["ton", "TEU"]
@@ -49,6 +53,9 @@ class CalcResult(BaseModel):
     reasons: dict[str, list[str]] = Field({}, description="alasan kapal terpilih gugur per flow (vessel.feasible = 0)")
     feasibility: dict[str, dict[str, FeasCell]] = Field(
         {}, description="modul voyage: kelayakan setiap kapal kompatibel per flow (flow id -> ship id -> sel)")
+    port_breakdown: dict[str, dict[str, list[float]]] = Field(
+        {}, description="modul shipcost: biaya pelabuhan per call per komponen (labuh, pandu, tambat, tunda, bm; "
+                        "ext + KEK) per flow, seri tahunan Rp/call")
     warnings: list[str] = []
 
 
@@ -173,6 +180,72 @@ def voyage_chain(case: Case, flow: CargoFlow, ship: Ship, equipment_id: str | No
     return out
 
 
+def cost_chain(case: Case, flow: CargoFlow, ship: Ship, ch: dict[str, Value], unit: ShipUnit,
+               d_flow: list[float]) -> tuple[dict[str, Value], dict[str, list[float]]]:
+    """§5.4 untuk satu flow dengan satu kapal, dari hasil `voyage_chain` (`ch`). Mengembalikan nilai berkunci id
+    registry dan rincian biaya pelabuhan per call per komponen. `d_flow` = demand dalam satuan flow (A7)."""
+    p = case.params
+    ae = shipcost.ae_kw(ship, p)
+    s_me, s_ae = shipcost.sfoc(ship, p)
+    f_me, f_ae = shipcost.fuel_of(p, p.me_fuel), shipcost.fuel_of(p, p.ae_fuel)
+    stype = next(t for t in case.ship_types if t.code == ship.ship_type)
+    size = float(vessel.teu_capacity(ship, p)) if stype.size_basis == "teu" else ship.dwt_t
+    rate = shipcost.tch_rate(stype, size)
+    port = voyage.external_port(case, flow)
+    kek = case.kek_site
+    book = case.tariffs
+
+    keys = ("shipcost.fuel_me_l", "shipcost.fuel_ae_l", "shipcost.fuel_me", "shipcost.fuel_ae", "shipcost.voyage",
+            "shipcost.tch", "shipcost.port_call", "shipcost.port", "shipcost.total", "shipcost.unit")
+    s: dict[str, list[float]] = {k: [] for k in keys}
+    parts: dict[str, list[float]] = {k: [] for k in PORT_PARTS}
+
+    def col(k: str) -> list[float]:
+        v = ch[k]
+        assert isinstance(v, list)
+        return v
+
+    freq, q, tk, te, tsea, ns = (col(k) for k in ("voyage.freq", "voyage.q", "voyage.t_port_kek", "voyage.t_port_ext",
+                                                    "voyage.t_sea", "voyage.n_ship"))
+    tfix = ch["voyage.t_fix"]
+    assert isinstance(tfix, float)
+    for y, f in enumerate(freq):
+        if f == 0:
+            for k in keys:
+                s[k].append(0.0)
+            for k in PORT_PARTS:
+                parts[k].append(0.0)
+            continue
+        t_call = tk[y] + te[y] + tfix
+        me_l = shipcost.fuel_litres(ship.me_kw, s_me, p.mcr, tsea[y], t_call, p.fuel_share_me_sea, p.fuel_share_me_port,
+                                    f, f_me.density_kg_m3)
+        ae_l = shipcost.fuel_litres(ae, s_ae, p.mcr, tsea[y], t_call, p.fuel_share_ae_sea, p.fuel_share_ae_port, f,
+                                    f_ae.density_kg_m3)
+        me_rp, ae_rp = shipcost.fuel_cost(me_l, f_me), shipcost.fuel_cost(ae_l, f_ae)
+        tch = shipcost.tch_cost(rate, p.usd_rate, p.commission_days, ns[y])
+        call = shipcost.ext_port_call(book, port, ship.gt, te[y], q[y], unit, p.usd_rate)
+        if kek.port_charges == "tariff" and kek.tariff_class:
+            k_call = shipcost.port_call_cost(book, kek.tariff_class, False, "beton", ship.gt, tk[y], q[y], unit,
+                                             p.usd_rate)
+            for k in PORT_PARTS:
+                setattr(call, k, getattr(call, k) + getattr(k_call, k))
+        port_yr = call.total * f
+        total = me_rp + ae_rp + tch + port_yr
+        for k, v in (("shipcost.fuel_me_l", me_l), ("shipcost.fuel_ae_l", ae_l), ("shipcost.fuel_me", me_rp),
+                     ("shipcost.fuel_ae", ae_rp), ("shipcost.voyage", me_rp + ae_rp), ("shipcost.tch", tch),
+                     ("shipcost.port_call", call.total), ("shipcost.port", port_yr), ("shipcost.total", total),
+                     ("shipcost.unit", shipcost.unit_cost(total, d_flow[y]))):
+            s[k].append(float(v))
+        for k in PORT_PARTS:
+            parts[k].append(float(getattr(call, k)))
+    out: dict[str, Value] = {"vessel.ae_kw": ae, "vessel.sfoc_me": s_me, "vessel.sfoc_ae": s_ae, "shipcost.tch_rate": rate}
+    out.update(s)
+    return out, parts
+
+
+SHIP_KEYED = {"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
+
+
 def _flow_unit(case: Case, flow: CargoFlow) -> ShipUnit:
     return "TEU" if flow.cargo_form in teu_forms(case) else "ton"
 
@@ -195,6 +268,7 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     values: dict[str, dict[str, Value]] = {}
     units: dict[str, ShipUnit] = {}
     reasons: dict[str, list[str]] = {}
+    breakdown: dict[str, dict[str, list[float]]] = {}
     warnings: list[str] = []
     ships = {s.id: s for s in case.ships}
 
@@ -222,8 +296,16 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
         except voyage.VoyageError as e:
             warnings.append(str(e))
             continue
+        if "shipcost" in mods:
+            try:
+                costs, parts = cost_chain(case, f, ship, chain, unit, series[f.id])
+            except shipcost.CostError as e:
+                warnings.append(f"{f.id}: {e}")
+            else:
+                chain = {**chain, **costs}
+                breakdown[f.id] = parts
         for k, v in chain.items():
-            key = ship.id if k == "vessel.ballast_speed" else f.id
+            key = ship.id if k in SHIP_KEYED else f.id
             values.setdefault(k, {})[key] = v
         feas = vessel.feasibility(case, f, ship)
         if not feas.ok:
@@ -242,12 +324,12 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     computed = [v for m in mods for v in COMPUTES[m]]
     return CalcResult(modules=mods, plan_id=pid, ship_by_flow=ships_by_flow, equipment_by_terminal=equip_by_term,
                       computed=computed, values=values, units=units, reasons=reasons, feasibility=matrix,
-                      warnings=warnings)
+                      port_breakdown=breakdown, warnings=warnings)
 
 
 def compare(case: Case, flow_id: str, plan_id: str | None = None, ship_by_flow: dict[str, str] | None = None,
             equipment_by_terminal: dict[str, str] | None = None) -> CompareResult:
-    """Bandingkan semua kapal kasus untuk satu flow (layar 4 & 6): kelayakan + rantai §5.1–5.3 per kapal."""
+    """Bandingkan semua kapal kasus untuk satu flow (layar 4 & 6): kelayakan + rantai §5.1–5.4 per kapal."""
     flow = next((f for f in case.flows if f.id == flow_id), None)
     if flow is None:
         raise ValueError(f"flow '{flow_id}' tidak ada di kasus")
@@ -271,8 +353,11 @@ def compare(case: Case, flow_id: str, plan_id: str | None = None, ship_by_flow: 
                 row.error = "; ".join(warn) or "D_TEU tidak bisa dihitung"
             else:
                 try:
-                    row.values.update(voyage_chain(case, flow, ship, eq_id, d_unit, unit, tpt))
-                except voyage.VoyageError as e:
+                    ch = voyage_chain(case, flow, ship, eq_id, d_unit, unit, tpt)
+                    row.values.update(ch)
+                    costs, _ = cost_chain(case, flow, ship, ch, unit, series)
+                    row.values.update(costs)
+                except (voyage.VoyageError, shipcost.CostError) as e:
                     row.error = str(e)
         rows.append(row)
     return CompareResult(flow_id=flow.id, unit=unit, equipment_id=eq_id, rows=rows)

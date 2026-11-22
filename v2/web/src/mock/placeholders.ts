@@ -48,38 +48,6 @@ export const PROJECTION: Record<string, number[]> = {
   'in.fantasi': [0, 0, 100, 104, 108.2, 112.5, 117, 121.7, 126.5, 131.6, 136.9, 142.3, 148, 154, 160, 160, 160, 160, 160, 160],
 }
 
-
-// ── Layar 7: biaya pelayaran tahun 10 (Rp miliar: TCH, BBM, pelabuhan) ─────
-export const SHIPPING_Y10: Record<string, [number, number, number] | null> = {
-  'in.damai': [230, 260, 73],
-  'out.damai': [220, 176, 81],
-  'in.fantasi': [140, 120, 50],
-  'out.fantasi': [190, 220, 60],
-  'in.esa': [80, 104, 24],
-  'out.esa': [28, 24, 12],
-  'in.baru': [140, 190, 24],
-  'out.baru': [72, 56, 28],
-  'in.adi': null,
-  'out.adi': null,
-}
-
-export const SHIPPING_DETAIL_DAMAI = [
-  { year: 1, ships: 3, calls: 92, tch: 172, bbm: 168, port: 47, rpPerT: 129 },
-  { year: 5, ships: 3, calls: 112, tch: 172, bbm: 204, port: 57, rpPerT: 119 },
-  { year: 10, ships: 4, calls: 143, tch: 230, bbm: 260, port: 73, rpPerT: 121 },
-  { year: 15, ships: 5, calls: 182, tch: 287, bbm: 331, port: 93, rpPerT: 120 },
-  { year: 20, ships: 6, calls: 232, tch: 345, bbm: 423, port: 119, rpPerT: 117 },
-]
-
-/** Komponen biaya pelabuhan per call (placeholder, contoh in.damai · AETOS di Badas). Dihitung engine Tahap 6. */
-export const PORT_CALL_DAMAI = [
-  { comp: 'Labuh', basis: 'GT × tarif labuh per kunjungan', value: 4.1 },
-  { comp: 'Pandu', basis: 'gerakan × (tarif tetap + tarif variabel × GT)', value: 9.8 },
-  { comp: 'Tunda', basis: 'gerakan × (tarif tetap + tarif variabel × GT), rentang GT', value: 21.6 },
-  { comp: 'Tambat', basis: 'GT × tarif per etmal × lama tambat (etmal)', value: 6.3 },
-  { comp: 'Bongkar muat', basis: 'muatan × tarif B/M per ton atau per TEU', value: 468.0 },
-]
-
 // ── Layar 8: terminal KEK ───────────────────────────────────────────────────
 export const TERMINAL_Y13 = {
   MP: { berthDays: 547, berths: 3, equipment: 12, bor: 0.5 },

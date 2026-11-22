@@ -60,7 +60,7 @@ def test_calculate_voyage_and_compare(client):
 
 
 def test_calculate_errors(client):
-    assert client.post("/api/calculate", json={"case": CASE, "modules": ["shipcost"]}).status_code == 422
+    assert client.post("/api/calculate", json={"case": CASE, "modules": ["terminal"]}).status_code == 422
     assert client.post("/api/calculate", json={"case": CASE, "plan_id": "x"}).status_code == 422
 
 

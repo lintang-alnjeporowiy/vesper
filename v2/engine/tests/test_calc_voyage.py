@@ -29,7 +29,7 @@ def case() -> Case:
 
 @pytest.fixture(scope="module")
 def res(case):
-    return calculate(case, ["voyage"], plan_id="k15-excel")
+    return calculate(case, ["shipcost"], plan_id="k15-excel")
 
 
 def ship(case, sid):
@@ -137,11 +137,12 @@ def test_f_max_rounddown_A1():
 # ─── laporan selisih vs Excel ──────────────────────────────────────────────────────────────────
 @pytest.mark.parametrize("fid", FLOWS)
 def test_excel_replica_reproduces_golden(case, fid):
-    """Tiruan rumus Excel (A1, A2, A3, A5, A10, A13 apa adanya) = golden Excel, semua seri, 20 tahun."""
+    """Tiruan rumus Excel (temuan audit apa adanya) = golden Excel, semua seri, 20 tahun. Toleransi 1e-6: Excel
+    memakai konstanta liter/ton HSD yang dibulatkan (Model!F44 = 1201,923; tiruan 1000/0,832)."""
     ex = excel_chain(case, GOLDEN, fid)
     for key in EXCEL_SERIES:
         ref = GOLDEN["flows"][fid]["series"][key]["values"]
-        assert all(close(a, b) for a, b in zip(ex[key], ref, strict=True)), (fid, key)
+        assert all(close(a, b, rel=1e-6) for a, b in zip(ex[key], ref, strict=True)), (fid, key)
 
 
 @pytest.mark.parametrize("fid", FLOWS)
@@ -164,7 +165,7 @@ def test_series_without_causes_match_excel(res, key):
 
 # ─── kontrak hasil & bandingkan kandidat ──────────────────────────────────────────────────────
 def test_result_contract(res):
-    assert res.modules == ["demand", "voyage"]  # voyage menarik demand
+    assert res.modules == ["demand", "voyage", "shipcost"]  # shipcost menarik voyage & demand
     assert set(COMPUTES["voyage"]) <= set(res.computed)
     assert res.equipment_by_terminal == {"MP": "eq.liebherr_lhm_280", "CC": "eq.emco_wheaton_b0300_10"}
     assert all(len(res.values["voyage.rtd"][f]) == 20 for f in FLOWS)

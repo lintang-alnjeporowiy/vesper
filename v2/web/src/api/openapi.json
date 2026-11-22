@@ -290,7 +290,8 @@
               "type": "string",
               "enum": [
                 "demand",
-                "voyage"
+                "voyage",
+                "shipcost"
               ]
             },
             "type": "array",
@@ -298,7 +299,8 @@
             "description": "modul engine yang dihitung (dependensi ikut)",
             "default": [
               "demand",
-              "voyage"
+              "voyage",
+              "shipcost"
             ]
           },
           "plan_id": {
@@ -452,6 +454,21 @@
             "type": "object",
             "title": "Feasibility",
             "description": "modul voyage: kelayakan setiap kapal kompatibel per flow (flow id -> ship id -> sel)",
+            "default": {}
+          },
+          "port_breakdown": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Port Breakdown",
+            "description": "modul shipcost: biaya pelabuhan per call per komponen (labuh, pandu, tambat, tunda, bm; ext + KEK) per flow, seri tahunan Rp/call",
             "default": {}
           },
           "warnings": {

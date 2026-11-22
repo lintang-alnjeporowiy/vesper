@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost']
 
 /** Pasang sekali di App: hitung ulang setiap kali kasus aktif atau kapal terpilih berubah. */
 export function useEngineSync() {
@@ -75,8 +75,9 @@ export function computedNumber(result: CalcResult | undefined, id: string, ctx: 
 /** Satuan tampilan: demand dalam satuan flow / satuan kapal, lainnya dari registry. */
 export function unitOf(caseData: Case, result: CalcResult | undefined, id: string, flow?: string): string {
   if ((id === 'cargo.demand_unit' || id === 'vessel.payload' || id === 'voyage.q') && flow) return result?.units[flow] === 'TEU' ? 'TEU' : 't'
-  if ((id === 'demand.base' || id === 'demand.ratio') && flow) {
-    return caseData.flows.find((f) => f.id === flow)?.unit === 'TEU' ? 'TEU' : 't'
+  if ((id === 'demand.base' || id === 'demand.ratio' || id === 'shipcost.unit') && flow) {
+    const u = caseData.flows.find((f) => f.id === flow)?.unit === 'TEU' ? 'TEU' : 't'
+    return id === 'shipcost.unit' ? `Rp/${u}` : u
   }
   return VAR[id]?.unit ?? ''
 }

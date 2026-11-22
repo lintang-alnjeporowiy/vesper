@@ -52,7 +52,9 @@ export default function S06Armada() {
   const cmpOk = cmp.status === 'ok' && !!cmp.data
   const nGugur = cmpOk ? rows.filter((r) => !r.feasible).length : undefined
   const bad = (r: CandidateRow, word: string) => r.reasons.some((x) => x.includes(word))
-  const engineBadge = res ? <Badge kind="dihitung">operasi dihitung · biaya placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>
+  const engineBadge = res ? <Badge kind="dihitung">dihitung · engine</Badge> : <PH>placeholder · API tidak aktif</PH>
+  const fUnit = flow.unit === 'TEU' ? 'TEU' : 't'
+  const rpShort = (x: number | undefined) => (x === undefined ? '–' : x >= 1e12 ? `Rp ${num(x / 1e12, 2)} T` : `Rp ${num(x / 1e9, 1)} M`)
 
   return (
     <>
@@ -143,8 +145,8 @@ export default function S06Armada() {
         items={[
           { label: 'Utilisasi kapal', value: v('voyage.utilization') === undefined ? '–' : `${num((v('voyage.utilization') ?? 0) * 100)} %`, v: 'voyage.utilization' },
           { label: 'Lama konsumsi / pengapalan', value: v('voyage.consumption') === undefined ? '–' : `${num(v('voyage.consumption'), 1)} hr`, v: 'voyage.consumption' },
-          { label: 'Shipping cost / th · tahap 6', value: '–', v: 'shipcost.total' },
-          { label: 'Unit cost · tahap 6', value: '–', v: 'shipcost.unit' },
+          { label: `Shipping cost th ${year}`, value: rpShort(v('shipcost.total')), v: 'shipcost.total' },
+          { label: `Biaya pelayaran per ${fUnit}`, value: v('shipcost.unit') === undefined ? '–' : `Rp ${num(v('shipcost.unit'))}`, v: 'shipcost.unit', final: true },
         ]}
       />
 
@@ -168,6 +170,7 @@ export default function S06Armada() {
             { key: 'rtd', head: 'RTD', width: 52, mono: true, render: (r) => fmt(rowNumber(r.values, 'voyage.rtd', year), 1) },
             { key: 'fm', head: 'F_max', width: 52, mono: true, render: (r) => fmt(rowNumber(r.values, 'voyage.f_max', year)) },
             { key: 'k', head: 'Kapal', width: 48, mono: true, render: (r) => <span className={r.ship_id === shipId ? 'font-medium' : ''}>{fmt(rowNumber(r.values, 'voyage.n_ship', year))}</span> },
+            { key: 'u', head: `Rp/${fUnit}`, width: 80, mono: true, render: (r) => <Tv v="shipcost.unit" ctx={{ ...ctx, ship: r.ship_id }} value={fmt(rowNumber(r.values, 'shipcost.unit', year))}>{fmt(rowNumber(r.values, 'shipcost.unit', year))}</Tv> },
             {
               key: 'st',
               head: 'Status',
@@ -183,26 +186,26 @@ export default function S06Armada() {
         />
         <Note>
           Kelayakan (engine): tipe kapal boleh membawa {flow.cargo_form}; draft ≤ draft maks pelabuhan; dermaga terpanjang ≥ <Tv v="in.param.berth_loa_ratio">{num(ratio, 2)}</Tv> × LOA
-          {port?.longest_berth_m ? <> ({shortPortName(port.name)} <Tv v="in.port.longest_berth" ctx={ctx}>{`${num(port.longest_berth_m)} m`}</Tv> → LOA ≤ {num(port.longest_berth_m / ratio)} m)</> : ' (panjang dermaga belum ada → LOA tidak dicek)'}. Angka merah = yang melanggar; arahkan kursor ke badge gugur untuk alasan lengkap. Kandidat gugur tetap dihitung agar terlihat posisinya. Rp/t menyusul tahap 6.
+          {port?.longest_berth_m ? <> ({shortPortName(port.name)} <Tv v="in.port.longest_berth" ctx={ctx}>{`${num(port.longest_berth_m)} m`}</Tv> → LOA ≤ {num(port.longest_berth_m / ratio)} m)</> : ' (panjang dermaga belum ada → LOA tidak dicek)'}. Angka merah = yang melanggar; arahkan kursor ke badge gugur untuk alasan lengkap. Kandidat gugur tetap dihitung agar terlihat posisinya. Rp/{fUnit} = shipping cost (TCH + BBM + pelabuhan) ÷ demand.
         </Note>
       </Section>
 
-      <Section title={`Jumlah kapal terhadap ukuran kapal · tahun ${year}`} aside={cmpOk ? <Badge kind="dihitung">dihitung</Badge> : <PH />}>
+      <Section title={`Biaya pelayaran per ${fUnit} terhadap ukuran kapal · tahun ${year}`} aside={cmpOk ? <Badge kind="dihitung">dihitung</Badge> : <PH />}>
         {cmpOk ? (
           <>
             <DotPlot
               height={200}
               points={rows
-                .filter((r) => rowNumber(r.values, 'voyage.n_ship', year) !== undefined)
+                .filter((r) => (rowNumber(r.values, 'shipcost.unit', year) ?? 0) > 0)
                 .map((r) => {
                   const s = shipsById[r.ship_id]
-                  const n = rowNumber(r.values, 'voyage.n_ship', year) ?? 0
-                  return { x: Math.log(s.dwt_t), y: n, color: !r.feasible ? C.merah : r.ship_id === shipId ? C.hitam : C.biru, outline: !r.feasible, size: r.ship_id === shipId ? 14 : 10, label: `${s.name}: ${n} kapal · RTD ${fmt(rowNumber(r.values, 'voyage.rtd', year), 1)} hr` }
+                  const u = rowNumber(r.values, 'shipcost.unit', year) ?? 0
+                  return { x: Math.log(s.dwt_t), y: u, color: !r.feasible ? C.merah : r.ship_id === shipId ? C.hitam : C.biru, outline: !r.feasible, size: r.ship_id === shipId ? 14 : 10, label: `${s.name}: Rp ${num(u)}/${fUnit} · ${fmt(rowNumber(r.values, 'voyage.n_ship', year))} kapal` }
                 })}
               xLabels={rows.length ? [`${num(shipsById[rows[0].ship_id].dwt_t / 1000, 1)}k`, `${num(shipsById[rows[rows.length - 1].ship_id].dwt_t / 1000, 1)}k DWT`] : []}
             />
             <Legend items={[{ color: C.biru, label: 'layak', round: true }, { color: C.hitam, label: 'terpilih', round: true }, { color: C.merah, label: 'gugur (posisi jika diizinkan)', round: true, outline: true }]} />
-            <Note>Sumbu X = DWT (skala log), sumbu Y = jumlah kapal yang dibutuhkan pada tahun {year}. Kapal besar butuh lebih sedikit unit tapi RTD lebih panjang; trade-off biaya (Rp/t) ditambahkan di tahap 6.</Note>
+            <Note>Sumbu X = DWT (skala log), sumbu Y = biaya pelayaran per {fUnit} pada tahun {year} (makin rendah makin baik). Kapal besar: TCH per unit lebih mahal tapi butuh lebih sedikit unit dan call; titik terendah yang layak = kandidat terbaik untuk biaya pelayaran saja (biaya terminal & perairan menyusul tahap 7–8).</Note>
           </>
         ) : (
           <Note>Grafik muncul setelah engine (/api/compare) menjawab.</Note>
