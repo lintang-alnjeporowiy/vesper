@@ -2035,7 +2035,8 @@
       "section": "4.8",
       "case_path": "tariffs.classes[tariff_class].labuh_domestic_rp_per_gt",
       "screens": [
-        1
+        3,
+        7
       ],
       "desc": "Tarif jasa labuh per GT per kunjungan.",
       "deps": [],
@@ -2058,7 +2059,8 @@
       "section": "4.8",
       "case_path": "tariffs.classes[tariff_class].pandu_domestic_var_rp_per_gt",
       "screens": [
-        1
+        3,
+        7
       ],
       "desc": "Tarif jasa pandu per gerakan (tetap + per GT).",
       "deps": [],
@@ -2081,7 +2083,8 @@
       "section": "4.8",
       "case_path": "tariffs.classes[tariff_class].tambat_domestic_rp_per_gt_etmal",
       "screens": [
-        1
+        3,
+        7
       ],
       "desc": "Tarif jasa tambat per GT per etmal (24 jam) di dermaga.",
       "deps": [],
@@ -2104,7 +2107,8 @@
       "section": "4.8",
       "case_path": "tariffs.classes[tariff_class].tug",
       "screens": [
-        1
+        3,
+        7
       ],
       "desc": "Tarif kapal tunda per gerakan menurut rentang GT.",
       "deps": [],
@@ -2127,7 +2131,8 @@
       "section": "4.8",
       "case_path": "tariffs.classes[tariff_class].bm_domestic_rp_per_ton",
       "screens": [
-        1
+        3,
+        7
       ],
       "desc": "Tarif bongkar muat di pelabuhan per ton atau per TEU.",
       "deps": [],
@@ -2150,7 +2155,7 @@
       "section": "4.8",
       "case_path": "tariffs.tug_gt_bands",
       "screens": [
-        1
+        3
       ],
       "desc": "Rentang GT yang menentukan baris tarif tunda.",
       "deps": [],
@@ -3601,7 +3606,8 @@
       "section": "5.4",
       "screens": [
         6,
-        7
+        7,
+        9
       ],
       "desc": "Shipping cost: total biaya pelayaran flow per tahun = BBM + sewa kapal + biaya pelabuhan.",
       "dependents": [

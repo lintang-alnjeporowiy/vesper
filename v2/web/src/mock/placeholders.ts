@@ -100,6 +100,15 @@ export const SHIPPING_DETAIL_DAMAI = [
   { year: 20, ships: 6, calls: 232, tch: 345, bbm: 423, port: 119, rpPerT: 117 },
 ]
 
+/** Komponen biaya pelabuhan per call (placeholder, contoh in.damai · AETOS di Badas). Dihitung engine Tahap 6. */
+export const PORT_CALL_DAMAI = [
+  { comp: 'Labuh', basis: 'GT × tarif labuh per kunjungan', value: 4.1 },
+  { comp: 'Pandu', basis: 'gerakan × (tarif tetap + tarif variabel × GT)', value: 9.8 },
+  { comp: 'Tunda', basis: 'gerakan × (tarif tetap + tarif variabel × GT), rentang GT', value: 21.6 },
+  { comp: 'Tambat', basis: 'GT × tarif per etmal × lama tambat (etmal)', value: 6.3 },
+  { comp: 'Bongkar muat', basis: 'muatan × tarif B/M per ton atau per TEU', value: 468.0 },
+]
+
 // ── Layar 8: terminal KEK ───────────────────────────────────────────────────
 export const TERMINAL_Y13 = {
   MP: { berthDays: 547, berths: 3, equipment: 12, bor: 0.5 },
@@ -154,6 +163,21 @@ export const INVEST_ITEMS = [
 ]
 
 // ── Layar 10: optimasi ──────────────────────────────────────────────────────
+/** Biaya pelayaran total semua flow per tahun (Rp miliar, placeholder) untuk grafik layar 9. */
+export const SHIPPING_BY_YEAR: number[] = Array.from({ length: 20 }, (_, y) => Math.round(1700 + y * 95 + (y > 6 ? 260 : 0)))
+
+/** Jejak konvergensi HiGHS (placeholder): waktu (detik), incumbent & batas bawah NPV biaya total (Rp T). */
+export const CONVERGENCE: { t: number; incumbent: number | null; bound: number }[] = [
+  { t: 0, incumbent: null, bound: 41.2 },
+  { t: 0.4, incumbent: 49.8, bound: 42.0 },
+  { t: 1.1, incumbent: 47.1, bound: 43.1 },
+  { t: 2.3, incumbent: 46.2, bound: 44.0 },
+  { t: 3.6, incumbent: 45.6, bound: 44.7 },
+  { t: 5.2, incumbent: 45.3, bound: 45.0 },
+  { t: 7.0, incumbent: 45.3, bound: 45.2 },
+  { t: 8.4, incumbent: 45.28, bound: 45.28 },
+]
+
 export const OPTIM_RESULT = {
   npvDelta: '−6,2 %',
   rows: [

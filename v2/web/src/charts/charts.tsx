@@ -4,12 +4,22 @@ import type { ReactNode } from 'react'
 export const C = { hitam: '#000000', biru: '#56BDCC', hijau: '#90B148', merah: '#AA3A36', abu: '#9A9A9A', garis: '#DEDEDE' }
 
 /** Kolom bertumpuk vertikal. series[i] = nilai per kolom; urutan bawah→atas. */
-export function ColumnStack(props: { columns: number[][]; colors: string[]; height?: number; labels?: string[] }) {
+export function ColumnStack(props: { columns: number[][]; colors: string[]; height?: number; labels?: string[]; yUnit?: string; xUnit?: string }) {
   const h = props.height ?? 220
   const max = Math.max(1e-9, ...props.columns.map((c) => c.reduce((a, b) => a + b, 0)))
+  const fmt = (v: number) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(v)
   return (
     <div className="flex w-full flex-col gap-2">
-      <div className="flex w-full items-end gap-1.5 border-b border-hitam px-1" style={{ height: h }}>
+      {props.yUnit && <span className="font-mono text-[13px] text-abu">↑ {props.yUnit}</span>}
+      <div className="flex w-full items-stretch gap-2">
+      {props.yUnit && (
+        <div className="flex w-12 shrink-0 flex-col justify-between text-right font-mono text-[13px] text-abu" style={{ height: h }}>
+          <span>{fmt(max)}</span>
+          <span>{fmt(max / 2)}</span>
+          <span>0</span>
+        </div>
+      )}
+      <div className="flex min-w-0 grow items-end gap-1.5 border-b border-l border-hitam px-1" style={{ height: h }}>
         {props.columns.map((col, i) => {
           const total = col.reduce((a, b) => a + b, 0)
           return (
@@ -23,19 +33,21 @@ export function ColumnStack(props: { columns: number[][]; colors: string[]; heig
           )
         })}
       </div>
+      </div>
       {props.labels && (
-        <div className="flex w-full justify-between px-1 font-mono text-[13px] text-abu">
+        <div className={`flex justify-between px-1 font-mono text-[13px] text-abu ${props.yUnit ? 'ml-14' : ''}`}>
           {props.labels.map((l) => (
             <span key={l}>{l}</span>
           ))}
         </div>
       )}
+      {props.xUnit && <span className="self-end font-mono text-[13px] text-abu">{props.xUnit} →</span>}
     </div>
   )
 }
 
 /** Batang horizontal bertumpuk dengan label kiri dan total kanan. */
-export function BarRows(props: { rows: { label: string; parts: number[] | null; total?: ReactNode; emptyText?: string; strong?: boolean }[]; colors: string[]; width?: number; onSegment?: (label: string, j: number, value: number) => void; segmentTitle?: (label: string, j: number, value: number) => string }) {
+export function BarRows(props: { rows: { label: string; parts: number[] | null; total?: ReactNode; emptyText?: string; strong?: boolean }[]; colors: string[]; width?: number; onSegment?: (label: string, j: number, value: number) => void; segmentTitle?: (label: string, j: number, value: number) => string; xUnit?: string }) {
   const w = props.width ?? 560
   const max = Math.max(1e-9, ...props.rows.map((r) => (r.parts ? r.parts.reduce((a, b) => a + b, 0) : 0)))
   return (
@@ -61,6 +73,20 @@ export function BarRows(props: { rows: { label: string; parts: number[] | null; 
           )}
         </div>
       ))}
+      {props.xUnit && (
+        <div className="flex items-start gap-3">
+          <span className="w-[150px] shrink-0" />
+          <span className="relative h-9 border-t border-hitam" style={{ width: w }}>
+            {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+              <span key={f} className="absolute top-0 flex flex-col items-center font-mono text-[13px] text-abu" style={{ left: f * w, transform: f === 0 ? 'none' : f === 1 ? 'translateX(-100%)' : 'translateX(-50%)', alignItems: f === 0 ? 'flex-start' : f === 1 ? 'flex-end' : 'center' }}>
+                <span className="h-1 w-px bg-hitam" />
+                {new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(max * f)}
+              </span>
+            ))}
+          </span>
+          <span className="pt-1 font-mono text-[13px] text-abu">{props.xUnit}</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -190,6 +216,65 @@ export function BathyProfile(props: {
           </g>
         )
       })}
+    </svg>
+  )
+}
+
+/**
+ * Konvergensi MILP (branch-and-bound): incumbent (solusi terbaik, turun) dan batas bawah
+ * (dual bound, naik) terhadap waktu. Keduanya bertemu = optimal (gap 0 %).
+ */
+export function ConvergenceChart(props: { points: { t: number; incumbent: number | null; bound: number }[]; yUnit: string; xUnit: string; width?: number; height?: number }) {
+  const W = props.width ?? 860
+  const H = props.height ?? 240
+  const L = 64
+  const R = 16
+  const T = 24
+  const B = 40
+  const pts = props.points
+  const vals = pts.flatMap((p) => [p.bound, ...(p.incumbent === null ? [] : [p.incumbent])])
+  const y0 = Math.min(...vals)
+  const y1 = Math.max(...vals)
+  const pad = (y1 - y0) * 0.08 || 1
+  const lo = y0 - pad
+  const hi = y1 + pad
+  const tMax = Math.max(...pts.map((p) => p.t)) || 1
+  const x = (t: number) => L + (t / tMax) * (W - L - R)
+  const y = (v: number) => T + ((hi - v) / (hi - lo)) * (H - T - B)
+  const step = (key: 'incumbent' | 'bound') => {
+    const seq = pts.filter((p) => p[key] !== null)
+    return seq.map((p, i) => (i === 0 ? `M${x(p.t)},${y(p[key]!)}` : `H${x(p.t)} V${y(p[key]!)}`)).join(' ')
+  }
+  const fmt = (v: number, d = 1) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: d }).format(v)
+  const last = pts[pts.length - 1]
+  const firstInc = pts.find((p) => p.incumbent !== null)
+  const yTicks = [lo + pad, (lo + hi) / 2, hi - pad]
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label="Grafik konvergensi optimasi" className="font-mono" style={{ maxWidth: W }}>
+      <text x={0} y={T - 10} fontSize={13} fill={C.abu}>{`↑ ${props.yUnit}`}</text>
+      {yTicks.map((v) => (
+        <g key={v}>
+          <line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke={C.garis} strokeDasharray="2 3" />
+          <text x={L - 8} y={y(v) + 4} fontSize={13} fill={C.abu} textAnchor="end">{fmt(v, 2)}</text>
+        </g>
+      ))}
+      <line x1={L} x2={L} y1={T} y2={H - B} stroke={C.hitam} />
+      <line x1={L} x2={W - R} y1={H - B} y2={H - B} stroke={C.hitam} />
+      {[0, 0.25, 0.5, 0.75, 1].map((f) => (
+        <text key={f} x={x(f * tMax)} y={H - B + 18} fontSize={13} fill={C.abu} textAnchor={f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}>{fmt(f * tMax)}</text>
+      ))}
+      <text x={W - R} y={H - 4} fontSize={13} fill={C.abu} textAnchor="end">{props.xUnit} →</text>
+      <path d={step('bound')} fill="none" stroke={C.biru} strokeWidth={2} />
+      <path d={step('incumbent')} fill="none" stroke={C.hitam} strokeWidth={2} />
+      {pts.filter((p) => p.incumbent !== null).map((p, i) => (
+        <circle key={i} cx={x(p.t)} cy={y(p.incumbent!)} r={3} fill={C.hitam}>
+          <title>{`t = ${fmt(p.t)} · incumbent ${fmt(p.incumbent!, 3)} · bound ${fmt(p.bound, 3)} · gap ${fmt(((p.incumbent! - p.bound) / p.incumbent!) * 100, 2)} %`}</title>
+        </circle>
+      ))}
+      {firstInc && <text x={x(firstInc.t) + 6} y={y(firstInc.incumbent!) - 8} fontSize={13} fill={C.hitam}>solusi layak pertama</text>}
+      {last && last.incumbent !== null && (
+        <text x={x(last.t) - 4} y={y(last.incumbent) - 10} fontSize={13} fill={C.hitam} textAnchor="end">{`gap ${fmt(((last.incumbent - last.bound) / last.incumbent) * 100, 2)} %`}</text>
+      )}
     </svg>
   )
 }

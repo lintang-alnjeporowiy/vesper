@@ -19,9 +19,11 @@ export interface Settings {
   showDesc: boolean
   /** Catatan bahwa nilai turunan placeholder hanya ada untuk contoh in.damai. */
   showPlaceholderNote: boolean
+  /** Tabel asumsi & celah data di layar 1 (panduan development, bukan untuk pengguna akhir). */
+  showDevNotes: boolean
 }
 
-export const DEFAULT_SETTINGS: Settings = { showNoAuditNote: false, showAuditNotes: true, showDesc: true, showPlaceholderNote: true }
+export const DEFAULT_SETTINGS: Settings = { showNoAuditNote: false, showAuditNotes: true, showDesc: true, showPlaceholderNote: true, showDevNotes: false }
 const SETTINGS_KEY = 'tpt-planner.settings'
 
 function loadSettings(): Settings {

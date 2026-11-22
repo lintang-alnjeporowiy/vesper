@@ -1,6 +1,7 @@
 import type { Case, ExternalPort } from '../api/case'
 import { BarRows, C } from '../charts/charts'
 import { BathyEditor } from '../components/BathyEditor'
+import { TariffTable } from '../components/TariffTable'
 import { Badge, DefRow, EditNum, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
 import { portOfRoute, shortPortName } from '../lib/case'
 import { num } from '../lib/format'
@@ -88,6 +89,7 @@ export default function S03Pelabuhan() {
       <Section title="Jarak rute ke Batu Ampar" aside={<span className="text-[13px] text-abu">mil laut (NM) sekali jalan · diedit di tabel atas</span>}>
         <BarRows
           colors={[C.biru]}
+          xUnit="NM"
           rows={routeRows.map(({ f, d }) => ({
             label: `${shortPortName(portOfRoute(c, f.route_id)?.name ?? '')} · ${f.id}`,
             parts: [d],
@@ -96,6 +98,10 @@ export default function S03Pelabuhan() {
           }))}
         />
         <Note>Flow yang sedang dipilih (layar 6) ditebalkan. Semua rute pola round trip; muatan penuh satu arah.</Note>
+      </Section>
+
+      <Section title="Tarif pelabuhan per kelas" aside={<span className="text-[13px] text-abu">labuh · pandu · tunda · tambat · bongkar muat</span>}>
+        <TariffTable />
       </Section>
 
       <Split

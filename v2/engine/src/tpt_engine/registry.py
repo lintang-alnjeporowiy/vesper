@@ -156,12 +156,12 @@ INPUTS: tuple[VarDef, ...] = (
     _in("in.rule.loa_bands", "Alat per tambatan menurut LOA", "unit", "equipment_rules.loa_bands", excel="Model!CF34:CH37", sec="4.7", screens=(5, 8)),
     _in("in.rule.max_per_berth", "Batas alat per tambatan", "unit", "equipment_rules.max_per_berth", sec="4.7", screens=(5, 8)),
     # §4.8 tarif pelabuhan
-    _in("in.tariff.labuh", "Tarif labuh", "Rp | USD /GT", "tariffs.classes[tariff_class].labuh_domestic_rp_per_gt", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
-    _in("in.tariff.pandu", "Tarif pandu", "Rp | USD /GT/gerakan", "tariffs.classes[tariff_class].pandu_domestic_var_rp_per_gt", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
-    _in("in.tariff.tambat", "Tarif tambat", "Rp | USD /GT/etmal", "tariffs.classes[tariff_class].tambat_domestic_rp_per_gt_etmal", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
-    _in("in.tariff.tunda", "Tarif tunda per rentang GT", "Rp | USD", "tariffs.classes[tariff_class].tug", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
-    _in("in.tariff.bm", "Tarif B/M (OPP/OPT)", "Rp/t | Rp/TEU", "tariffs.classes[tariff_class].bm_domestic_rp_per_ton", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
-    _in("in.tariff.gt_bands", "Rentang GT tarif tunda", "GT", "tariffs.tug_gt_bands", excel="Biaya Pelabuhan", sec="4.8", screens=(1,)),
+    _in("in.tariff.labuh", "Tarif labuh", "Rp | USD /GT", "tariffs.classes[tariff_class].labuh_domestic_rp_per_gt", excel="Biaya Pelabuhan", sec="4.8", screens=(3, 7)),
+    _in("in.tariff.pandu", "Tarif pandu", "Rp | USD /GT/gerakan", "tariffs.classes[tariff_class].pandu_domestic_var_rp_per_gt", excel="Biaya Pelabuhan", sec="4.8", screens=(3, 7)),
+    _in("in.tariff.tambat", "Tarif tambat", "Rp | USD /GT/etmal", "tariffs.classes[tariff_class].tambat_domestic_rp_per_gt_etmal", excel="Biaya Pelabuhan", sec="4.8", screens=(3, 7)),
+    _in("in.tariff.tunda", "Tarif tunda per rentang GT", "Rp | USD", "tariffs.classes[tariff_class].tug", excel="Biaya Pelabuhan", sec="4.8", screens=(3, 7)),
+    _in("in.tariff.bm", "Tarif B/M (OPP/OPT)", "Rp/t | Rp/TEU", "tariffs.classes[tariff_class].bm_domestic_rp_per_ton", excel="Biaya Pelabuhan", sec="4.8", screens=(3, 7)),
+    _in("in.tariff.gt_bands", "Rentang GT tarif tunda", "GT", "tariffs.tug_gt_bands", excel="Biaya Pelabuhan", sec="4.8", screens=(3,)),
     # §4.9 penyimpanan
     _in("in.storage.dwell", "Mode dwell time", "from_consumption | fixed", "storage.dwell_time_mode", excel="Fasilitas Daratan Rata2!F134", sec="4.9", screens=(8,)),
     _in("in.storage.share", "Porsi muatan masuk penyimpanan", "–", "storage.inbound_share", sec="4.9", screens=(8,)),
@@ -294,7 +294,7 @@ DERIVED: tuple[VarDef, ...] = (
     _d("shipcost.port", "Biaya pelabuhan per tahun", "Rp/th", "flow×year", "F · biaya pelabuhan per call",
        ("shipcost.port_call", "voyage.freq"), sec="5.4", excel="Model!M325:AF325", audit=("A11",), screens=(7,)),
     _d("shipcost.total", "Shipping cost", "Rp/th", "flow×year", "voyage cost + TCH + biaya pelabuhan",
-       ("shipcost.voyage", "shipcost.tch", "shipcost.port"), sec="5.4", excel="Model!M338:AF338", screens=(6, 7)),
+       ("shipcost.voyage", "shipcost.tch", "shipcost.port"), sec="5.4", excel="Model!M338:AF338", screens=(6, 7, 9)),
     _d("shipcost.unit", "Biaya pelayaran per satuan", "Rp/t | Rp/TEU", "flow×year", "shipping cost / D (satuan flow, A7)",
        ("shipcost.total", "cargo.demand_unit"), sec="5.4", audit=("A7",), screens=(6, 7), kind="metric"),
     # §5.5 terminal KEK

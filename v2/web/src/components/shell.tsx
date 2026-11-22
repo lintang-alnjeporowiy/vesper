@@ -7,7 +7,7 @@ import { Badge, Button, InputMark, PH, StatusDot } from './ui'
 
 export const STEPS: { n: number; title: string; group: 'Input' | 'Hasil' | 'Telusur'; status?: 'lengkap' | 'asumsi' | 'placeholder' }[] = [
   { n: 0, title: 'Beranda', group: 'Input' },
-  { n: 1, title: 'Soal & asumsi', group: 'Input', status: 'lengkap' },
+  { n: 1, title: 'Soal & parameter', group: 'Input', status: 'lengkap' },
   { n: 2, title: 'Tenant & muatan', group: 'Input', status: 'lengkap' },
   { n: 3, title: 'Pelabuhan & rute', group: 'Input', status: 'asumsi' },
   { n: 4, title: 'Kapal', group: 'Input', status: 'lengkap' },
@@ -132,6 +132,7 @@ const SETTING_ROWS: { key: keyof Settings; label: string; hint: string }[] = [
   { key: 'showDesc', label: 'Keterangan variabel', hint: 'Satu-dua kalimat "variabel ini apa" di bawah nama variabel.' },
   { key: 'showAuditNotes', label: 'Catatan selisih Excel (≠ Excel · A#)', hint: 'Penjelasan temuan audit bila variabel ini berbeda dari Excel K15.' },
   { key: 'showNoAuditNote', label: 'Catatan "tidak ada temuan audit"', hint: 'Kalimat pengingat saat variabel tidak punya temuan audit langsung.' },
+  { key: 'showDevNotes', label: 'Catatan development (asumsi data)', hint: 'Tabel asumsi & celah data kasus di layar 1. Panduan pengembangan, bukan bagian tampilan akhir.' },
   { key: 'showPlaceholderNote', label: 'Catatan nilai placeholder', hint: 'Pengingat bahwa nilai turunan hanya tersedia untuk contoh in.damai · AETOS · tahun 10.' },
 ]
 

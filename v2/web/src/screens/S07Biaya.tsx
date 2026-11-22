@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { BarRows, C } from '../charts/charts'
 import { Tv } from '../components/trace'
 import { Badge, KpiStrip, Legend, Note, PH, ScreenHeader, Section, Slider, Table } from '../components/ui'
-import { startYearOf } from '../lib/case'
+import { portOfRoute, shortPortName, startYearOf } from '../lib/case'
 import { num } from '../lib/format'
-import { SHIPPING_DETAIL_DAMAI, SHIPPING_Y10 } from '../mock/placeholders'
+import { PORT_CALL_DAMAI, SHIPPING_DETAIL_DAMAI, SHIPPING_Y10 } from '../mock/placeholders'
 import { usePlanner } from '../store'
 
 export default function S07Biaya() {
@@ -16,6 +17,16 @@ export default function S07Biaya() {
   const hsd = c.params.fuels.find((f) => f.code === 'HSD')
   const total = Object.values(SHIPPING_Y10).reduce((a, p) => a + (p ? p[0] + p[1] + p[2] : 0), 0)
   const bbm = Object.values(SHIPPING_Y10).reduce((a, p) => a + (p ? p[1] : 0), 0)
+  const flowsWithData = c.flows.filter((f) => SHIPPING_Y10[f.id])
+  const [flow, setFlow] = useState('in.damai')
+  // placeholder: rincian flow lain = pola in.damai diskalakan dengan komposisi tahun 10 flow itu
+  const base = SHIPPING_Y10['in.damai']!
+  const target = SHIPPING_Y10[flow] ?? base
+  const k = target.map((v, i) => v / base[i])
+  const detail = SHIPPING_DETAIL_DAMAI.map((r) => ({ ...r, tch: Math.round(r.tch * k[0]), bbm: Math.round(r.bbm * k[1]), port: Math.round(r.port * k[2]) }))
+  const flowObj = c.flows.find((f) => f.id === flow)
+  const portName = flowObj ? shortPortName(portOfRoute(c, flowObj.route_id)?.name ?? '') : ''
+  const callTotal = PORT_CALL_DAMAI.reduce((a, r) => a + r.value, 0)
 
   return (
     <>
@@ -39,9 +50,10 @@ export default function S07Biaya() {
         ]}
       />
 
-      <Section title="Komposisi per flow · tahun 10, Rp miliar" aside={<Legend items={[{ color: C.hitam, label: 'TCH' }, { color: C.biru, label: 'BBM' }, { color: C.hijau, label: 'pelabuhan' }]} />}>
+      <Section title="Komposisi per flow · tahun 10" aside={<Legend items={[{ color: C.hitam, label: 'TCH' }, { color: C.biru, label: 'BBM' }, { color: C.hijau, label: 'pelabuhan' }]} />}>
         <BarRows
           colors={[C.hitam, C.biru, C.hijau]}
+          xUnit="Rp miliar/th"
           onSegment={(flow, j, v) => showTrace(PART_VARS[j], ctxOf(flow), `Rp ${num(v)} M`)}
           segmentTitle={(flow, j, v) => `${flow} · ${PART_LABEL[j]} Rp ${num(v)} M — klik untuk jejak`}
           rows={c.flows.map((f) => {
@@ -51,23 +63,52 @@ export default function S07Biaya() {
         />
       </Section>
 
-      <Section title="Rincian in.damai per tahun" aside={<Badge kind="audit">≠ Excel · A11</Badge>}>
+      <Section
+        title="Rincian per tahun"
+        aside={
+          <span className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-[13px] text-abu">
+              Flow (tenant · arah)
+              <select aria-label="Flow yang dirinci" value={flow} onChange={(e) => setFlow(e.target.value)} className="h-8 rounded-kontrol border border-hitam bg-white px-2 text-[13px] text-hitam">
+                {flowsWithData.map((f) => <option key={f.id} value={f.id}>{f.id}</option>)}
+              </select>
+            </label>
+            <Badge kind="audit">≠ Excel · A11</Badge>
+          </span>
+        }
+      >
         <Table
           rowKey={(r) => String(r.year)}
-          rows={SHIPPING_DETAIL_DAMAI}
+          rows={detail}
           selected={(r) => r.year === 10}
           columns={[
             { key: 'y', head: 'Tahun', width: 70, mono: true, render: (r) => r.year },
-            { key: 's', head: 'Kapal', width: 80, mono: true, render: (r) => <Tv v="voyage.n_ship" ctx={ctxOf('in.damai', r.year)} className="text-abu">{String(r.ships)}</Tv> },
-            { key: 'c', head: 'Call/th', width: 90, mono: true, render: (r) => <Tv v="voyage.freq" ctx={ctxOf('in.damai', r.year)} className="text-abu">{String(r.calls)}</Tv> },
-            { key: 't', head: 'TCH', width: 110, mono: true, render: (r) => <Tv v="shipcost.tch" ctx={ctxOf('in.damai', r.year)} className="text-abu">{`${r.tch} M`}</Tv> },
-            { key: 'b', head: 'BBM', width: 110, mono: true, render: (r) => <Tv v="shipcost.voyage" ctx={ctxOf('in.damai', r.year)} className="text-abu">{`${r.bbm} M`}</Tv> },
-            { key: 'p', head: 'Pelabuhan', width: 110, mono: true, render: (r) => <Tv v="shipcost.port" ctx={ctxOf('in.damai', r.year)} className="text-abu">{`${r.port} M`}</Tv> },
-            { key: 'tot', head: 'Total', width: 110, mono: true, render: (r) => <Tv v="shipcost.total" ctx={ctxOf('in.damai', r.year)} className="text-abu">{`${r.tch + r.bbm + r.port} M`}</Tv> },
-            { key: 'u', head: 'Rp/t', mono: true, render: (r) => <Tv v="shipcost.unit" ctx={ctxOf('in.damai', r.year)} className="text-abu">{`${r.rpPerT} rb`}</Tv> },
+            { key: 's', head: 'Kapal', width: 80, mono: true, render: (r) => <Tv v="voyage.n_ship" ctx={ctxOf(flow, r.year)} className="text-abu">{String(r.ships)}</Tv> },
+            { key: 'c', head: 'Call/th', width: 90, mono: true, render: (r) => <Tv v="voyage.freq" ctx={ctxOf(flow, r.year)} className="text-abu">{String(r.calls)}</Tv> },
+            { key: 't', head: 'TCH, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.tch" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.tch} M`}</Tv> },
+            { key: 'b', head: 'BBM, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.voyage" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.bbm} M`}</Tv> },
+            { key: 'p', head: 'Pelabuhan, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.port" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.port} M`}</Tv> },
+            { key: 'tot', head: 'Total, Rp', width: 110, mono: true, render: (r) => <Tv v="shipcost.total" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.tch + r.bbm + r.port} M`}</Tv> },
+            { key: 'u', head: 'Per satuan, Rp', mono: true, render: (r) => <Tv v="shipcost.unit" ctx={ctxOf(flow, r.year)} className="text-abu">{`${r.rpPerT} rb`}</Tv> },
           ]}
         />
-        <Note>Semua angka placeholder; klik angka atau segmen batang untuk jejaknya. Biaya pelabuhan = tarif × frekuensi aktual (A11), bukan nilai statis Excel.</Note>
+        <Note>Semua angka placeholder (M = miliar, rb = ribu; flow selain in.damai = contoh yang diskalakan); klik angka atau segmen batang untuk jejaknya. Biaya pelabuhan = biaya per call × frekuensi aktual (A11), bukan nilai statis Excel.</Note>
+      </Section>
+
+      <Section title={`Biaya pelabuhan per call · in.damai di ${shortPortName(portOfRoute(c, c.flows.find((f) => f.id === 'in.damai')?.route_id ?? '')?.name ?? '')}`} aside={<PH>placeholder · engine tahap 6</PH>}>
+        <Table
+          rowKey={(r) => r.comp}
+          rows={PORT_CALL_DAMAI}
+          columns={[
+            { key: 'c', head: 'Komponen', width: 150, render: (r) => r.comp },
+            { key: 'b', head: 'Dasar perhitungan', render: (r) => <span className="text-[13px] text-abu">{r.basis}</span> },
+            { key: 'v', head: 'Per call, Rp juta', width: 140, mono: true, render: (r) => <Tv v="shipcost.port_call" ctx={ctxOf('in.damai')} className="text-abu">{num(r.value, 1)}</Tv> },
+          ]}
+        />
+        <Note>
+          Total per call Rp {num(callTotal, 1)} juta (placeholder). Tarif per kelas pelabuhan diedit di layar 3; GT, lama tambat, dan muatan per call datang dari kapal terpilih (AETOS) dan port time.
+          Di KEK (TERSUS greenfield) tidak ada tarif pelabuhan. {flow !== 'in.damai' && `Rincian per call untuk ${flow} (${portName}) muncul setelah engine tahap 6.`}
+        </Note>
       </Section>
     </>
   )

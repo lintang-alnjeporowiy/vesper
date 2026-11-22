@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Badge, Button, Note, PH, ScreenHeader, Section, Split, Table } from '../components/ui'
-import { OPTIM_RESULT } from '../mock/placeholders'
+import { ConvergenceChart } from '../charts/charts'
+import { CONVERGENCE, OPTIM_RESULT } from '../mock/placeholders'
 
 const VARS = [
   { id: 'ship', label: 'Kapal per flow', sym: 'y[f,k]', on: true },
@@ -81,6 +82,13 @@ export default function S10Optimasi() {
           </div>
         }
       />
+
+      <Section title="Konvergensi solver" aside={<span className="flex items-center gap-3"><span className="flex items-center gap-1.5 text-[13px] text-abu"><span className="inline-block h-0.5 w-4 bg-hitam" />solusi terbaik (incumbent)</span><span className="flex items-center gap-1.5 text-[13px] text-abu"><span className="inline-block h-0.5 w-4 bg-biru" />batas bawah (dual bound)</span><PH /></span>}>
+        <ConvergenceChart points={CONVERGENCE} yUnit="NPV biaya total, Rp triliun" xUnit="waktu solver, detik" />
+        <Note>
+          Bukti optimasi: HiGHS (branch-and-bound) merekam setiap solusi layak yang lebih baik (garis hitam, turun) dan batas bawah yang bisa dicapai (garis biru, naik). Saat keduanya bertemu, gap = 0 % dan solusi terbukti optimal, bukan sekadar "tidak membaik lagi" seperti iterasi Evolver. Data direkam lewat callback solver di Tahap 9; kurva ini placeholder.
+        </Note>
+      </Section>
 
       <Section title="Hasil optimasi vs pilihan manual" aside={<span className="flex items-center gap-2"><span className="text-[13px] text-abu">NPV biaya total</span><span className="font-mono text-sm text-abu">{OPTIM_RESULT.npvDelta}</span><Badge kind="dihitung">lebih murah</Badge></span>}>
         <Table

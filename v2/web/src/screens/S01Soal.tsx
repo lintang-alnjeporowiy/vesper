@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Badge, DefRow, EditNum, InputMark, Label, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
+import { Badge, DefRow, EditNum, InputMark, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
 import { useField } from '../lib/useField'
 import { usePlanner } from '../store'
 
@@ -14,8 +14,8 @@ function Param(props: { path: (string | number)[]; label: string; unit?: string;
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col pb-5">
-      <span className="pb-1.5"><Label>{title}</Label></span>
+    <div className="flex flex-col pb-6">
+      <span className="mb-1 border-b border-hitam pb-1.5 text-sm font-semibold">{title}</span>
       {children}
     </div>
   )
@@ -32,10 +32,12 @@ export default function S01Soal() {
   const dirty = usePlanner((s) => s.dirty)
   const fuelIdx = (code: string) => c.params.fuels.findIndex((f) => f.code === code)
   const nDirty = Object.keys(dirty).length
+  const showDev = usePlanner((s) => s.settings.showDevNotes)
+  const setDrawerTab = usePlanner((s) => s.setDrawerTab)
 
   return (
     <>
-      <ScreenHeader step={1} kind="input" title="Soal & asumsi" lead="Identitas kawasan, horizon perencanaan, dan parameter global yang dipakai semua perhitungan." badge={<Badge kind="input">input K15</Badge>} />
+      <ScreenHeader step={1} kind="input" title="Soal & parameter" lead="Identitas kawasan, horizon perencanaan, dan parameter global yang dipakai semua perhitungan." badge={<Badge kind="input">input K15</Badge>} />
 
       <Split
         left={
@@ -113,7 +115,14 @@ export default function S01Soal() {
         </div>
       </Section>
 
-      <Section title="Asumsi dan celah data" aside={<span className="font-mono text-[13px] text-abu">{c.assumptions?.length ?? 0} tercatat</span>}>
+      {!showDev && (
+        <Note>
+          {c.assumptions?.length ?? 0} catatan asumsi & celah data kasus disembunyikan (panduan development). Tampilkan lewat{' '}
+          <button type="button" onClick={() => setDrawerTab('pengaturan')} className="cursor-pointer border-0 bg-transparent p-0 text-[13px] text-biru underline decoration-dotted">Pengaturan</button>.
+        </Note>
+      )}
+      {showDev && (
+      <Section title="Asumsi dan celah data" aside={<span className="flex items-center gap-2"><Badge kind="audit">development</Badge><span className="font-mono text-[13px] text-abu">{c.assumptions?.length ?? 0} tercatat</span></span>}>
         <Table
           rowKey={(a) => a.id}
           rows={c.assumptions ?? []}
@@ -123,7 +132,9 @@ export default function S01Soal() {
             { key: 'x', head: 'Keterangan', render: (a) => <span className="text-[13px] text-abu">{a.text}</span> },
           ]}
         />
+        <Note>Catatan asal-usul data untuk pengembangan (dari Excel / dikonfirmasi / asumsi). Bukan saklar model: yang mengubah perhitungan tetap parameter di layar masing-masing.</Note>
       </Section>
+      )}
     </>
   )
 }
