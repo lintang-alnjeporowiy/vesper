@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "v2/web", "run", "dev", "--", "--port", "5173", "--strictPort"],
       "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "--project", "v2/engine", "uvicorn", "tpt_api.app:app", "--host", "127.0.0.1", "--port", "8000", "--reload", "--reload-dir", "v2/engine/src"],
+      "port": 8000
     }
   ]
 }

@@ -2,7 +2,7 @@ import { C, Tornado } from '../charts/charts'
 import { Badge, Button, Legend, Note, PH, ScreenHeader, Section, Split } from '../components/ui'
 import { SCENARIOS, TORNADO } from '../mock/placeholders'
 
-const EXPORT_ITEMS = ['Rangkuman (format sheet Rangkuman)', 'Armada per flow per tahun', 'Biaya pelayaran dan terminal', 'Jadwal investasi', 'Daftar asumsi dan selisih vs Excel (A1–A11)']
+const EXPORT_ITEMS = ['Rangkuman (format sheet Rangkuman)', 'Armada per flow per tahun', 'Biaya pelayaran dan terminal', 'Jadwal investasi', 'Daftar asumsi dan selisih vs Excel (A1–A12)']
 
 export default function S11Skenario() {
   return (
@@ -54,7 +54,7 @@ export default function S11Skenario() {
             </tbody>
           </table>
         </div>
-        <Note>Semua nilai placeholder. Baseline dihitung ulang dengan engine terkoreksi, jadi akan berbeda dari angka di workbook (A1–A11).</Note>
+        <Note>Semua nilai placeholder. Baseline dihitung ulang dengan engine terkoreksi, jadi akan berbeda dari angka di workbook (A1–A12).</Note>
       </Section>
 
       <Section title="Sensitivitas NPV biaya total" aside={<Legend items={[{ color: C.hijau, label: 'turun' }, { color: C.merah, label: 'naik' }]} />}>

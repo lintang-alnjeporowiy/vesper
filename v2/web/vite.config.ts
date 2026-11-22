@@ -42,8 +42,15 @@ function reviewNotes(): Plugin {
   }
 }
 
-// Tahap 2b: UI membaca ../cases/*.json langsung sebagai mock (belum ada backend).
+// Tahap 4: /api diteruskan ke FastAPI (uvicorn :8000, konfigurasi "api" di .claude/launch.json).
+// Kasus awal tetap dibundel dari ../cases/*.json agar UI terbuka walau API mati (angka hasil → placeholder).
+const API_TARGET = process.env.TPT_API_URL ?? 'http://127.0.0.1:8000'
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), reviewNotes()],
-  server: { fs: { allow: ['..'] }, watch: { ignored: ['**/review/notes.json'] } },
+  server: {
+    fs: { allow: ['..'] },
+    watch: { ignored: ['**/review/notes.json'] },
+    proxy: { '/api': { target: API_TARGET, changeOrigin: false } },
+  },
 })

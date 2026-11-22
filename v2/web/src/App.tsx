@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { Sidebar, TopBar, TraceDrawer } from './components/shell'
+import { useEngineSync } from './lib/engine'
 import { useReviewHydrate } from './review'
 import { MAP_SCREEN, usePlanner } from './store'
 import S00Beranda from './screens/S00Beranda'
@@ -24,6 +25,7 @@ const SCREENS: ComponentType[] = [
 export default function App() {
   const screen = usePlanner((s) => s.screen)
   useReviewHydrate()
+  useEngineSync()
   const Screen = SCREENS[screen]
   const hideSidebar = usePlanner((s) => s.mapWide) && screen === MAP_SCREEN
   return (

@@ -20,6 +20,10 @@ try {
     if ($Install -or -not (Test-Path 'web\node_modules')) {
         Invoke-Step 'web: npm ci' { npm --prefix web ci }
     }
+    if ($Install) {
+        # openapi-typescript (gen:api) dipasang terpisah: butuh TypeScript 5, web memakai TypeScript 7.
+        Invoke-Step 'web: npm ci (gen-api)' { npm --prefix web/tools/gen-api ci }
+    }
     Invoke-Step 'engine: ruff' { uv run --project engine ruff check --config engine/pyproject.toml engine tools }
     Invoke-Step 'engine: pytest' { uv run --project engine pytest engine/tests -q }
     Invoke-Step 'web: tsc + oxlint + build' { npm --prefix web run check }

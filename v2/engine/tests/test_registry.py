@@ -160,3 +160,19 @@ def test_web_json_in_sync():
     assert WEB_JSON.read_text(encoding="utf-8") == R.to_json(), (
         "registry.json basi — jalankan: uv run --project engine python tools/dump_registry.py"
     )
+
+
+def test_impl_points_to_engine_functions():
+    """Tahap 4: variabel yang sudah dihitung engine menunjuk fungsi `calc` yang ada; §5.1 lengkap."""
+    import importlib
+
+    from tpt_engine.calc.run import COMPUTES
+
+    for v in R.REGISTRY:
+        if v.impl is None:
+            continue
+        mod, fn = v.impl.split(":")
+        assert callable(getattr(importlib.import_module(f"tpt_engine.calc.{mod}"), fn)), v.id
+    with_impl = {v.id for v in R.REGISTRY if v.impl}
+    assert {v.id for v in R.REGISTRY if v.section == "5.1" and v.kind == "derived"} <= with_impl
+    assert {vid for ids in COMPUTES.values() for vid in ids} == with_impl

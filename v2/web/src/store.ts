@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Case } from './api/case'
+import type { CalcResult, Case } from './api/case'
 import { K15 } from './mock/case'
 import type { TraceCtx, TraceRef } from './lib/registry'
 
@@ -8,6 +8,14 @@ export const MAP_SCREEN = 12
 
 type Path = (string | number)[]
 export type DrawerTab = 'jejak' | 'review' | 'pengaturan'
+
+/** Status hasil engine (Tahap 4): `offline` = API tidak terjangkau, `error` = API menolak kasus. */
+export interface CalcState {
+  status: 'idle' | 'loading' | 'ok' | 'offline' | 'error'
+  result?: CalcResult
+  error?: string
+  at?: number
+}
 
 /** Pengaturan tampilan per pengguna (disimpan di localStorage browser ini). */
 export interface Settings {
@@ -67,6 +75,12 @@ interface PlannerState {
   /** Tab aktif di laci kanan. */
   drawerTab: DrawerTab
   settings: Settings
+  /** Hasil /calculate terakhir untuk kasus aktif. */
+  calc: CalcState
+  setCalc: (patch: Partial<CalcState>) => void
+  /** Dinaikkan untuk memaksa /calculate ulang (Hitung ulang, coba lagi saat API mati). */
+  calcNonce: number
+  retryCalc: () => void
   setScreen: (n: number) => void
   setYear: (y: number) => void
   setFlow: (id: string) => void
@@ -106,6 +120,10 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   traceHistory: [],
   drawerTab: 'jejak',
   settings: loadSettings(),
+  calc: { status: 'idle' },
+  calcNonce: 0,
+  retryCalc: () => set({ calcNonce: get().calcNonce + 1 }),
+  setCalc: (patch) => set({ calc: { ...get().calc, ...patch } }),
   setScreen: (n) => {
     window.location.hash = `#/${n}`
     set({ screen: n })
@@ -123,8 +141,8 @@ export const usePlanner = create<PlannerState>((set, get) => ({
     else next[key] = { label, from, to: value }
     set({ caseData: setAt(caseData, path, value), dirty: next })
   },
-  // Engine belum tersambung (Tahap 4+): hitung ulang hanya menandai input sebagai baseline baru.
-  recalc: () => set({ baseline: get().caseData, dirty: {} }),
+  // Engine (modul demand) menghitung otomatis lewat useEngineSync; hitung ulang menandai input sebagai baseline baru.
+  recalc: () => set({ baseline: get().caseData, dirty: {}, calcNonce: get().calcNonce + 1 }),
   showTrace: (id, ctx, value, opts) => {
     const { trace, traceHistory } = get()
     const same = trace.id === id && JSON.stringify(trace.ctx) === JSON.stringify(ctx)

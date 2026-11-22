@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Case } from '../api/case'
 import { Badge, Button, Note, ScreenHeader, Section, Table } from '../components/ui'
+import { fetchCases } from '../api/client'
 import { CASES, type CaseListItem } from '../mock/case'
 import { usePlanner } from '../store'
 
@@ -18,6 +19,21 @@ export default function S00Beranda() {
   const setScreen = usePlanner((s) => s.setScreen)
   const fileRef = useRef<HTMLInputElement>(null)
   const [importMsg, setImportMsg] = useState<string | null>(null)
+  // Daftar kasus dari API /cases (file di v2/cases); kasus yang belum diekstrak tetap dari daftar mock.
+  const [apiCases, setApiCases] = useState<CaseListItem[] | null>(null)
+  useEffect(() => {
+    let alive = true
+    fetchCases()
+      .then((items) => {
+        if (!alive) return
+        setApiCases(items.map((i) => ({ id: i.id, name: i.name, location: i.location ?? '–', status: i.status === 'siap' ? 'siap' : 'belum diekstrak', data: CASES.find((m) => m.id === i.id)?.data })))
+      })
+      .catch(() => alive && setApiCases(null))
+    return () => {
+      alive = false
+    }
+  }, [])
+  const caseRows = apiCases ? [...apiCases, ...CASES.filter((m) => !apiCases.some((a) => a.id === m.id))] : CASES
 
   const onImport = async (file: File) => {
     try {
@@ -81,7 +97,7 @@ export default function S00Beranda() {
       <Section title="Semua kasus">
         <Table<CaseListItem>
           rowKey={(r) => r.id}
-          rows={CASES}
+          rows={caseRows}
           selected={(r) => r.id === caseData.meta.id}
           columns={[
             { key: 'n', head: 'Kasus', width: 200, render: (r) => r.name },
@@ -91,7 +107,7 @@ export default function S00Beranda() {
             { key: 'd', head: 'Diekstrak', mono: true, render: (r) => <span className="text-[13px] text-abu">{r.data?.meta.extracted_at ?? '–'}</span> },
           ]}
         />
-        <Note>K21 dan K24 menjadi uji lanjutan di tahap 12. K7 (hub-spoke) di luar cakupan.</Note>
+        <Note>{apiCases ? 'Kasus berstatus siap dibaca dari API /cases (folder v2/cases).' : 'API tidak aktif: daftar kasus dari mock.'} K21 dan K24 menjadi uji lanjutan di tahap 12. K7 (hub-spoke) di luar cakupan.</Note>
       </Section>
 
       <div className="flex w-full gap-8">

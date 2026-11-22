@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Equipment1 } from '../api/case'
+import type { Equipment } from '../api/case'
 import { Badge, Button, EditNum, EditText, Note, PH, ScreenHeader, Section, Split, Table } from '../components/ui'
 import { num } from '../lib/format'
 import { useField } from '../lib/useField'
@@ -14,10 +14,10 @@ function Cell(props: { path: (string | number)[]; label: string; digits?: number
 
 type Prod = Record<string, { unload: number; load: number; unit: string } | undefined>
 
-const isCustom = (e: Equipment1) => e.id.startsWith('eq.baru_')
+const isCustom = (e: Equipment) => e.id.startsWith('eq.baru_')
 
 /** Kandidat alat baru dengan nilai awal yang wajar; semua angkanya bisa diedit. */
-function newEquipment(kind: 'HMC' | 'MLA', n: number): Equipment1 {
+function newEquipment(kind: 'HMC' | 'MLA', n: number): Equipment {
   const prod = (unload: number, unit: 't/h' | 'box/h') => ({ refs: {}, unload, load: unload, unit })
   return {
     refs: {},
@@ -26,9 +26,9 @@ function newEquipment(kind: 'HMC' | 'MLA', n: number): Equipment1 {
     kind,
     terminal_id: kind === 'HMC' ? 'MP' : 'CC',
     price_usd: kind === 'HMC' ? 100000 : 50000,
-    productivity: (kind === 'HMC' ? { GC: prod(800, 't/h'), CK: prod(800, 't/h'), PK: prod(30, 'box/h') } : { CC: prod(1000, 't/h') }) as Equipment1['productivity'],
+    productivity: (kind === 'HMC' ? { GC: prod(800, 't/h'), CK: prod(800, 't/h'), PK: prod(30, 'box/h') } : { CC: prod(1000, 't/h') }) as Equipment['productivity'],
     in_reference_model: false,
-  } as Equipment1
+  } as Equipment
 }
 
 function Rule(props: { path: (string | number)[]; label: string }) {
@@ -43,17 +43,17 @@ export default function S05Alat() {
   const hmc = c.equipment.filter((e) => e.kind === 'HMC')
   const mla = c.equipment.filter((e) => e.kind === 'MLA')
   const [alt, setAlt] = useState('eq.liebherr_lhm_420')
-  const idx = (e: Equipment1) => c.equipment.indexOf(e)
-  const prod = (e: Equipment1) => e.productivity as unknown as Prod
-  const status = (e: Equipment1) =>
+  const idx = (e: Equipment) => c.equipment.indexOf(e)
+  const prod = (e: Equipment) => e.productivity as unknown as Prod
+  const status = (e: Equipment) =>
     Object.values(chosen).includes(e.id) ? <span className="text-[13px] font-medium">terpilih</span> : assumed.has(e.id.replace('eq.liebherr_', '').replace('_', '')) || e.id.endsWith('800') ? <Badge kind="asumsi">asumsi</Badge> : <span className="text-[13px] text-abu">kandidat</span>
   const setInput = usePlanner((s) => s.setInput)
   const addEq = (kind: 'HMC' | 'MLA') => {
     const n = c.equipment.filter((e) => e.id.startsWith(`eq.baru_${kind.toLowerCase()}_`)).length + 1
     setInput(['equipment'], [...c.equipment, newEquipment(kind, n)], `Tambah alat ${kind}`)
   }
-  const removeEq = (e: Equipment1) => setInput(['equipment'], c.equipment.filter((x) => x.id !== e.id), `Hapus ${e.name}`)
-  const nameCell = (e: Equipment1) =>
+  const removeEq = (e: Equipment) => setInput(['equipment'], c.equipment.filter((x) => x.id !== e.id), `Hapus ${e.name}`)
+  const nameCell = (e: Equipment) =>
     isCustom(e) ? (
       <span className="inline-flex items-center gap-1">
         <EditText value={e.name} width="16ch" label={`Nama ${e.name}`} onChange={(v) => v && setInput(['equipment', idx(e), 'name'], v, `Nama alat ${e.name}`)} />
@@ -62,7 +62,7 @@ export default function S05Alat() {
     ) : (
       e.name.replace("''", '″')
     )
-  const prodCell = (e: Equipment1, form: string) =>
+  const prodCell = (e: Equipment, form: string) =>
     prod(e)[form] ? <Cell path={['equipment', idx(e), 'productivity', form, 'unload']} label={`Produktivitas ${form} ${e.name}`} /> : <span className="font-mono text-abu">–</span>
 
   return (
@@ -70,7 +70,7 @@ export default function S05Alat() {
       <ScreenHeader step={5} kind="input" title="Alat bongkar muat" lead="Produktivitas alat menentukan port time di KEK, lalu RTD, berth-days, dan jumlah tambatan." badge={<Badge kind="input">input K15 · {c.equipment.length} alat</Badge>} />
 
       <Section title="Harbour mobile crane · dermaga MP" aside={<span className="flex items-center gap-3"><span className="font-mono text-[13px] text-abu">{hmc.length} alat</span><Button size="sm" onClick={() => addEq('HMC')}>Tambah alat</Button></span>}>
-        <Table<Equipment1>
+        <Table<Equipment>
           rowKey={(e) => e.id}
           rows={hmc}
           selected={(e) => Object.values(chosen).includes(e.id)}
@@ -87,7 +87,7 @@ export default function S05Alat() {
       </Section>
 
       <Section title="Marine loading arm · jetty CC" aside={<span className="flex items-center gap-3"><span className="font-mono text-[13px] text-abu">{mla.length} alat</span><Button size="sm" onClick={() => addEq('MLA')}>Tambah alat</Button></span>}>
-        <Table<Equipment1>
+        <Table<Equipment>
           rowKey={(e) => e.id}
           rows={mla}
           selected={(e) => Object.values(chosen).includes(e.id)}

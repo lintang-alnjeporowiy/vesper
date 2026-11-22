@@ -1,0 +1,9 @@
+{
+  "name": "gen-api",
+  "private": true,
+  "description": "openapi-typescript terpisah dari web/ karena web memakai TypeScript 7, sedangkan openapi-typescript butuh TypeScript 5 (peer).",
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

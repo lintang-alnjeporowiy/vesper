@@ -8,7 +8,9 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.165.0",
     "pydantic>=2.14.4",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [build-system]
@@ -17,6 +19,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "openpyxl>=3.1.5",
     "pytest>=9.2.0",
     "ruff>=0.17.6",
@@ -33,9 +36,14 @@ ignore = ["E501", "B905"]  # baris panjang diserahkan ke formatter; zip strict d
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# starlette menyarankan httpx2 untuk TestClient; httpx 0.28 tetap berfungsi
+filterwarnings = ["ignore:Using .httpx. with .starlette.testclient. is deprecated"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tools/*.py" = ["E702", "E741", "B007"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["tpt_engine"]
+known-first-party = ["tpt_engine", "tpt_api"]
+
+[tool.uv.build-backend]
+module-name = ["tpt_engine", "tpt_api"]

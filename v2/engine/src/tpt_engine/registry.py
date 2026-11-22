@@ -2,7 +2,8 @@
 
 Satu entri = satu variabel: input kasus (per atribut, menunjuk path di `Case`), variabel keputusan,
 turunan (satu per baris rumus SPEC §5), metrik laporan, dan objektif. Registry ini HANYA definisi:
-rumus ditulis sebagai teks untuk ditampilkan; implementasi hitung ada di `calc/` (Tahap 4+).
+rumus ditulis sebagai teks untuk ditampilkan; implementasi hitung ada di `calc/` (Tahap 4+) dan ditunjuk oleh
+`impl` ("modul:fungsi" di bawah `tpt_engine.calc`, lihat `IMPL`).
 
 Konvensi
 - id: `<modul>.<nama>`; input `in.<entitas>.<atribut>`, keputusan `dv.*`, objektif `obj.*`.
@@ -45,6 +46,7 @@ class VarDef:
     note: str | None = None
     symbol: str | None = None  # notasi singkat di rumus, mis. "RTD", "F_req"
     desc: str = ""  # keterangan singkat & gamblang (registry_desc.py)
+    impl: str | None = None  # fungsi engine yang menghitungnya, mis. "demand:demand_base" (IMPL)
 
 
 def _in(id: str, label: str, unit: str, path: str, *, excel: str | None = None, scope: str = "global",
@@ -196,9 +198,9 @@ DERIVED: tuple[VarDef, ...] = (
     _d("demand.base", "Demand flow independen", "t | TEU per th", "flow×year",
        "D[t] = 0 bila t < t₀; V₀ di t₀; min(Dmax, D[t−1]·(1+g))",
        ("in.flow.start_year", "in.flow.initial", "in.flow.maximum", "in.flow.growth", "in.horizon.years"),
-       sec="5.1", excel="Model!N3:AG3", audit=("A4",), screens=(2, 6), symbol="D[f,t]"),
+       sec="5.1", excel="Model!N3:AG3", audit=("A4", "A12"), screens=(2, 6), symbol="D[f,t]"),
     _d("demand.ratio", "Demand flow rasio (outbound)", "t | TEU per th", "flow×year", "D_out[t] = r · D_in[t] (aturan volume §4.2)",
-       ("demand.base", "in.flow.ratio"), sec="5.1", excel="Proyeksi Muatan!C12", screens=(2,)),
+       ("demand.base", "in.flow.ratio"), sec="5.1", excel="Proyeksi Muatan!G12:Z16", audit=("A4",), screens=(2,)),
     _d("cargo.netmax", "Muatan bersih maks per TEU", "t/TEU", "flow×ship", "NetMax = min(payload kontainer, α·DWT_k / TEU_k − tare)",
        ("in.container.max_net", "in.param.teu_weight_ratio", "in.ship.dwt", "vessel.teu_cap", "in.container.tare"),
        sec="5.1", excel="Muatan", audit=("A8",), screens=(2,), symbol="NetMax"),
@@ -210,7 +212,7 @@ DERIVED: tuple[VarDef, ...] = (
     _d("cargo.demand_unit", "Demand dalam satuan kapal", "t | TEU per th", "flow×year",
        "D_TEU = ⌈D_ton / tonPerTEU⌉ untuk muatan PK bersatuan ton; selain itu D",
        ("demand.base", "demand.ratio", "cargo.ton_per_teu", "in.flow.unit", "in.flow.cargo_form", "dv.ship"),
-       sec="5.1", excel="Proyeksi Muatan!G20:Z24", screens=(2, 6), symbol="D"),
+       sec="5.1", excel="Proyeksi Muatan!G20:Z24", audit=("A12",), screens=(2, 6), symbol="D"),
     # §5.2 kandidat & kelayakan kapal
     _d("vessel.teu_cap", "Kapasitas TEU efektif", "TEU", "ship", "TEU_k isian; bila kosong ⌊rasio · DWT / berat nominal per TEU⌋",
        ("in.ship.teu", "in.ship.dwt", "in.param.teu_capacity_ratio", "in.param.teu_nominal_weight"), sec="5.2", screens=(4,)),
@@ -381,7 +383,19 @@ DERIVED: tuple[VarDef, ...] = (
        note="K15/Evolver meminimumkan anuitas (Model!K407); v2 memakai NPV total cost sebagai objektif default"),
 )
 
-REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, "")) for v in INPUTS + DECISIONS + DERIVED)
+# Variabel → fungsi engine yang menghitungnya ("modul:fungsi" di bawah tpt_engine.calc). Dites: dapat diimpor.
+IMPL: dict[str, str] = {
+    "demand.base": "demand:demand_base",
+    "demand.ratio": "demand:demand_ratio",
+    "vessel.teu_cap": "vessel:teu_capacity",
+    "cargo.netmax": "cargo:net_max",
+    "cargo.box_per_teu": "cargo:box_per_teu",
+    "cargo.ton_per_teu": "cargo:ton_per_teu",
+    "cargo.demand_unit": "cargo:demand_unit",
+}
+
+REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, ""), impl=IMPL.get(v.id))
+                                     for v in INPUTS + DECISIONS + DERIVED)
 
 # Interaksi wajib SPEC §7: titik awal penelusuran di peta variabel.
 INTERACTIONS: tuple[tuple[str, str, str], ...] = (
@@ -444,6 +458,8 @@ AUDIT: dict[str, str] = {
     "A9": "Excel: BBM dari F_max · N_ship voyage. v2: dari frekuensi aktual F.",
     "A10": "Excel: alat per tambatan selalu 4 (XLOOKUP nama alat). v2: dari tabel rentang LOA.",
     "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa.",
+    "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu "
+           "dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15.",
 }
 AUDIT_IDS = tuple(AUDIT)
 
@@ -555,5 +571,5 @@ def to_json() -> str:
 
 __all__ = [
     "VarDef", "REGISTRY", "INPUTS", "DECISIONS", "DERIVED", "INTERACTIONS", "GRAPH_LANES", "INPUT_GROUPS", "KINDS",
-    "AUDIT", "AUDIT_IDS", "by_id", "dependents", "upstream", "downstream", "topo_order", "lane_of", "depths", "to_json", "to_json_dict",
+    "AUDIT", "AUDIT_IDS", "IMPL", "by_id", "dependents", "upstream", "downstream", "topo_order", "lane_of", "depths", "to_json", "to_json_dict",
 ]

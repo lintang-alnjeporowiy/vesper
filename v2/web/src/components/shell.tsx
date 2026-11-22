@@ -1,6 +1,7 @@
 import { MAP_SCREEN, usePlanner, type Settings } from '../store'
 import { AUDIT, KIND_LABEL, VAR, contextLabel, sameCtx, downstream, getVar, inputValue, upstream, type VarDef } from '../lib/registry'
 import { PH_SAMPLE, PH_SAMPLE_CTX } from '../mock/placeholders'
+import { computedText, isComputed } from '../lib/engine'
 import { useReview } from '../review'
 import { ReviewPanel, VarNotes } from './ReviewPanel'
 import { Badge, Button, InputMark, PH, StatusDot } from './ui'
@@ -72,7 +73,7 @@ export function Sidebar() {
 }
 
 export function TopBar() {
-  const { caseData, year, setYear, dirty, recalc, setScreen, toggleTrace, traceOpen } = usePlanner()
+  const { caseData, year, setYear, dirty, recalc, setScreen, toggleTrace, traceOpen, calc } = usePlanner()
   const n = Object.keys(dirty).length
   const plan = caseData.plans?.[0]
   return (
@@ -103,9 +104,19 @@ export function TopBar() {
           {n} input berubah · perlu hitung ulang
         </span>
       ) : (
-        <span className="flex items-center gap-2 text-[13px] text-abu">engine belum tersambung · semua hasil placeholder</span>
+        <span className="flex items-center gap-2 text-[13px] text-abu" title={calc.error}>
+          {calc.status === 'offline' ? (
+            <><span className="h-2 w-2 bg-merah" />API tidak aktif · semua hasil placeholder</>
+          ) : calc.status === 'error' ? (
+            <><span className="h-2 w-2 bg-merah" />engine menolak kasus · lihat laci</>
+          ) : calc.result ? (
+            <><span className="h-2 w-2 bg-hijau" />{calc.status === 'loading' ? 'menghitung…' : 'demand dihitung engine'} · hasil lain placeholder</>
+          ) : (
+            'menghubungi engine…'
+          )}
+        </span>
       )}
-      <Button variant="utama" onClick={recalc} disabled={n === 0}>Hitung ulang</Button>
+      <Button variant="utama" onClick={recalc} disabled={n === 0 && calc.status !== 'offline'}>Hitung ulang</Button>
       <Button onClick={() => setScreen(10)}>Jalankan optimasi</Button>
       <Button variant="tipis" onClick={toggleTrace}>{traceOpen ? 'Tutup laci' : 'ƒx Jejak'}</Button>
     </header>
@@ -159,7 +170,7 @@ function SettingsPanel() {
 }
 
 export function TraceDrawer() {
-  const { trace, traceOpen, toggleTrace, showTrace, traceBack, traceHistory, caseData, shipByFlow, setScreen, screen, drawerTab, setDrawerTab, settings } = usePlanner()
+  const { trace, traceOpen, toggleTrace, showTrace, traceBack, traceHistory, caseData, shipByFlow, setScreen, screen, drawerTab, setDrawerTab, settings, calc, year } = usePlanner()
   if (!traceOpen) return null
   const tabs = (
     <div className="flex items-center gap-2">
@@ -202,8 +213,10 @@ export function TraceDrawer() {
   const v = VAR[trace.id] ?? getVar('voyage.rtd')
   const ctx = trace.ctx ?? {}
   const shipCtx = { ...ctx, ship: ctx.ship ?? (ctx.flow ? shipByFlow[ctx.flow] : undefined) }
-  const value = v.kind === 'input' ? (inputValue(caseData, v, shipCtx, shipByFlow) ?? trace.value) : (trace.value ?? phValue(v.id, shipCtx))
-  const depValue = (d: VarDef) => (d.kind === 'input' ? inputValue(caseData, d, shipCtx, shipByFlow) : phValue(d.id, shipCtx)) ?? '–'
+  const live = v.kind === 'input' ? undefined : computedText(caseData, calc, v.id, shipCtx, year)
+  const value = v.kind === 'input' ? (inputValue(caseData, v, shipCtx, shipByFlow) ?? trace.value) : (live ?? (isComputed(calc, v.id) ? trace.value : (trace.value ?? phValue(v.id, shipCtx))))
+  const depLive = (d: VarDef) => computedText(caseData, calc, d.id, shipCtx, year)
+  const depValue = (d: VarDef) => (d.kind === 'input' ? inputValue(caseData, d, shipCtx, shipByFlow) : (depLive(d) ?? phValue(d.id, shipCtx))) ?? '–'
   return (
     <aside aria-label="Jejak variabel" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
       {tabs}
@@ -211,11 +224,11 @@ export function TraceDrawer() {
         <span className="text-[13px] text-abu">{contextLabel(caseData, v, ctx, shipByFlow)}</span>
         <span className="text-base">{v.label}</span>
         <span className="flex items-end gap-2">
-          <span className={`font-mono text-[28px] leading-none ${v.kind === 'input' ? 'text-hitam' : 'text-abu'}`}>{value ?? '–'}</span>
+          <span className={`font-mono text-[28px] leading-none ${v.kind === 'input' || live ? 'text-hitam' : 'text-abu'}`}>{value ?? '–'}</span>
           {value === undefined && <span className="text-sm text-abu">{v.unit}</span>}
         </span>
         <span className="flex flex-wrap items-center gap-1.5">
-          <KindBadge v={v} />
+          {isComputed(calc, v.id) ? <Badge kind="dihitung">dihitung</Badge> : <KindBadge v={v} />}
           {v.symbol && <span className="font-mono text-[13px]">{v.symbol}</span>}
           <span className="font-mono text-[13px] text-abu">{v.id}</span>
         </span>
@@ -260,7 +273,7 @@ export function TraceDrawer() {
               >
                 <span className="grow text-sm">{d.label}</span>
                 {d.kind === 'input' && <InputMark />}
-                <span className={`max-w-[120px] truncate font-mono text-[13px] ${d.kind === 'input' ? 'text-hitam' : 'text-abu'}`}>{depValue(d)}</span>
+                <span className={`max-w-[120px] truncate font-mono text-[13px] ${d.kind === 'input' || depLive(d) ? 'text-hitam' : 'text-abu'}`}>{depValue(d)}</span>
               </button>
             )
           })}
@@ -283,7 +296,7 @@ export function TraceDrawer() {
       </div>
       {v.note && <p className="m-0 text-[13px] text-abu">{v.note}</p>}
       <VarNotes varId={v.id} />
-      {settings.showPlaceholderNote && v.kind !== 'input' && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
+      {settings.showPlaceholderNote && v.kind !== 'input' && !isComputed(calc, v.id) && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
       <span className="grow" />
       {(v.audit?.length ? settings.showAuditNotes : settings.showNoAuditNote) && (
         <div className="flex gap-2 pt-3">

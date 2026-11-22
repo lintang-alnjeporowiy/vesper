@@ -9,8 +9,8 @@
     "lint": "oxlint",
     "typecheck": "tsc -b",
     "check": "tsc -b && oxlint && vite build",
-    "gen:types": "json2ts -i ../cases/case.schema.json -o src/api/case.ts --no-additionalProperties",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:api": "node tools/gen-api/node_modules/openapi-typescript/bin/cli.js src/api/openapi.json -o src/api/openapi.ts"
   },
   "dependencies": {
     "react": "^19.3.1",
@@ -23,7 +23,6 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
-    "json-schema-to-typescript": "^16.0.0",
     "oxlint": "^1.90.0",
     "tailwindcss": "^4.3.5",
     "typescript": "~7.0.2",

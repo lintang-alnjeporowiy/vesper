@@ -41,7 +41,8 @@
     "A8": "Excel: payload 85 % DWT di satu tempat, 90 % di tempat lain. v2: dua parameter α.",
     "A9": "Excel: BBM dari F_max · N_ship voyage. v2: dari frekuensi aktual F.",
     "A10": "Excel: alat per tambatan selalu 4 (XLOOKUP nama alat). v2: dari tabel rentang LOA.",
-    "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa."
+    "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa.",
+    "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15."
   },
   "interactions": [
     {
@@ -2567,7 +2568,8 @@
       "excel_ref": "Model!N3:AG3",
       "section": "5.1",
       "audit": [
-        "A4"
+        "A4",
+        "A12"
       ],
       "screens": [
         2,
@@ -2575,6 +2577,7 @@
       ],
       "symbol": "D[f,t]",
       "desc": "Volume muatan per tahun untuk flow yang berdiri sendiri: mulai di tahun mulai, tumbuh tiap tahun, dibatasi volume maksimum.",
+      "impl": "demand:demand_base",
       "dependents": [
         "demand.ratio",
         "cargo.demand_unit"
@@ -2594,12 +2597,16 @@
         "demand.base",
         "in.flow.ratio"
       ],
-      "excel_ref": "Proyeksi Muatan!C12",
+      "excel_ref": "Proyeksi Muatan!G12:Z16",
       "section": "5.1",
+      "audit": [
+        "A4"
+      ],
       "screens": [
         2
       ],
       "desc": "Volume muatan per tahun untuk flow outbound yang mengikuti inbound tenant yang sama dengan rasio konversi.",
+      "impl": "demand:demand_ratio",
       "dependents": [
         "cargo.demand_unit"
       ],
@@ -2631,6 +2638,7 @@
       ],
       "symbol": "NetMax",
       "desc": "Berat muatan maksimum per TEU yang masih aman, dibatasi kontainer maupun kemampuan angkut kapal.",
+      "impl": "cargo:net_max",
       "dependents": [
         "cargo.box_per_teu",
         "cargo.ton_per_teu"
@@ -2658,6 +2666,7 @@
       ],
       "symbol": "nBox",
       "desc": "Berapa kemasan muat dalam satu kontainer 20 kaki, dibatasi ruang dan berat.",
+      "impl": "cargo:box_per_teu",
       "dependents": [
         "cargo.ton_per_teu"
       ],
@@ -2686,6 +2695,7 @@
       ],
       "symbol": "tonPerTEU",
       "desc": "Berat muatan rata-rata per TEU; jembatan konversi ton ↔ TEU untuk muatan petikemas.",
+      "impl": "cargo:ton_per_teu",
       "dependents": [
         "cargo.demand_unit",
         "vessel.payload"
@@ -2711,12 +2721,16 @@
       ],
       "excel_ref": "Proyeksi Muatan!G20:Z24",
       "section": "5.1",
+      "audit": [
+        "A12"
+      ],
       "screens": [
         2,
         6
       ],
       "symbol": "D",
       "desc": "Demand dalam satuan yang dipakai kapal: TEU untuk petikemas, ton untuk lainnya. Inilah volume yang harus diangkut armada.",
+      "impl": "cargo:demand_unit",
       "dependents": [
         "voyage.freq",
         "voyage.q",
@@ -2747,6 +2761,7 @@
         4
       ],
       "desc": "Kapasitas TEU kapal yang dipakai hitungan: dari data kapal, atau ditaksir dari DWT bila kosong.",
+      "impl": "vessel:teu_capacity",
       "dependents": [
         "cargo.netmax",
         "vessel.payload",

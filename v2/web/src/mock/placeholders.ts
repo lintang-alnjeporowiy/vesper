@@ -76,7 +76,6 @@ export const PROJECTION: Record<string, number[]> = {
   'in.fantasi': [0, 0, 100, 104, 108.2, 112.5, 117, 121.7, 126.5, 131.6, 136.9, 142.3, 148, 154, 160, 160, 160, 160, 160, 160],
 }
 
-export const TEU_CALC = { cartonsPerTeu: 392, tonPerTeu: 7.3, teuYear10: '545 rb' }
 
 // ── Layar 7: biaya pelayaran tahun 10 (Rp miliar: TCH, BBM, pelabuhan) ─────
 export const SHIPPING_Y10: Record<string, [number, number, number] | null> = {
