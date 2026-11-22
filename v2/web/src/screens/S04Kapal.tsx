@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { Ship } from '../api/case'
+import type { Ship, TchPoint } from '../api/case'
 import { C, DotPlot } from '../charts/charts'
-import { Badge, Button, EditNum, Note, PH, ScreenHeader, Section, Split, Table, Tabs } from '../components/ui'
+import { Badge, Button, EditNum, EditText, InputMark, Note, PH, ScreenHeader, Section, Split, Table, Tabs } from '../components/ui'
 import { flowsForShipType, portOfRoute, shipTypesForForm, shortPortName } from '../lib/case'
 import { num } from '../lib/format'
 import { useField } from '../lib/useField'
@@ -13,6 +13,83 @@ const TYPE_SHORT: Record<string, string> = { tanker: 'Tanker', bulk_carrier: 'Bu
 function Cell(props: { path: (string | number)[]; label: string; digits?: number }) {
   const f = useField(props.path, props.label)
   return <EditNum {...f} mark={false} digits={props.digits} />
+}
+
+/** Cek digit IMO: 7 angka, digit ke-7 = Σ(digit_i × (7−i)) mod 10. */
+function imoValid(s: string | null | undefined): boolean {
+  if (!s || !/^\d{7}$/.test(s)) return false
+  const sum = [...s.slice(0, 6)].reduce((a, d, i) => a + Number(d) * (7 - i), 0)
+  return sum % 10 === Number(s[6])
+}
+
+function ImoCell({ ship, idx }: { ship: Ship; idx: number }) {
+  const setInput = usePlanner((s) => s.setInput)
+  const v = ship.imo ?? ''
+  const ok = imoValid(v)
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <EditText
+        mono
+        width="8ch"
+        value={ship.imo}
+        placeholder="–"
+        invalid={!!v && !ok}
+        title={v && !ok ? 'Digit periksa IMO tidak cocok' : undefined}
+        label={`IMO ${ship.name}`}
+        onChange={(x) => setInput(['ships', idx, 'imo'], x?.replace(/^IMO\s*/i, '') ?? null, `IMO ${ship.name}`)}
+      />
+      {ok && (
+        <a href={`https://www.marinetraffic.com/en/ais/details/ships/imo:${v}`} target="_blank" rel="noreferrer" title="Buka di MarineTraffic untuk verifikasi" className="text-[13px] text-abu no-underline hover:text-biru">↗</a>
+      )}
+    </span>
+  )
+}
+
+/** Tabel titik TCH pasar per tipe kapal (ship_types[i].tch_points). */
+function TchEditor({ typeIdx }: { typeIdx: number }) {
+  const st = usePlanner((s) => s.caseData.ship_types[typeIdx])
+  const changed = usePlanner((s) => Object.keys(s.dirty).some((k) => k.startsWith(`ship_types.${typeIdx}.tch_points`)))
+  const setInput = usePlanner((s) => s.setInput)
+  if (!st) return null
+  const pts: TchPoint[] = st.tch_points ?? []
+  const basis = st.size_basis === 'teu' ? 'TEU' : 'DWT'
+  const setPts = (next: TchPoint[], label: string) => setInput(['ship_types', typeIdx, 'tch_points'], next, label)
+  const setAt = (i: number, patch: Partial<TchPoint>, label: string) => setPts(pts.map((p, j) => (j === i ? { ...p, ...patch, refs: {} } : p)), label)
+  const add = () => {
+    const last = pts[pts.length - 1]
+    setPts([...pts, { refs: {}, label: null, size: last ? last.size * 1.5 : st.size_basis === 'teu' ? 1000 : 10000, usd_per_day: last?.usd_per_day ?? 10000 }], `TCH ${st.name}: tambah titik`)
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-hitam text-[13px] text-abu">
+            <th className="py-1.5 text-left font-medium"><span className="inline-flex items-center gap-1"><InputMark />Kelas pasar</span></th>
+            <th className="py-1.5 text-right font-medium"><span className="inline-flex items-center gap-1"><InputMark />Ukuran, {basis}</span></th>
+            <th className="py-1.5 text-right font-medium"><span className="inline-flex items-center gap-1"><InputMark />TCH, USD/hari</span></th>
+            <th className="w-6" />
+          </tr>
+        </thead>
+        <tbody>
+          {pts.map((p, i) => (
+            <tr key={i} className="border-t border-garis">
+              <td className="py-1"><EditText value={p.label} placeholder="(tanpa nama)" width="16ch" label={`Kelas TCH ${i + 1}`} onChange={(v) => setAt(i, { label: v }, `TCH ${st.name}: kelas ${i + 1}`)} /></td>
+              <td className="py-1 text-right"><EditNum value={p.size} mark={false} label={`Ukuran TCH ${i + 1}`} onChange={(v) => v > 0 && setAt(i, { size: v }, `TCH ${st.name}: ukuran ${i + 1}`)} /></td>
+              <td className="py-1 text-right"><EditNum value={p.usd_per_day} mark={false} label={`TCH ${i + 1}`} onChange={(v) => v > 0 && setAt(i, { usd_per_day: v }, `TCH ${st.name}: tarif ${i + 1}`)} /></td>
+              <td className="text-right">
+                <button type="button" aria-label={`Hapus titik TCH ${i + 1}`} onClick={() => setPts(pts.filter((_, j) => j !== i), `TCH ${st.name}: hapus titik ${i + 1}`)} className="cursor-pointer border-0 bg-transparent text-abu hover:text-merah">×</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <span className="flex items-center gap-2">
+        <Button size="sm" variant="tipis" onClick={add}>+ Titik TCH</Button>
+        {changed && <Badge kind="gugur">diubah</Badge>}
+        {pts.length < 2 && <span className="text-[13px] text-merah">Regresi butuh minimal 2 titik.</span>}
+      </span>
+    </div>
+  )
 }
 
 export default function S04Kapal() {
@@ -69,14 +146,11 @@ export default function S04Kapal() {
               <h2 className="m-0 grow text-xl font-normal">Titik TCH · {st?.name}</h2>
               <PH>regresi: placeholder</PH>
             </div>
-            {pts.length > 0 ? (
-              <>
-                <DotPlot height={170} points={pts.map((p) => ({ x: p.size, y: p.usd_per_day, color: C.biru, size: 8, label: `${p.label ?? ''} ${p.size} → ${p.usd_per_day} USD/hari` }))} xLabels={[`${num(pts[0].size)} ${st?.size_basis.toUpperCase()}`, `${num(pts[pts.length - 1].size)} · ${num(pts[pts.length - 1].usd_per_day / 1000, 1)} rb USD/hari`]} />
-                <Note>{pts.length} titik data TCH (input). Tarif kapal di antara titik diambil dari regresi (engine tahap 6).</Note>
-              </>
-            ) : (
-              <Note>Tidak ada titik TCH untuk tipe ini.</Note>
+            {pts.length > 0 && (
+              <DotPlot height={140} points={pts.map((p) => ({ x: p.size, y: p.usd_per_day, color: C.biru, size: 8, label: `${p.label ?? ''} ${num(p.size)} → ${num(p.usd_per_day)} USD/hari` }))} xLabels={[`${num(Math.min(...pts.map((p) => p.size)))} ${st?.size_basis.toUpperCase()}`, `${num(Math.max(...pts.map((p) => p.size)))} ${st?.size_basis.toUpperCase()}`]} />
             )}
+            <TchEditor typeIdx={types.findIndex((t) => t.code === type)} />
+            <Note>Tarif charter pasar per tipe kapal (sumber K15: sheet TCH). TCH tiap kapal = regresi linier titik-titik ini terhadap {st?.size_basis === 'teu' ? 'kapasitas TEU' : 'DWT'} kapal (engine tahap 6). Ganti tipe lewat tab Database kapal di bawah.</Note>
           </div>
         }
       />
@@ -96,10 +170,11 @@ export default function S04Kapal() {
             rows={ships}
             columns={[
               { key: 'n', head: 'Kapal', width: 150, render: (s) => s.name },
-              { key: 'dwt', head: 'DWT', width: 110, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'dwt_t']} label={`DWT ${s.name}`} /> },
-              { key: 'loa', head: 'LOA', width: 100, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'loa_m']} label={`LOA ${s.name}`} digits={1} /> },
-              { key: 'dr', head: 'Draft', width: 100, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'draft_m']} label={`Draft ${s.name}`} digits={2} /> },
-              { key: 'v', head: 'Kn', width: 90, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'speed_kn']} label={`Kecepatan ${s.name}`} digits={1} /> },
+              { key: 'imo', head: 'IMO', width: 110, input: true, render: (s) => <ImoCell ship={s} idx={c.ships.indexOf(s)} /> },
+              { key: 'dwt', head: 'DWT, t', width: 110, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'dwt_t']} label={`DWT ${s.name}`} /> },
+              { key: 'loa', head: 'LOA, m', width: 100, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'loa_m']} label={`LOA ${s.name}`} digits={1} /> },
+              { key: 'dr', head: 'Draft, m', width: 100, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'draft_m']} label={`Draft ${s.name}`} digits={2} /> },
+              { key: 'v', head: 'Kecepatan, knot', width: 120, input: true, render: (s) => <Cell path={['ships', c.ships.indexOf(s), 'speed_kn']} label={`Kecepatan ${s.name}`} digits={1} /> },
               ...ports.map(({ port, flow }) => ({
                 key: port!.id,
                 head: <span title={flow}>{shortPortName(port!.name)}</span>,
@@ -114,7 +189,7 @@ export default function S04Kapal() {
             ]}
           />
         )}
-        <Note>Kolom pelabuhan = kelayakan per rute untuk tipe ini (aturan SPEC §5.2, dihitung sementara di UI sampai engine tahap 5). "LOA ?" = panjang dermaga pelabuhan itu kosong.</Note>
+        <Note>IMO number tidak dipakai dalam hitungan; gunanya agar kapal bisa diverifikasi sebagai kapal riil (merah = digit periksa tidak cocok, ↗ = buka di MarineTraffic). Kolom pelabuhan = kelayakan per rute untuk tipe ini (aturan SPEC §5.2, dihitung sementara di UI sampai engine tahap 5). "LOA ?" = panjang dermaga pelabuhan itu kosong.</Note>
       </Section>
     </>
   )

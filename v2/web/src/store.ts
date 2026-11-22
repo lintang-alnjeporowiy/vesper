@@ -70,7 +70,11 @@ interface PlannerState {
   setShip: (flowId: string, shipId: string) => void
   setInput: (path: Path, value: unknown, label: string) => void
   recalc: () => void
-  showTrace: (id: string, ctx?: TraceCtx, value?: string) => void
+  /** `open: false` = ganti variabel tanpa membuka laci yang sedang ditutup (dipakai peta variabel). */
+  showTrace: (id: string, ctx?: TraceCtx, value?: string, opts?: { open?: boolean }) => void
+  /** Peta variabel tanpa menu kiri (tampilan lebar). */
+  mapWide: boolean
+  setMapWide: (v: boolean) => void
   traceBack: () => void
   toggleTrace: () => void
   setDrawerTab: (t: 'jejak' | 'pengaturan') => void
@@ -94,6 +98,7 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   flowId: 'in.damai',
   shipByFlow: { ...(plan?.ship_by_flow ?? {}) },
   traceOpen: true,
+  mapWide: false,
   trace: { id: 'voyage.rtd', ctx: { flow: 'in.damai', ship: 'ship.aetos', year: 10 } },
   traceHistory: [],
   drawerTab: 'jejak',
@@ -117,12 +122,12 @@ export const usePlanner = create<PlannerState>((set, get) => ({
   },
   // Engine belum tersambung (Tahap 4+): hitung ulang hanya menandai input sebagai baseline baru.
   recalc: () => set({ baseline: get().caseData, dirty: {} }),
-  showTrace: (id, ctx, value) => {
+  showTrace: (id, ctx, value, opts) => {
     const { trace, traceHistory } = get()
     const same = trace.id === id && JSON.stringify(trace.ctx) === JSON.stringify(ctx)
     set({
       trace: { id, ctx, value },
-      traceOpen: true,
+      traceOpen: opts?.open === false ? get().traceOpen : true,
       drawerTab: 'jejak',
       traceHistory: same ? traceHistory : [...traceHistory, trace].slice(-30),
     })
@@ -132,6 +137,7 @@ export const usePlanner = create<PlannerState>((set, get) => ({
     if (h.length) set({ trace: h[h.length - 1], traceHistory: h.slice(0, -1) })
   },
   toggleTrace: () => set({ traceOpen: !get().traceOpen }),
+  setMapWide: (v) => set({ mapWide: v }),
   setDrawerTab: (t) => set({ drawerTab: t, traceOpen: true }),
   setSetting: (key, value) => {
     const settings = { ...get().settings, [key]: value }

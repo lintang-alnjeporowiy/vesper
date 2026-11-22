@@ -184,6 +184,31 @@ export function EditNum(props: { value: number; onChange: (v: number) => void; d
   )
 }
 
+/** Isian teks satu baris (mis. IMO number, nama kelas TCH). Disimpan saat blur/Enter. */
+export function EditText(props: { value: string | null | undefined; onChange: (v: string | null) => void; label: string; placeholder?: string; mono?: boolean; width?: string; invalid?: boolean; title?: string }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const commit = () => {
+    if (draft !== null && draft.trim() !== (props.value ?? '')) props.onChange(draft.trim() || null)
+    setDraft(null)
+  }
+  return (
+    <input
+      aria-label={props.label}
+      title={props.title}
+      placeholder={props.placeholder}
+      className={`border-0 border-b bg-transparent text-sm outline-none hover:border-garis focus:border-biru ${props.mono ? 'font-mono' : ''} ${props.invalid ? 'border-merah text-merah' : 'border-transparent'}`}
+      style={{ width: props.width ?? '12ch' }}
+      value={draft ?? props.value ?? ''}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+        if (e.key === 'Escape') setDraft(null)
+      }}
+    />
+  )
+}
+
 // ── Slider what-if ──────────────────────────────────────────────────────────
 export function Slider(props: { label: string; value: number; min: number; max: number; step: number; display: string; onChange?: (v: number) => void; input?: boolean; dark?: boolean }) {
   return (

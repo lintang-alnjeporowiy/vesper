@@ -23,11 +23,12 @@ const SCREENS: ComponentType[] = [
 export default function App() {
   const screen = usePlanner((s) => s.screen)
   const Screen = SCREENS[screen]
+  const hideSidebar = usePlanner((s) => s.mapWide) && screen === MAP_SCREEN
   return (
     <div className="min-h-screen bg-white">
       <TopBar />
       <div className="flex">
-        <Sidebar />
+        {!hideSidebar && <Sidebar />}
         <main className="min-w-0 grow">
           <div className={`mx-auto flex flex-col gap-8 px-8 pt-8 pb-12 ${screen === MAP_SCREEN ? 'max-w-none' : 'max-w-[960px]'}`}>
             <Screen />

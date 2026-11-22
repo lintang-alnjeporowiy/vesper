@@ -1,4 +1,4 @@
-import type { ExternalPort } from '../api/case'
+import type { Case, ExternalPort } from '../api/case'
 import { BarRows, C } from '../charts/charts'
 import { BathyEditor } from '../components/BathyEditor'
 import { Badge, DefRow, EditNum, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
@@ -11,6 +11,37 @@ function Cell(props: { path: (string | number)[]; label: string; digits?: number
   const f = useField(props.path, props.label)
   if (f.value === undefined || f.value === null) return <Badge kind="asumsi">kosong</Badge>
   return <EditNum {...f} mark={false} digits={props.digits} unit={props.unit} />
+}
+
+/** Rute pulang-pergi yang menyinggahi pelabuhan ini (K15: satu rute per pelabuhan). */
+function routeIndexOfPort(c: Case, portId: string) {
+  return c.routes.findIndex((r) => r.legs.some((l) => l.origin === portId || l.destination === portId))
+}
+
+/** Jarak KEK ↔ pelabuhan; pada pola round trip kedua leg diisi nilai yang sama. */
+function DistanceCell({ portId }: { portId: string }) {
+  const c = usePlanner((s) => s.caseData)
+  const setInput = usePlanner((s) => s.setInput)
+  const ri = routeIndexOfPort(c, portId)
+  const changed = usePlanner((s) => Object.keys(s.dirty).some((k) => k.startsWith(`routes.${ri}.`)))
+  if (ri < 0) return <Badge kind="asumsi">tanpa rute</Badge>
+  const r = c.routes[ri]
+  const legs = r.legs.filter((l) => l.origin === portId || l.destination === portId)
+  const d = legs[0].distance_nm
+  const uneven = legs.some((l) => l.distance_nm !== d)
+  return (
+    <span className="inline-flex items-center gap-1" title={uneven ? 'Jarak pergi dan pulang berbeda; mengedit akan menyamakan keduanya' : r.name}>
+      <EditNum
+        value={d}
+        digits={1}
+        mark={false}
+        changed={changed}
+        label={`Jarak ${r.name}`}
+        onChange={(v) => v > 0 && setInput(['routes', ri, 'legs'], r.legs.map((l) => (l.origin === portId || l.destination === portId ? { ...l, distance_nm: v, refs: {} } : l)), `Jarak ${r.name}`)}
+      />
+      {uneven && <span className="text-[13px] text-merah">≠</span>}
+    </span>
+  )
 }
 
 export default function S03Pelabuhan() {
@@ -43,17 +74,18 @@ export default function S03Pelabuhan() {
             { key: 'n', head: 'Pelabuhan', width: 130, render: (p) => shortPortName(p.name) },
             { key: 'c', head: 'Negara', width: 90, render: (p) => p.country },
             { key: 't', head: 'Terminal', width: 100, render: (p) => <span className="text-[13px] text-abu">{p.terminal_type}</span> },
-            { key: 'd', head: 'Draft', width: 110, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'max_draft_m']} label={`Draft ${p.name}`} digits={1} /> },
-            { key: 'b', head: 'Dermaga', width: 110, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'longest_berth_m']} label={`Dermaga ${p.name}`} /> },
-            { key: 'l', head: 'LOA maks', width: 70, mono: true, render: (p) => <span className="text-abu">{p.longest_berth_m ? num(p.longest_berth_m / ratio) : '–'}</span> },
-            { key: 'p', head: 'Produktivitas', width: 140, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'productivity', 'value']} label={`Produktivitas ${p.name}`} unit={p.productivity.unit.replace('/h', '/j')} /> },
+            { key: 'd', head: 'Draft maks, m', width: 110, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'max_draft_m']} label={`Draft ${p.name}`} digits={1} /> },
+            { key: 'r', head: 'Jarak ke KEK, NM', width: 130, input: true, render: (p) => <DistanceCell portId={p.id} /> },
+            { key: 'b', head: 'Dermaga terpanjang, m', width: 120, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'longest_berth_m']} label={`Panjang dermaga ${p.name}`} /> },
+            { key: 'l', head: 'LOA maks, m', width: 80, mono: true, render: (p) => <span className="text-abu">{p.longest_berth_m ? num(p.longest_berth_m / ratio) : '–'}</span> },
+            { key: 'p', head: 'Produktivitas bongkar muat', width: 150, input: true, render: (p) => <Cell path={['ports', c.ports.indexOf(p), 'productivity', 'value']} label={`Produktivitas ${p.name}`} unit={p.productivity.unit.replace('/h', '/j')} /> },
             { key: 'k', head: 'Tarif', render: (p) => <span className="text-[13px] text-abu">{/^\d/.test(String(p.tariff_class)) ? `kelas ${p.tariff_class}` : p.tariff_class}</span> },
           ]}
         />
-        <Note>LOA maks = dermaga ÷ {num(ratio, 2)} (turunan langsung, abu). {missing.map((p) => shortPortName(p.name)).join(', ')}: panjang dermaga belum ada datanya.</Note>
+        <Note>Jarak ke KEK = mil laut sekali jalan ke Batu Ampar (K15: sheet Rute, kolom X); pola round trip, jadi pergi = pulang. LOA maks = dermaga terpanjang ÷ {num(ratio, 2)} (turunan langsung, abu). {missing.map((p) => shortPortName(p.name)).join(', ')}: panjang dermaga belum ada datanya.</Note>
       </Section>
 
-      <Section title="Jarak rute ke Batu Ampar" aside={<span className="text-[13px] text-abu">pulang-pergi, mil laut sekali jalan</span>}>
+      <Section title="Jarak rute ke Batu Ampar" aside={<span className="text-[13px] text-abu">mil laut (NM) sekali jalan · diedit di tabel atas</span>}>
         <BarRows
           colors={[C.biru]}
           rows={routeRows.map(({ f, d }) => ({

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from 'react'
 import { Button, InputMark, Legend, Note, ScreenHeader } from '../components/ui'
 import { INPUT_GROUPS, INTERACTIONS, KIND_LABEL, LANES, VAR, VARS, downstream, upstream, type VarDef } from '../lib/registry'
 import { usePlanner } from '../store'
@@ -15,6 +15,10 @@ const LANE_HEAD = 26
 const LANE_PAD = 14
 
 type Mode = 'ringkas' | 'rinci'
+type View = { x: number; y: number; z: number }
+const Z_MIN = 0.2
+const Z_MAX = 2
+const clampZ = (z: number) => Math.min(Z_MAX, Math.max(Z_MIN, z))
 
 interface GNode {
   id: string
@@ -101,10 +105,14 @@ function buildLayout(mode: Mode, visible: Set<string> | null) {
 }
 
 export default function S12PetaVariabel() {
-  const { trace, showTrace } = usePlanner()
+  const { trace, showTrace, traceOpen, toggleTrace, mapWide, setMapWide } = usePlanner()
   const [mode, setMode] = useState<Mode>('ringkas')
   const [onlyChain, setOnlyChain] = useState(false)
-  const [zoom, setZoom] = useState(1)
+  const [view, setView] = useState<View>({ x: 16, y: 16, z: 0.8 })
+  const [grabbing, setGrabbing] = useState(false)
+  const vpRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ id: number; sx: number; sy: number; vx: number; vy: number; moved: boolean } | null>(null)
+  const suppressClick = useRef(false)
   const [query, setQuery] = useState('')
   const sel = VAR[trace.id] ? trace.id : null
   const up = useMemo(() => (sel ? upstream(sel) : new Set<string>()), [sel])
@@ -113,7 +121,80 @@ export default function S12PetaVariabel() {
   const layout = useMemo(() => buildLayout(mode, visible), [mode, visible])
   const byId = useMemo(() => Object.fromEntries(layout.nodes.map((n) => [n.id, n])), [layout])
 
-  const select = (id: string) => showTrace(id, trace.ctx)
+  // ── pan & zoom ────────────────────────────────────────────────
+  const zoomAt = useCallback((factor: number, cx?: number, cy?: number) => {
+    const el = vpRef.current
+    if (!el) return
+    const px = cx ?? el.clientWidth / 2
+    const py = cy ?? el.clientHeight / 2
+    setView((v) => {
+      const z = clampZ(v.z * factor)
+      const k = z / v.z
+      return { z, x: px - (px - v.x) * k, y: py - (py - v.y) * k }
+    })
+  }, [])
+  const fit = useCallback(() => {
+    const el = vpRef.current
+    if (!el) return
+    const z = clampZ(Math.min((el.clientWidth - 32) / layout.width, (el.clientHeight - 32) / layout.height))
+    setView({ z, x: (el.clientWidth - layout.width * z) / 2, y: 16 })
+  }, [layout])
+  useEffect(() => {
+    const el = vpRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const r = el.getBoundingClientRect()
+      if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) >= Math.abs(e.deltaX)) zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top)
+      else setView((v) => ({ ...v, x: v.x - e.deltaX }))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [zoomAt])
+  // "hanya rantai terpilih" mengubah ukuran graf -> paskan ulang
+  useEffect(() => {
+    if (onlyChain) fit()
+  }, [onlyChain, fit])
+  // simpul terpilih di luar layar -> geser ke tengah
+  useEffect(() => {
+    const el = vpRef.current
+    const n = sel ? byId[sel] : undefined
+    if (!el || !n) return
+    setView((v) => {
+      const sx = v.x + n.x * v.z
+      const sy = v.y + n.y * v.z
+      const inside = sx >= 0 && sy >= 0 && sx + n.w * v.z <= el.clientWidth && sy + n.h * v.z <= el.clientHeight
+      if (inside) return v
+      return { ...v, x: el.clientWidth / 2 - (n.x + n.w / 2) * v.z, y: el.clientHeight / 2 - (n.y + n.h / 2) * v.z }
+    })
+  }, [sel, byId])
+  const onPointerDown = (e: RPointerEvent) => {
+    if (e.button !== 0) return
+    drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false }
+  }
+  const onPointerMove = (e: RPointerEvent) => {
+    const d = drag.current
+    if (!d || d.id !== e.pointerId) return
+    const dx = e.clientX - d.sx
+    const dy = e.clientY - d.sy
+    if (!d.moved && Math.hypot(dx, dy) < 4) return
+    if (!d.moved) {
+      d.moved = true
+      setGrabbing(true)
+      vpRef.current?.setPointerCapture(e.pointerId)
+    }
+    setView((v) => ({ ...v, x: d.vx + dx, y: d.vy + dy }))
+  }
+  const onPointerUp = (e: RPointerEvent) => {
+    const d = drag.current
+    if (!d || d.id !== e.pointerId) return
+    suppressClick.current = d.moved
+    drag.current = null
+    setGrabbing(false)
+  }
+
+  // laci yang sudah ditutup tetap tertutup saat memilih simpul; rincian tampil lagi bila laci dibuka
+  const select = (id: string) => showTrace(id, trace.ctx, undefined, { open: false })
   const q = query.trim().toLowerCase()
   const matches = q ? VARS.filter((v) => v.label.toLowerCase().includes(q) || v.id.includes(q) || (v.symbol ?? '').toLowerCase().includes(q)).slice(0, 8) : []
 
@@ -171,11 +252,19 @@ export default function S12PetaVariabel() {
           </label>
           <span className="flex items-center gap-1">
             <span className="text-[13px] text-abu">Zoom</span>
-            {[0.6, 0.8, 1].map((z) => (
-              <button key={z} type="button" aria-pressed={zoom === z} onClick={() => setZoom(z)} className={`h-8 cursor-pointer rounded-kontrol border px-2 font-mono text-[13px] ${zoom === z ? 'border-hitam' : 'border-garis bg-white'}`}>
-                {Math.round(z * 100)}%
-              </button>
-            ))}
+            <button type="button" aria-label="Perkecil" onClick={() => zoomAt(1 / 1.25)} className="h-8 w-8 cursor-pointer rounded-kontrol border border-garis bg-white font-mono text-[13px] hover:border-hitam">−</button>
+            <button type="button" title="Kembali ke 100 %" onClick={() => zoomAt(1 / view.z)} className="h-8 w-14 cursor-pointer rounded-kontrol border border-garis bg-white font-mono text-[13px] hover:border-hitam">{Math.round(view.z * 100)}%</button>
+            <button type="button" aria-label="Perbesar" onClick={() => zoomAt(1.25)} className="h-8 w-8 cursor-pointer rounded-kontrol border border-garis bg-white font-mono text-[13px] hover:border-hitam">+</button>
+            <button type="button" onClick={fit} className="h-8 cursor-pointer rounded-kontrol border border-garis bg-white px-2 text-[13px] hover:border-hitam">Paskan</button>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="text-[13px] text-abu">Ruang</span>
+            <button type="button" aria-pressed={mapWide} title="Sembunyikan/tampilkan menu langkah di kiri (hanya di layar ini)" onClick={() => setMapWide(!mapWide)} className={`h-8 cursor-pointer rounded-kontrol border px-2 text-[13px] ${mapWide ? 'border-hitam bg-hitam text-white' : 'border-garis bg-white hover:border-hitam'}`}>
+              {mapWide ? '⇥ Menu' : '⇤ Menu'}
+            </button>
+            <button type="button" aria-pressed={!traceOpen} title="Tutup/buka laci jejak di kanan; memilih simpul tidak membuka laci yang sudah ditutup" onClick={toggleTrace} className={`h-8 cursor-pointer rounded-kontrol border px-2 text-[13px] ${!traceOpen ? 'border-hitam bg-hitam text-white' : 'border-garis bg-white hover:border-hitam'}`}>
+              {traceOpen ? 'Laci ⇥' : 'Laci ⇤'}
+            </button>
           </span>
           <span className="relative grow">
             <input
@@ -203,7 +292,7 @@ export default function S12PetaVariabel() {
               </span>
             )}
           </span>
-          {sel && <Button size="sm" variant="tipis" onClick={() => { showTrace('obj.npv', trace.ctx); setOnlyChain(false) }}>Ke objektif</Button>}
+          {sel && <Button size="sm" variant="tipis" onClick={() => { select('obj.npv'); setOnlyChain(false) }}>Ke objektif</Button>}
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <span className="w-24 text-[13px] font-medium text-abu">Legenda</span>
@@ -216,9 +305,30 @@ export default function S12PetaVariabel() {
         </div>
       </div>
 
-      <div className="w-full overflow-auto border-b border-garis" style={{ maxHeight: 'calc(100vh - 160px)' }}>
-        <div style={{ width: layout.width * zoom, height: layout.height * zoom }}>
-          <div className="relative origin-top-left" style={{ width: layout.width, height: layout.height, transform: `scale(${zoom})` }}>
+      <div
+        ref={vpRef}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onClickCapture={(e) => {
+          if (suppressClick.current) {
+            e.stopPropagation()
+            e.preventDefault()
+            suppressClick.current = false
+          }
+        }}
+        onDoubleClick={(e) => {
+          if ((e.target as HTMLElement).closest('button')) return
+          const r = vpRef.current!.getBoundingClientRect()
+          zoomAt(1.5, e.clientX - r.left, e.clientY - r.top)
+        }}
+        className={`relative w-full touch-none overflow-hidden border-y border-garis select-none ${grabbing ? 'cursor-grabbing' : 'cursor-grab'}`}
+        style={{ height: 'calc(100vh - 160px)', minHeight: 420, backgroundImage: 'radial-gradient(#DEDEDE 1px, transparent 1px)', backgroundSize: `${24 * view.z}px ${24 * view.z}px`, backgroundPosition: `${view.x}px ${view.y}px` }}
+      >
+        <span className="pointer-events-none absolute right-2 bottom-2 z-30 bg-white/90 px-1.5 text-[13px] text-abu">seret = geser · roda = zoom · klik ganda = perbesar</span>
+        <div className="absolute top-0 left-0 origin-top-left" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.z})` }}>
+          <div className="relative" style={{ width: layout.width, height: layout.height }}>
             {layout.lanes.map((l, i) => (
               <div key={l.name} className={`absolute right-0 ${i > 0 ? 'border-t border-garis' : ''}`} style={{ left: layout.x0 - GAP_X / 2, top: l.y, height: l.h }}>
                 <span className="absolute top-1 left-2 z-10 bg-white pr-1 text-[13px] font-medium text-abu">{l.name}</span>
