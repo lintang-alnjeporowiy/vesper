@@ -5,7 +5,7 @@ import { Badge, Button, EditNum, EditText, InputMark, Note, PH, ScreenHeader, Se
 import { flowsForShipType, portOfRoute, shipTypesForForm, shortPortName } from '../lib/case'
 import { num } from '../lib/format'
 import { useField } from '../lib/useField'
-import { feasibilityMock } from '../mock/placeholders'
+import { useCalc } from '../lib/engine'
 import { usePlanner } from '../store'
 
 const TYPE_SHORT: Record<string, string> = { tanker: 'Tanker', bulk_carrier: 'Bulk', container_ship: 'Petikemas', general_cargo_ship: 'GC', lct: 'LCT' }
@@ -99,6 +99,8 @@ export default function S04Kapal() {
   const ships = c.ships.filter((s) => s.ship_type === type).sort((a, b) => a.dwt_t - b.dwt_t)
   const st = types.find((t) => t.code === type)
   const flows = flowsForShipType(c, type)
+  const calc = useCalc()
+  const feas = calc.ok ? calc.result?.feasibility : undefined
   const ports = [...new Map(flows.map((f) => [portOfRoute(c, f.route_id)?.id, { port: portOfRoute(c, f.route_id), flow: f.id }])).values()].filter((p) => p.port)
   const assumed = new Set((c.assumptions ?? []).filter((a) => a.status === 'asumsi').map((a) => a.id))
   const pts = st?.tch_points ?? []
@@ -180,16 +182,17 @@ export default function S04Kapal() {
                 head: <span title={flow}>{shortPortName(port!.name)}</span>,
                 width: 84,
                 render: (s: Ship) => {
-                  const r = feasibilityMock(s, port!, c.params.berth_loa_min_ratio)
-                  if (r.ok === true) return <span className="text-[13px] text-abu">layak</span>
-                  if (r.ok === null) return <span className="text-[13px] text-merah">LOA ?</span>
-                  return <Badge kind="gugur">{r.reasons.join(', ')}</Badge>
+                  const r = feas?.[flow]?.[s.id]
+                  if (!r) return <span className="text-[13px] text-abu">–</span>
+                  if (!r.ok) return <span title={r.reasons.join('\n')}><Badge kind="gugur">{r.reasons.map((x) => x.split(' ')[0]).join(', ')}</Badge></span>
+                  if (r.notes.length) return <span className="text-[13px] text-merah" title={r.notes.join('\n')}>LOA ?</span>
+                  return <span className="text-[13px] text-abu">layak</span>
                 },
               })),
             ]}
           />
         )}
-        <Note>IMO number tidak dipakai dalam hitungan; gunanya agar kapal bisa diverifikasi sebagai kapal riil (merah = digit periksa tidak cocok, ↗ = buka di MarineTraffic). Kolom pelabuhan = kelayakan per rute untuk tipe ini (aturan SPEC §5.2, dihitung sementara di UI sampai engine tahap 5). "LOA ?" = panjang dermaga pelabuhan itu kosong.</Note>
+        <Note>IMO number tidak dipakai dalam hitungan; gunanya agar kapal bisa diverifikasi sebagai kapal riil (merah = digit periksa tidak cocok, ↗ = buka di MarineTraffic). Kolom pelabuhan = kelayakan per rute untuk tipe ini (aturan SPEC §5.2, dihitung engine; – = API tidak aktif; arahkan kursor ke badge untuk alasan lengkap). "LOA ?" = panjang dermaga pelabuhan itu kosong.</Note>
       </Section>
     </>
   )

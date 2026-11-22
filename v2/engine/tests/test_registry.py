@@ -174,5 +174,6 @@ def test_impl_points_to_engine_functions():
         mod, fn = v.impl.split(":")
         assert callable(getattr(importlib.import_module(f"tpt_engine.calc.{mod}"), fn)), v.id
     with_impl = {v.id for v in R.REGISTRY if v.impl}
-    assert {v.id for v in R.REGISTRY if v.section == "5.1" and v.kind == "derived"} <= with_impl
+    assert {v.id for v in R.REGISTRY if v.section in ("5.1", "5.3") and v.kind in ("derived", "metric")} <= with_impl
+    assert {v.id for v in R.REGISTRY if v.section == "5.2"} - with_impl == {"vessel.reach_ok"}  # Tahap 7
     assert {vid for ids in COMPUTES.values() for vid in ids} == with_impl

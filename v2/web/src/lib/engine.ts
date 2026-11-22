@@ -1,8 +1,8 @@
 // Sambungan ke engine lewat API (Tahap 4): kasus aktif (termasuk editan) dikirim otomatis ke /calculate
 // (debounce), hasil disimpan di store. Bila API mati, layar kembali ke placeholder dengan catatan.
-import { useEffect } from 'react'
-import { ApiError, postCalculate } from '../api/client'
-import type { CalcRequest, CalcResult, Case } from '../api/case'
+import { useEffect, useState } from 'react'
+import { ApiError, postCalculate, postCompare } from '../api/client'
+import type { CalcRequest, CalcResult, Case, CompareResult } from '../api/case'
 import { usePlanner, type CalcState } from '../store'
 import { num } from './format'
 import { VAR, type TraceCtx } from './registry'
@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage']
 
 /** Pasang sekali di App: hitung ulang setiap kali kasus aktif atau kapal terpilih berubah. */
 export function useEngineSync() {
@@ -74,7 +74,7 @@ export function computedNumber(result: CalcResult | undefined, id: string, ctx: 
 
 /** Satuan tampilan: demand dalam satuan flow / satuan kapal, lainnya dari registry. */
 export function unitOf(caseData: Case, result: CalcResult | undefined, id: string, flow?: string): string {
-  if (id === 'cargo.demand_unit' && flow) return result?.units[flow] === 'TEU' ? 'TEU' : 't'
+  if ((id === 'cargo.demand_unit' || id === 'vessel.payload' || id === 'voyage.q') && flow) return result?.units[flow] === 'TEU' ? 'TEU' : 't'
   if ((id === 'demand.base' || id === 'demand.ratio') && flow) {
     return caseData.flows.find((f) => f.id === flow)?.unit === 'TEU' ? 'TEU' : 't'
   }
@@ -93,4 +93,39 @@ export function computedText(caseData: Case, calc: CalcState, id: string, ctx: T
   if (v === undefined) return undefined
   const u = unitOf(caseData, calc.result, id, ctx?.flow)
   return u ? `${fmtValue(v)} ${u}` : fmtValue(v)
+}
+
+/** Bandingkan semua kapal kandidat untuk satu flow lewat /compare (layar 4 & 6); dihitung ulang saat kasus berubah. */
+export function useCompare(flowId: string | undefined): { data?: CompareResult; status: 'idle' | 'loading' | 'ok' | 'offline' | 'error'; error?: string } {
+  const caseData = usePlanner((s) => s.caseData)
+  const shipByFlow = usePlanner((s) => s.shipByFlow)
+  const nonce = usePlanner((s) => s.calcNonce)
+  const [state, setState] = useState<{ data?: CompareResult; status: 'idle' | 'loading' | 'ok' | 'offline' | 'error'; error?: string; key?: string }>({ status: 'idle' })
+  useEffect(() => {
+    if (!flowId) return
+    const ctl = new AbortController()
+    const timer = window.setTimeout(() => {
+      setState((s) => ({ ...s, status: 'loading' }))
+      postCompare({ case: caseData, flow_id: flowId, plan_id: null, ship_by_flow: shipByFlow, equipment_by_terminal: null }, ctl.signal)
+        .then((data) => setState({ data, status: 'ok', key: flowId }))
+        .catch((e: unknown) => {
+          if (ctl.signal.aborted) return
+          const offline = !(e instanceof ApiError) || e.status >= 500
+          setState({ status: offline ? 'offline' : 'error', error: e instanceof Error ? e.message : String(e) })
+        })
+    }, DEBOUNCE_MS)
+    return () => {
+      window.clearTimeout(timer)
+      ctl.abort()
+    }
+  }, [flowId, caseData, shipByFlow, nonce])
+  // hasil flow lain (sebelum respons flow baru tiba) tidak ditampilkan
+  return state.data && state.data.flow_id !== flowId ? { status: 'loading' } : state
+}
+
+/** Nilai skalar atau seri pada tahun `year` dari sebuah baris kandidat. */
+export function rowNumber(values: Record<string, number | number[]> | undefined, id: string, year: number): number | undefined {
+  const v = values?.[id]
+  if (v === undefined) return undefined
+  return Array.isArray(v) ? v[year - 1] : v
 }

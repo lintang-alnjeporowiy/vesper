@@ -1,4 +1,4 @@
-"""FastAPI TPT Planner v2 — Tahap 4: daftar kasus & kalkulasi modul demand.
+"""FastAPI TPT Planner v2 — daftar kasus, kalkulasi per modul (demand, voyage), bandingkan kandidat kapal.
 
 Semua rute di bawah `/api` (dev: Vite mem-proxy `/api` → :8000; Tahap 13: FastAPI juga menyajikan build web).
 Skema OpenAPI → `web/src/api/openapi.ts` lewat `tools/export_openapi.py` + `npm run gen:api`.
@@ -13,14 +13,14 @@ from typing import Literal
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, ValidationError
 
-from tpt_engine.calc.run import CalcResult, Module, calculate
+from tpt_engine.calc.run import MODULES, CalcResult, CompareResult, Module, calculate, compare
 from tpt_engine.domain import Case, load_case
 
 CASES_DIR = Path(os.environ.get("TPT_CASES_DIR") or Path(__file__).resolve().parents[3] / "cases")
 
 app = FastAPI(
     title="TPT Planner v2 API",
-    version="0.4.0",
+    version="0.5.0",
     description="Engine perencanaan transportasi laut (TPT). Hasil /calculate berkunci id variabel registry.",
     separate_input_output_schemas=False,
 )
@@ -36,9 +36,18 @@ class CaseSummary(BaseModel):
 
 class CalcRequest(BaseModel):
     case: Case = Field(description="kasus aktif (termasuk editan di UI)")
-    modules: list[Module] = Field(["demand"], description="modul engine yang dihitung")
-    plan_id: str | None = Field(None, description="rencana kapal per flow; default plan pertama kasus")
+    modules: list[Module] = Field(list(MODULES), description="modul engine yang dihitung (dependensi ikut)")
+    plan_id: str | None = Field(None, description="rencana kapal & alat; default plan pertama kasus")
     ship_by_flow: dict[str, str] | None = Field(None, description="override kapal per flow di atas plan")
+    equipment_by_terminal: dict[str, str] | None = Field(None, description="override alat per terminal KEK di atas plan")
+
+
+class CompareRequest(BaseModel):
+    case: Case = Field(description="kasus aktif (termasuk editan di UI)")
+    flow_id: str
+    plan_id: str | None = None
+    ship_by_flow: dict[str, str] | None = None
+    equipment_by_terminal: dict[str, str] | None = None
 
 
 class Health(BaseModel):
@@ -53,8 +62,6 @@ def _case_files() -> list[Path]:
 
 @app.get("/api/health", response_model=Health, tags=["meta"])
 def health() -> Health:
-    from tpt_engine.calc.run import MODULES
-
     return Health(version=app.version, modules=list(MODULES))
 
 
@@ -81,6 +88,17 @@ def get_case(case_id: str) -> Case:
 @app.post("/api/calculate", response_model=CalcResult, tags=["calc"])
 def post_calculate(req: CalcRequest) -> CalcResult:
     try:
-        return calculate(req.case, list(req.modules), plan_id=req.plan_id, ship_by_flow=req.ship_by_flow)
+        return calculate(req.case, list(req.modules), plan_id=req.plan_id, ship_by_flow=req.ship_by_flow,
+                         equipment_by_terminal=req.equipment_by_terminal)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(422, str(e)) from e
+
+
+@app.post("/api/compare", response_model=CompareResult, tags=["calc"])
+def post_compare(req: CompareRequest) -> CompareResult:
+    """Semua kapal kandidat untuk satu flow: kelayakan + alasan gugur + rantai §5.1–5.3 (layar 4 & 6)."""
+    try:
+        return compare(req.case, req.flow_id, plan_id=req.plan_id, ship_by_flow=req.ship_by_flow,
+                       equipment_by_terminal=req.equipment_by_terminal)
     except (ValueError, KeyError) as e:
         raise HTTPException(422, str(e)) from e

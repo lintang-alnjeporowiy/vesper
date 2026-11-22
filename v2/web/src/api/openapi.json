@@ -3,7 +3,7 @@
   "info": {
     "title": "TPT Planner v2 API",
     "description": "Engine perencanaan transportasi laut (TPT). Hasil /calculate berkunci id variabel registry.",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "paths": {
     "/api/health": {
@@ -134,6 +134,48 @@
           }
         }
       }
+    },
+    "/api/compare": {
+      "post": {
+        "tags": [
+          "calc"
+        ],
+        "summary": "Post Compare",
+        "description": "Semua kapal kandidat untuk satu flow: kelayakan + alasan gugur + rantai §5.1–5.3 (layar 4 & 6).",
+        "operationId": "post_compare_api_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompareResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -246,13 +288,17 @@
           "modules": {
             "items": {
               "type": "string",
-              "const": "demand"
+              "enum": [
+                "demand",
+                "voyage"
+              ]
             },
             "type": "array",
             "title": "Modules",
-            "description": "modul engine yang dihitung",
+            "description": "modul engine yang dihitung (dependensi ikut)",
             "default": [
-              "demand"
+              "demand",
+              "voyage"
             ]
           },
           "plan_id": {
@@ -265,7 +311,7 @@
               }
             ],
             "title": "Plan Id",
-            "description": "rencana kapal per flow; default plan pertama kasus"
+            "description": "rencana kapal & alat; default plan pertama kasus"
           },
           "ship_by_flow": {
             "anyOf": [
@@ -281,6 +327,21 @@
             ],
             "title": "Ship By Flow",
             "description": "override kapal per flow di atas plan"
+          },
+          "equipment_by_terminal": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment By Terminal",
+            "description": "override alat per terminal KEK di atas plan"
           }
         },
         "type": "object",
@@ -308,7 +369,7 @@
               }
             ],
             "title": "Plan Id",
-            "description": "rencana (kapal per flow) yang dipakai untuk variabel bergantung kapal"
+            "description": "rencana (kapal per flow, alat per terminal) yang dipakai"
           },
           "ship_by_flow": {
             "additionalProperties": {
@@ -317,6 +378,15 @@
             "type": "object",
             "title": "Ship By Flow",
             "description": "kapal terpilih per flow yang dipakai"
+          },
+          "equipment_by_terminal": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Equipment By Terminal",
+            "description": "alat terpilih per terminal KEK yang dipakai",
+            "default": {}
           },
           "computed": {
             "items": {
@@ -357,7 +427,31 @@
             },
             "type": "object",
             "title": "Units",
-            "description": "satuan cargo.demand_unit per flow",
+            "description": "satuan kapal per flow (cargo.demand_unit, payload, q)",
+            "default": {}
+          },
+          "reasons": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Reasons",
+            "description": "alasan kapal terpilih gugur per flow (vessel.feasible = 0)",
+            "default": {}
+          },
+          "feasibility": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/FeasCell"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Feasibility",
+            "description": "modul voyage: kelayakan setiap kapal kompatibel per flow (flow id -> ship id -> sel)",
             "default": {}
           },
           "warnings": {
@@ -378,6 +472,82 @@
           "values"
         ],
         "title": "CalcResult"
+      },
+      "CandidateRow": {
+        "properties": {
+          "ship_id": {
+            "type": "string",
+            "title": "Ship Id"
+          },
+          "compatible": {
+            "type": "boolean",
+            "title": "Compatible"
+          },
+          "feasible": {
+            "type": "boolean",
+            "title": "Feasible"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "alasan gugur",
+            "default": []
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "catatan data yang tidak menggugurkan",
+            "default": []
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected",
+            "default": false
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "items": {
+                    "type": "number"
+                  },
+                  "type": "array"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values",
+            "description": "id variabel -> angka/seri untuk flow ini dengan kapal ini",
+            "default": {}
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ship_id",
+          "compatible",
+          "feasible"
+        ],
+        "title": "CandidateRow"
       },
       "CargoFlow": {
         "properties": {
@@ -912,6 +1082,106 @@
         ],
         "title": "Commodity"
       },
+      "CompareRequest": {
+        "properties": {
+          "case": {
+            "$ref": "#/components/schemas/Case",
+            "description": "kasus aktif (termasuk editan di UI)"
+          },
+          "flow_id": {
+            "type": "string",
+            "title": "Flow Id"
+          },
+          "plan_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Plan Id"
+          },
+          "ship_by_flow": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ship By Flow"
+          },
+          "equipment_by_terminal": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment By Terminal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "case",
+          "flow_id"
+        ],
+        "title": "CompareRequest"
+      },
+      "CompareResult": {
+        "properties": {
+          "flow_id": {
+            "type": "string",
+            "title": "Flow Id"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "ton",
+              "TEU"
+            ],
+            "title": "Unit"
+          },
+          "equipment_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment Id"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRow"
+            },
+            "type": "array",
+            "title": "Rows",
+            "description": "semua kapal kasus; rantai dihitung untuk yang kompatibel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "flow_id",
+          "unit",
+          "equipment_id",
+          "rows"
+        ],
+        "title": "CompareResult"
+      },
       "ContainerSpec": {
         "properties": {
           "refs": {
@@ -1427,6 +1697,37 @@
           "berth_type"
         ],
         "title": "ExternalPort"
+      },
+      "FeasCell": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "alasan gugur",
+            "default": []
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "catatan data yang tidak menggugurkan (mis. panjang dermaga kosong)",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "title": "FeasCell"
       },
       "Fuel": {
         "properties": {

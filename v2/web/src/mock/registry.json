@@ -42,7 +42,8 @@
     "A9": "Excel: BBM dari F_max · N_ship voyage. v2: dari frekuensi aktual F.",
     "A10": "Excel: alat per tambatan selalu 4 (XLOOKUP nama alat). v2: dari tabel rentang LOA.",
     "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa.",
-    "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15."
+    "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15.",
+    "A13": "Excel: lama konsumsi = ⌈payload / (D/365)⌉ (payload, dibulatkan ke hari). v2: q / (D/365) kontinu."
   },
   "interactions": [
     {
@@ -2797,6 +2798,7 @@
       ],
       "symbol": "payload[k]",
       "desc": "Muatan per pelayaran yang bisa dibawa kapal (ton atau TEU). Kapal lebih besar → payload naik → frekuensi turun (I1).",
+      "impl": "vessel:payload",
       "dependents": [
         "voyage.freq",
         "voyage.q"
@@ -2823,6 +2825,7 @@
         6
       ],
       "desc": "Apakah tipe kapal boleh membawa bentuk muatan flow ini (dari matriks kompatibilitas).",
+      "impl": "vessel:compatible",
       "dependents": [
         "vessel.feasible"
       ],
@@ -2855,6 +2858,7 @@
       ],
       "symbol": "feasible[f,k]",
       "desc": "Apakah kapal lolos semua syarat: tipe cocok, sarat ≤ kedalaman pelabuhan, dan LOA muat di dermaga. Kapal gugur tidak bisa dipilih.",
+      "impl": "vessel:feasibility",
       "dependents": [
         "dv.ship"
       ],
@@ -2886,6 +2890,7 @@
       ],
       "symbol": "nEq[k]",
       "desc": "Jumlah alat bongkar muat yang melayani satu kapal di tambatan KEK, ditentukan dari panjang kapal (A10).",
+      "impl": "vessel:n_equipment",
       "dependents": [
         "voyage.t_port_kek",
         "terminal.n_equip"
@@ -2938,6 +2943,7 @@
         4
       ],
       "desc": "Kecepatan yang dipakai saat kapal berlayar kosong.",
+      "impl": "vessel:ballast_speed",
       "dependents": [
         "voyage.t_sea"
       ],
@@ -3016,6 +3022,7 @@
       ],
       "symbol": "F_req",
       "desc": "Berapa kali kapal harus datang per tahun untuk mengangkut seluruh demand flow.",
+      "impl": "voyage:freq",
       "dependents": [
         "voyage.q",
         "voyage.n_ship",
@@ -3049,6 +3056,7 @@
       ],
       "symbol": "q",
       "desc": "Muatan yang dibawa per kunjungan (rata-rata, atau penuh pada mode full-load).",
+      "impl": "voyage:cargo_per_call",
       "dependents": [
         "voyage.t_port_kek",
         "voyage.t_port_ext",
@@ -3084,6 +3092,7 @@
       ],
       "symbol": "tPortKEK",
       "desc": "Lama kapal bongkar/muat di dermaga KEK per kunjungan, tergantung produktivitas dan jumlah alat.",
+      "impl": "voyage:t_port_kek",
       "dependents": [
         "voyage.t_port",
         "shipcost.port_call",
@@ -3115,6 +3124,7 @@
       ],
       "symbol": "tPortExt",
       "desc": "Lama kapal bongkar/muat di pelabuhan asal/tujuan per kunjungan.",
+      "impl": "voyage:t_port_ext",
       "dependents": [
         "voyage.t_port",
         "shipcost.port_call"
@@ -3140,6 +3150,7 @@
         6
       ],
       "desc": "Total waktu bongkar muat di kedua ujung rute per kunjungan.",
+      "impl": "voyage:t_port",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3167,6 +3178,7 @@
       ],
       "symbol": "tFix",
       "desc": "Waktu tetap per kunjungan di luar bongkar muat: mendekat, menunggu, dan diam (AT + WT + IT).",
+      "impl": "voyage:t_fix",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3203,6 +3215,7 @@
       ],
       "symbol": "tSea",
       "desc": "Lama berlayar satu putaran (berangkat bermuatan, pulang kosong).",
+      "impl": "voyage:t_sea",
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
@@ -3231,6 +3244,7 @@
       ],
       "symbol": "RTD",
       "desc": "Round trip days: lama satu putaran penuh kapal = berlayar + bongkar muat di kedua ujung + waktu tetap.",
+      "impl": "voyage:rtd",
       "dependents": [
         "voyage.f_max"
       ],
@@ -3259,6 +3273,7 @@
       ],
       "symbol": "F_max",
       "desc": "Berapa putaran yang sanggup dilakukan satu kapal dalam setahun (dibulatkan ke bawah, A1).",
+      "impl": "voyage:f_max",
       "dependents": [
         "voyage.n_ship",
         "voyage.utilization"
@@ -3286,6 +3301,7 @@
       ],
       "symbol": "N_ship",
       "desc": "Jumlah kapal yang dibutuhkan agar frekuensi tercapai. Dasar biaya sewa (TCH).",
+      "impl": "voyage:n_ship",
       "dependents": [
         "voyage.utilization",
         "shipcost.tch"
@@ -3311,6 +3327,7 @@
         6
       ],
       "desc": "Seberapa penuh jadwal armada terpakai; 100 % = tidak ada kapasitas putaran yang menganggur.",
+      "impl": "voyage:utilization",
       "dependents": [],
       "lane": 4,
       "depth": 13,
@@ -3329,11 +3346,15 @@
       ],
       "excel_ref": "Model!M350:AF350",
       "section": "5.3",
+      "audit": [
+        "A13"
+      ],
       "screens": [
         8
       ],
       "symbol": "lamaKonsumsi",
       "desc": "Berapa hari stok satu kali pengapalan cukup untuk kebutuhan tenant; dasar lama muatan menginap di penyimpanan.",
+      "impl": "voyage:consumption_days",
       "dependents": [
         "storage.dwell"
       ],

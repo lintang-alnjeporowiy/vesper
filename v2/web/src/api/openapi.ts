@@ -72,6 +72,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Compare
+         * @description Semua kapal kandidat untuk satu flow: kelayakan + alasan gugur + rantai §5.1–5.3 (layar 4 & 6).
+         */
+        post: operations["post_compare_api_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -126,15 +146,16 @@ export interface components {
             case: components["schemas"]["Case"];
             /**
              * Modules
-             * @description modul engine yang dihitung
+             * @description modul engine yang dihitung (dependensi ikut)
              * @default [
-             *       "demand"
+             *       "demand",
+             *       "voyage"
              *     ]
              */
-            modules: "demand"[];
+            modules: ("demand" | "voyage")[];
             /**
              * Plan Id
-             * @description rencana kapal per flow; default plan pertama kasus
+             * @description rencana kapal & alat; default plan pertama kasus
              */
             plan_id?: string | null;
             /**
@@ -144,6 +165,13 @@ export interface components {
             ship_by_flow?: {
                 [key: string]: string;
             } | null;
+            /**
+             * Equipment By Terminal
+             * @description override alat per terminal KEK di atas plan
+             */
+            equipment_by_terminal?: {
+                [key: string]: string;
+            } | null;
         };
         /** CalcResult */
         CalcResult: {
@@ -151,7 +179,7 @@ export interface components {
             modules: string[];
             /**
              * Plan Id
-             * @description rencana (kapal per flow) yang dipakai untuk variabel bergantung kapal
+             * @description rencana (kapal per flow, alat per terminal) yang dipakai
              */
             plan_id: string | null;
             /**
@@ -159,6 +187,14 @@ export interface components {
              * @description kapal terpilih per flow yang dipakai
              */
             ship_by_flow: {
+                [key: string]: string;
+            };
+            /**
+             * Equipment By Terminal
+             * @description alat terpilih per terminal KEK yang dipakai
+             * @default {}
+             */
+            equipment_by_terminal: {
                 [key: string]: string;
             };
             /**
@@ -177,17 +213,71 @@ export interface components {
             };
             /**
              * Units
-             * @description satuan cargo.demand_unit per flow
+             * @description satuan kapal per flow (cargo.demand_unit, payload, q)
              * @default {}
              */
             units: {
                 [key: string]: "ton" | "TEU";
             };
             /**
+             * Reasons
+             * @description alasan kapal terpilih gugur per flow (vessel.feasible = 0)
+             * @default {}
+             */
+            reasons: {
+                [key: string]: string[];
+            };
+            /**
+             * Feasibility
+             * @description modul voyage: kelayakan setiap kapal kompatibel per flow (flow id -> ship id -> sel)
+             * @default {}
+             */
+            feasibility: {
+                [key: string]: {
+                    [key: string]: components["schemas"]["FeasCell"];
+                };
+            };
+            /**
              * Warnings
              * @default []
              */
             warnings: string[];
+        };
+        /** CandidateRow */
+        CandidateRow: {
+            /** Ship Id */
+            ship_id: string;
+            /** Compatible */
+            compatible: boolean;
+            /** Feasible */
+            feasible: boolean;
+            /**
+             * Reasons
+             * @description alasan gugur
+             * @default []
+             */
+            reasons: string[];
+            /**
+             * Notes
+             * @description catatan data yang tidak menggugurkan
+             * @default []
+             */
+            notes: string[];
+            /**
+             * Selected
+             * @default false
+             */
+            selected: boolean;
+            /**
+             * Values
+             * @description id variabel -> angka/seri untuk flow ini dengan kapal ini
+             * @default {}
+             */
+            values: {
+                [key: string]: number | number[];
+            };
+            /** Error */
+            error?: string | null;
         };
         /** CargoFlow */
         CargoFlow: {
@@ -392,6 +482,40 @@ export interface components {
             /** Stowage Factor M3 T */
             stowage_factor_m3_t?: number | null;
             packaging?: components["schemas"]["Packaging"] | null;
+        };
+        /** CompareRequest */
+        CompareRequest: {
+            /** @description kasus aktif (termasuk editan di UI) */
+            case: components["schemas"]["Case"];
+            /** Flow Id */
+            flow_id: string;
+            /** Plan Id */
+            plan_id?: string | null;
+            /** Ship By Flow */
+            ship_by_flow?: {
+                [key: string]: string;
+            } | null;
+            /** Equipment By Terminal */
+            equipment_by_terminal?: {
+                [key: string]: string;
+            } | null;
+        };
+        /** CompareResult */
+        CompareResult: {
+            /** Flow Id */
+            flow_id: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "ton" | "TEU";
+            /** Equipment Id */
+            equipment_id: string | null;
+            /**
+             * Rows
+             * @description semua kapal kasus; rantai dihitung untuk yang kompatibel
+             */
+            rows: components["schemas"]["CandidateRow"][];
         };
         /** ContainerSpec */
         ContainerSpec: {
@@ -611,6 +735,23 @@ export interface components {
              * @enum {string}
              */
             berth_type: "beton" | "dolphin";
+        };
+        /** FeasCell */
+        FeasCell: {
+            /** Ok */
+            ok: boolean;
+            /**
+             * Reasons
+             * @description alasan gugur
+             * @default []
+             */
+            reasons: string[];
+            /**
+             * Notes
+             * @description catatan data yang tidak menggugurkan (mis. panjang dermaga kosong)
+             * @default []
+             */
+            notes: string[];
         };
         /** Fuel */
         Fuel: {
@@ -1810,6 +1951,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalcResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_compare_api_compare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompareResult"];
                 };
             };
             /** @description Validation Error */

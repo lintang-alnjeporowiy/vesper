@@ -181,7 +181,9 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 | `compatible[f,k]` | tipe kapal k ∈ tipe yang diizinkan untuk bentuk muatan f (matriks, bisa diedit) |
 | `feasible[f,k]` | compatible ∧ `T_k ≤ draft pelabuhan eksternal` ∧ `dermaga terpanjang ≥ 0,85·LOA_k` ∧ `LOA_k ≤ max_loa` (bila diisi) ∧ (opsional) `T_k·(1+UKC) ≤ kedalaman rencana KEK` |
 | `nEq[k]` | jumlah alat/tambatan dari tabel rentang LOA |
-| `reach_ok[k,e]` | radius alat ≥ kebutuhan jangkauan (≈ B kapal + margin) |
+| `reach_ok[k,e]` | radius alat ≥ kebutuhan jangkauan (≈ B kapal + margin) — **ditunda ke Tahap 7** (margin belum ada di kasus) |
+
+**Implementasi Tahap 5 (2026-11-22)** — `calc/vessel.py`: `payload` (TEU = kapasitas TEU efektif; ton = isian atau α·DWT; cek berat per TEU sudah dijamin NetMax §5.1), `compatible`, `feasibility` (per pelabuhan eksternal di rute: draft, dermaga terpanjang ≥ rasio·LOA, LOA maks; panjang dermaga kosong → LOA tidak dicek, dicatat sebagai *notes*; kedalaman KEK tidak membatasi karena dirancang mengikuti kapal di Tahap 8), `n_equipment` (rentang `[min, max)`, di atas rentang terakhir = rentang terakhir, dibatasi `max_per_berth` terminal), `ballast_speed`. Kecepatan = Vs kapal; keputusan kecepatan (dv.speed, I2) **ditunda** (keputusan pengguna).
 
 ### 5.3 Operasi pelayaran — sheet `Model` baris 28–235
 | Variabel | Rumus | Satuan |
@@ -197,6 +199,8 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 | `N_ship` | `⌈F_req / F_max⌉` | unit |
 | `lamaKonsumsi` | `q / (D/365)` | hari stok per pengapalan |
 | utilisasi kapal (metrik) | `F_req / (N_ship · F_max)` | – |
+
+**Implementasi Tahap 5 (2026-11-22)** — `calc/voyage.py` + `run.voyage_chain`. Terminal flow = terminal KEK yang melayani bentuk muatannya; alat = `plan.equipment_by_terminal` (+ override). Arah: inbound = bongkar di KEK / muat di asal, outbound sebaliknya (`ProdRate.unload/load`). Laju dikonversi ke satuan kapal: box/j → TEU/j lewat `share_20ft` (TEU per box = s + 2(1−s); K15 = 1), t/j ↔ TEU/j lewat tonPerTEU. Pelabuhan eksternal = ujung non-KEK leg bermuatan; `tSea` = Σ leg (Vs bila bermuatan, V ballast bila kosong). `tFix` sekali per call. Tahun tanpa demand: semua seri 0 (seperti Excel). Excel menyimpan port time sebagai hari/tahun (`Model!M68`, `M82`) dan `tFix` di dalam port time per call (`M182`); engine hari/call. Validasi (`tests/test_calc_voyage.py`, `tests/excel_k15.py`, `tools/diff_k15.py`): tiruan rumus Excel mereproduksi golden K15 persis (10 flow × 11 seri × 20 th), dan tiruan yang sama + koreksi A1, A2, A3, A5, A10, A13 + D_TEU engine (A12) = engine persis → setiap selisih vs Excel terjelaskan. Contoh tahun pertama: jumlah kapal berubah di in.baru (4→5, A5), out.damai & out.fantasi (3→4, A3), out.esa (2→1, A2), out.baru (3→4, A10).
 
 ### 5.4 Biaya pelayaran — sheet `Model` 246–338, `TCH`, `Biaya Pelabuhan`
 | Variabel | Rumus |
@@ -373,8 +377,9 @@ Selama Tahap 2–3 (UI placeholder) web membaca JSON kasus langsung sebagai mock
 
 **API (Tahap 4, keputusan pengguna 2026-11-22):**
 - **Dev:** FastAPI (`uv run --project engine uvicorn tpt_api.app:app`, :8000, konfigurasi `api` di `.claude/launch.json`) berdampingan dengan Vite; Vite mem-proxy `/api` → :8000 (`TPT_API_URL` untuk mengganti target). Semua rute di bawah `/api`; Tahap 13 FastAPI juga menyajikan build web di origin yang sama.
-- **Rute:** `GET /api/health`, `GET /api/cases` (file `cases/*.json` + status validasi), `GET /api/cases/{id}`, `POST /api/calculate`.
-- **`/calculate`:** request `{case, modules: ["demand"], plan_id?, ship_by_flow?}` — kasus aktif dikirim utuh (termasuk editan UI, tanpa state server). Respons **berkunci id registry**: `{modules, plan_id, ship_by_flow, computed: [id…], values: {id: {flow|ship: angka | seri[20]}}, units: {flow: ton|TEU}, warnings}`. `computed` = daftar variabel yang dihitung engine → UI mengganti badge `placeholder` dengan `dihitung`. Modul yang belum ada → 422.
+- **Rute:** `GET /api/health`, `GET /api/cases` (file `cases/*.json` + status validasi), `GET /api/cases/{id}`, `POST /api/calculate`, `POST /api/compare` (Tahap 5).
+- **`/calculate`:** request `{case, modules: ["demand"], plan_id?, ship_by_flow?}` — kasus aktif dikirim utuh (termasuk editan UI, tanpa state server). Respons **berkunci id registry**: `{modules, plan_id, ship_by_flow, computed: [id…], values: {id: {flow|ship: angka | seri[20]}}, units: {flow: ton|TEU}, warnings}`. `computed` = daftar variabel yang dihitung engine → UI mengganti badge `placeholder` dengan `dihitung`. Modul yang belum ada → 422. Tahap 5: modul `voyage` (menarik `demand`), request menerima `equipment_by_terminal`, respons menambah `equipment_by_terminal`, `reasons` (alasan kapal terpilih gugur) dan `feasibility` (flow → kapal kompatibel → `{ok, reasons, notes}`, dipakai layar 4).
+- **`/compare` (keputusan pengguna 2026-11-22):** request `{case, flow_id, plan_id?, ship_by_flow?, equipment_by_terminal?}` → `{flow_id, unit, equipment_id, rows: [{ship_id, compatible, feasible, reasons, notes, selected, values: {id registry: angka | seri}, error}]}` untuk semua kapal kasus; rantai §5.1–5.3 dihitung untuk yang kompatibel (termasuk yang gugur, agar posisinya terlihat). Dipanggil hanya oleh layar 6 (`useCompare`), bukan setiap /calculate.
 - **Web memilih mock vs API otomatis:** `useEngineSync` (dipasang di App) mengirim kasus ke `/calculate` dengan debounce 300 ms setiap kali kasus/kapal terpilih berubah (dan saat Hitung ulang); bila API tak terjangkau, angka kembali ke placeholder dengan catatan "API tidak aktif" dan dicoba lagi tiap 5 detik. Kasus awal tetap dibundel dari `cases/k15-batam.json` agar UI terbuka tanpa API; `registry.json` tetap mock sampai `/registry`.
 - **Tipe:** `tools/export_openapi.py` → `web/src/api/openapi.json` → `npm --prefix web run gen:api` (openapi-typescript, dipasang terpisah di `web/tools/gen-api` karena butuh TypeScript 5 sedangkan web TypeScript 7) → `src/api/openapi.ts`; `src/api/case.ts` hanya alias `components['schemas'][…]`. FastAPI memakai `separate_input_output_schemas=False` agar satu tipe per model. Test gagal bila `openapi.json` basi. Database hanya dipertimbangkan bila nanti butuh multi-user — **bukan** di roadmap ini. Kode v1 tidak dibuang; boleh jadi referensi.
 
@@ -397,7 +402,8 @@ v2/
 │                   src/components (ui, shell, trace), src/charts, src/lib (case, format, registry),
 │                   src/mock (case + placeholders + registry.json), src/store.ts (Zustand)
 └─ tools/           extract_k15.py (pemetaan sel khusus K15), export_schema.py, dump_registry.py (registry → web/src/mock/registry.json),
-                    export_openapi.py (OpenAPI → web/src/api/openapi.json), check.ps1 (semua cek), dev.ps1 (jalankan API + web lokal)
+                    export_openapi.py (OpenAPI → web/src/api/openapi.json), check.ps1 (semua cek), dev.ps1 (jalankan API + web lokal),
+                    diff_k15.py (laporan selisih engine vs Excel K15 per flow + penyebab, memakai engine/tests/excel_k15.py)
 ```
 
 ### 9.3 Registry & jejak (inti "interaksi variabel")
@@ -416,7 +422,7 @@ class VarDef:
 Registry diekspos lewat `/registry`; hasil `/calculate` membawa nilai + `deps` aktual → UI menggambar graf, menyorot hulu/hilir, dan menampilkan "kenapa angka ini".
 
 **Implementasi Tahap 3 (2026-11-21)** — `engine/src/tpt_engine/registry.py`, 173 variabel (100 input, 4 keputusan, 64 turunan, 4 metrik, 1 objektif):
-- `VarDef` ditambah: `impl` (Tahap 4: fungsi engine `"modul:fungsi"` di bawah `tpt_engine.calc`, dari `IMPL`; dites dapat diimpor dan sama dengan `calc.run.COMPUTES`), `section` (§ SPEC), `audit` (ID A1–A12), `case_path` (input), `screens` (layar tempat tampil), `symbol`, `note`, `desc` (keterangan 1–2 kalimat untuk pengguna, di `registry_desc.py`; test mewajibkan setiap variabel punya). `kind` ditambah **`metric`** = angka laporan yang tidak dipakai variabel lain (utilisasi, Rp/t pelayaran, BOR realisasi, anuitas).
+- `VarDef` ditambah: `impl` (Tahap 4: fungsi engine `"modul:fungsi"` di bawah `tpt_engine.calc`, dari `IMPL`; dites dapat diimpor dan sama dengan `calc.run.COMPUTES`), `section` (§ SPEC), `audit` (ID A1–A13), `case_path` (input), `screens` (layar tempat tampil), `symbol`, `note`, `desc` (keterangan 1–2 kalimat untuk pengguna, di `registry_desc.py`; test mewajibkan setiap variabel punya). `kind` ditambah **`metric`** = angka laporan yang tidak dipakai variabel lain (utilisasi, Rp/t pelayaran, BOR realisasi, anuitas).
 - Id: input `in.<entitas>.<atribut>`, keputusan `dv.*`, objektif `obj.npv`; turunan `<modul>.<nama>` dengan modul = file `calc/` (demand, cargo, vessel, voyage, shipcost, terminal, storage, waterside, invest, agg).
 - **Input per atribut** (keputusan pengguna): satu simpul per field `Case` yang dipakai rumus; `case_path` memakai `nama[kunci]` untuk elemen list yang dipilih konteks (flow, ship, port, route, terminal, equip, …). Tampilan graf bisa meringkasnya per entitas (17 kelompok).
 - Turunan = satu per baris rumus §5; beberapa baris dipecah agar jejak berguna (BBM liter vs Rp, port time KEK/ext/total, biaya pelabuhan per call vs per tahun, V ballast/daya AE/SFOC/kapasitas TEU efektif) dan beberapa ditambah: utilisasi, Rp/t pelayaran, alat lapangan, investasi total.
@@ -457,6 +463,7 @@ Semua temuan sudah diputuskan (tabel keputusan di bawah). Engine v2 **hanya** me
 | A10 | `Model!CI8:CI17` | jumlah alat/tambatan di-XLOOKUP dengan **nama alat** ("Alat 7") ke tabel rentang LOA → selalu 4 | aturan LOA→alat tidak pernah aktif |
 | A11 | `Biaya Pelabuhan!E71:E128` | biaya pelabuhan berupa **nilai statis** (tidak ikut berubah saat kapal diganti) dan dihitung dengan voyage maks per kapal (65), bukan frekuensi aktual (92) | optimasi Evolver tidak "melihat" biaya pelabuhan; in.damai th-1 dihitung 65 call, seharusnya 92 (kurang ±30 %) |
 | A12 | `Proyeksi Muatan!G20:Z24`, `J5…`, `Model!N9` | pembulatan TEU tidak seragam: tahun-1 `ROUNDDOWN` (G20), tahun lain `ROUNDUP`; TEU inbound (fantasi) dibulatkan lalu **dikompounding**; outbound TEU tidak dibulatkan (224.972,8 TEU) | out.damai th-1 kurang 1 TEU; in.fantasi naik ≤ 6 TEU sebelum batas (ditemukan Tahap 4) |
+| A13 | `Model!M350:AF359` | lama konsumsi = `ROUNDUP(payload / (D/365))` — memakai payload (bukan muatan per call aktual) dan dibulatkan ke hari | lama konsumsi naik ≤ 1 hari (dwelling time penyimpanan, Tahap 7) (ditemukan Tahap 5) |
 
 Verifikasi: dengan rumus di atas (termasuk A1, A9, A10), rantai AETOS tahun-1 rute Badas mereproduksi `Model!M338` = Rp 734,3 M persis — lihat tab 3 blueprint.
 
@@ -475,10 +482,11 @@ Verifikasi: dengan rumus di atas (termasuk A1, A9, A10), rantai AETOS tahun-1 ru
 | A8 | **dua parameter** (default saya, bisa diubah) | α payload = 85 % DWT; α batas berat per TEU = 90 % DWT |
 | A11 | **dihitung dari tarif × frekuensi aktual** (sejalan A9) | jasa labuh/pandu/tambat/tunda/B-M dari `tariffs` × `F`; TERSUS KEK tanpa jasa kepelabuhanan (`kek_site.port_charges = "none"`) |
 | A12 | **⌈·⌉ sekali** (jelas bug, sejalan rumus §5.1) | proyeksi kontinu dalam satuan flow; `D_TEU = ⌈D_ton/tonPerTEU⌉` atau `⌈D⌉` di semua tahun |
+| A13 | **ikut rumus §5.3** (q / (D/365), kontinu) | pembulatan hari, bila perlu, diputuskan di penyimpanan (Tahap 7) |
 
 **Data kasus:** celah data & asumsi ekstraksi K15 (batimetri, dermaga eksisting, mode produktivitas pelabuhan, batas LOA, kapasitas TEU, dll.) dicatat di `cases/k15-batam.json → assumptions`, bukan di dokumen ini.
 
-**Konsekuensi untuk golden test:** angka K15 yang terdampak A1–A3, A5, A6, A9–A11 (port time, RTD, jumlah kapal, BBM) tidak akan sama dengan Excel. Bagian itu dites dengan hitungan tangan; laporan validasi Tahap 5–6 mencatat selisih per flow vs Excel beserta penyebabnya.
+**Konsekuensi untuk golden test:** angka K15 yang terdampak A1–A3, A5, A6, A9–A13 (port time, RTD, jumlah kapal, BBM, pembulatan TEU, lama konsumsi) tidak akan sama dengan Excel. Bagian itu dites dengan hitungan tangan; laporan validasi mencatat selisih per flow vs Excel beserta penyebabnya (Tahap 5: `tools/diff_k15.py`).
 
 ---
 

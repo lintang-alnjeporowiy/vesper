@@ -49,8 +49,18 @@ def test_calculate_reflects_edits(client):
     assert body["values"]["demand.base"]["in.damai"][1] == pytest.approx(3_300_000)
 
 
+def test_calculate_voyage_and_compare(client):
+    body = client.post("/api/calculate", json={"case": CASE, "modules": ["voyage"]}).json()
+    assert body["modules"] == ["demand", "voyage"] and body["values"]["voyage.n_ship"]["in.damai"][0] == 2
+    cmp = client.post("/api/compare", json={"case": CASE, "flow_id": "in.damai"})
+    assert cmp.status_code == 200, cmp.text
+    rows = {r["ship_id"]: r for r in cmp.json()["rows"]}
+    assert rows["ship.aetos"]["selected"] and rows["ship.aetos"]["feasible"]
+    assert client.post("/api/compare", json={"case": CASE, "flow_id": "x"}).status_code == 422
+
+
 def test_calculate_errors(client):
-    assert client.post("/api/calculate", json={"case": CASE, "modules": ["voyage"]}).status_code == 422
+    assert client.post("/api/calculate", json={"case": CASE, "modules": ["shipcost"]}).status_code == 422
     assert client.post("/api/calculate", json={"case": CASE, "plan_id": "x"}).status_code == 422
 
 

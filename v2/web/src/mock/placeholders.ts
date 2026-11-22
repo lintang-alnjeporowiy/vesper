@@ -39,34 +39,6 @@ export const PH_SAMPLE: Record<string, string> = {
 }
 
 // ── Layar 6: armada in.damai ─────────────────────────────────────────────────
-export const CHAIN_DAMAI: { id: string; label: string; value: string; input?: boolean; final?: boolean }[] = [
-  { id: 'demand.base', label: 'Demand', value: '4,65 jt t', input: true },
-  { id: 'vessel.payload', label: 'Payload', value: '32.636 t', input: true },
-  { id: 'voyage.freq', label: 'Frekuensi', value: '143 /th' },
-  { id: 'voyage.t_port', label: 'Port time', value: '2,7 hr' },
-  { id: 'voyage.t_sea', label: 'Sea time', value: '5,3 hr' },
-  { id: 'voyage.rtd', label: 'RTD', value: '8,0 hr' },
-  { id: 'voyage.n_ship', label: 'Jumlah kapal', value: '4 unit', final: true },
-]
-
-export const KPI_FLEET = [
-  { label: 'Utilisasi kapal', value: '78 %', v: 'voyage.utilization' },
-  { label: 'Shipping cost / th', value: 'Rp 563 M', v: 'shipcost.total' },
-  { label: 'Unit cost', value: '121 rb/t', v: 'shipcost.unit' },
-  { label: 'Berth-days KEK', value: '164 hr', v: 'terminal.berth_days' },
-]
-
-/** Estimasi kasar per kandidat GC untuk in.damai tahun 10 (bukan engine). */
-export const FLEET_CANDIDATES: Record<string, { rtd: number; ships: number; unitCostRb: number }> = {
-  'ship.gemini_dream': { rtd: 6.5, ships: 12, unitCostRb: 168 },
-  'ship.ashico_victoria': { rtd: 6.6, ships: 10, unitCostRb: 160 },
-  'ship.al_amal': { rtd: 6.4, ships: 9, unitCostRb: 152 },
-  'ship.21_panda': { rtd: 6.5, ships: 8, unitCostRb: 147 },
-  'ship.simas': { rtd: 6.6, ships: 6, unitCostRb: 139 },
-  'ship.han_ren': { rtd: 6.7, ships: 6, unitCostRb: 134 },
-  'ship.aetos': { rtd: 8.0, ships: 4, unitCostRb: 121 },
-}
-
 // ── Layar 2: proyeksi inbound (juta ton; fantasi ribu TEU) ──────────────────
 export const PROJECTION: Record<string, number[]> = {
   'in.damai': [3.0, 3.15, 3.31, 3.47, 3.65, 3.83, 4.02, 4.22, 4.43, 4.65, 4.89, 5.13, 5.39, 5.66, 5.94, 6.24, 6.55, 6.88, 7.22, 7.58],
@@ -225,16 +197,3 @@ export const EQUIP_WHATIF = [
   { label: 'Berth-days MP th 13', value: '547 → 410', delta: '−25 %', good: true },
   { label: 'Investasi alat MP', value: 'USD 1,8 → 2,6 jt', delta: '+47 %', good: false },
 ]
-
-// Kelayakan kapal sementara (aturan SPEC §5.2) — mock sampai engine Tahap 5.
-export function feasibilityMock(
-  ship: { draft_m: number; loa_m: number },
-  port: { max_draft_m: number; longest_berth_m?: number | null },
-  loaRatio: number,
-): { ok: boolean | null; reasons: string[] } {
-  const reasons: string[] = []
-  if (ship.draft_m > port.max_draft_m) reasons.push('draft')
-  if (port.longest_berth_m == null) return { ok: reasons.length ? false : null, reasons: reasons.length ? reasons : ['LOA ?'] }
-  if (ship.loa_m > port.longest_berth_m / loaRatio) reasons.push('LOA')
-  return { ok: reasons.length === 0, reasons }
-}

@@ -267,7 +267,8 @@ DERIVED: tuple[VarDef, ...] = (
     _d("voyage.utilization", "Utilisasi kapal", "–", "flow×year", "F_req / (N_ship · F_max)",
        ("voyage.freq", "voyage.n_ship", "voyage.f_max"), sec="5.3", screens=(6,), kind="metric"),
     _d("voyage.consumption", "Lama konsumsi", "hari stok/pengapalan", "flow×year", "q / (D / 365)",
-       ("voyage.q", "cargo.demand_unit"), sec="5.3", excel="Model!M350:AF350", screens=(8,), symbol="lamaKonsumsi"),
+       ("voyage.q", "cargo.demand_unit"), sec="5.3", excel="Model!M350:AF350", audit=("A13",), screens=(8,),
+       symbol="lamaKonsumsi"),
     # §5.4 biaya pelayaran
     _d("shipcost.fuel_me_l", "Konsumsi BBM ME", "l/th", "flow×year",
        "P_ME · MCR · SFOC_ME · 24 · (tSea · %ME_laut + (tPort + tFix) · %ME_pelabuhan) · F ÷ berat jenis",
@@ -392,6 +393,24 @@ IMPL: dict[str, str] = {
     "cargo.box_per_teu": "cargo:box_per_teu",
     "cargo.ton_per_teu": "cargo:ton_per_teu",
     "cargo.demand_unit": "cargo:demand_unit",
+    # Tahap 5 (§5.2–5.3)
+    "vessel.payload": "vessel:payload",
+    "vessel.compatible": "vessel:compatible",
+    "vessel.feasible": "vessel:feasibility",
+    "vessel.neq": "vessel:n_equipment",
+    "vessel.ballast_speed": "vessel:ballast_speed",
+    "voyage.freq": "voyage:freq",
+    "voyage.q": "voyage:cargo_per_call",
+    "voyage.t_port_kek": "voyage:t_port_kek",
+    "voyage.t_port_ext": "voyage:t_port_ext",
+    "voyage.t_port": "voyage:t_port",
+    "voyage.t_fix": "voyage:t_fix",
+    "voyage.t_sea": "voyage:t_sea",
+    "voyage.rtd": "voyage:rtd",
+    "voyage.f_max": "voyage:f_max",
+    "voyage.n_ship": "voyage:n_ship",
+    "voyage.utilization": "voyage:utilization",
+    "voyage.consumption": "voyage:consumption_days",
 }
 
 REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, ""), impl=IMPL.get(v.id))
@@ -460,6 +479,7 @@ AUDIT: dict[str, str] = {
     "A11": "Excel: biaya pelabuhan statis, 65 call. v2: tarif × frekuensi aktual; TERSUS tanpa jasa.",
     "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu "
            "dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15.",
+    "A13": "Excel: lama konsumsi = ⌈payload / (D/365)⌉ (payload, dibulatkan ke hari). v2: q / (D/365) kontinu.",
 }
 AUDIT_IDS = tuple(AUDIT)
 
