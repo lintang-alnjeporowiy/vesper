@@ -1,6 +1,8 @@
 import { MAP_SCREEN, usePlanner, type Settings } from '../store'
 import { AUDIT, KIND_LABEL, VAR, contextLabel, sameCtx, downstream, getVar, inputValue, upstream, type VarDef } from '../lib/registry'
 import { PH_SAMPLE, PH_SAMPLE_CTX } from '../mock/placeholders'
+import { useReview } from '../review'
+import { ReviewPanel, VarNotes } from './ReviewPanel'
 import { Badge, Button, InputMark, PH, StatusDot } from './ui'
 
 export const STEPS: { n: number; title: string; group: 'Input' | 'Hasil' | 'Telusur'; status?: 'lengkap' | 'asumsi' | 'placeholder' }[] = [
@@ -23,6 +25,8 @@ export function Sidebar() {
   const screen = usePlanner((s) => s.screen)
   const setScreen = usePlanner((s) => s.setScreen)
   const meta = usePlanner((s) => s.caseData.meta)
+  const reviewed = useReview((s) => s.reviewed)
+  const openNotes = useReview((s) => s.notes).filter((n) => !n.done)
   return (
     <nav aria-label="Langkah pengerjaan" className="sticky top-14 flex h-[calc(100vh-56px)] w-60 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-garis bg-white px-4 py-5">
       <div className="flex items-center gap-2.5 px-2 pb-6">
@@ -47,6 +51,10 @@ export function Sidebar() {
               >
                 <span className={`w-6 font-mono text-[13px] ${on ? 'text-white' : 'text-abu'}`}>{String(s.n).padStart(2, '0')}</span>
                 <span className="grow text-sm">{s.title}</span>
+                {openNotes.some((n) => n.screen === s.n) && (
+                  <span title="catatan review terbuka" className={`font-mono text-[13px] ${on ? 'text-white' : 'text-abu'}`}>{openNotes.filter((n) => n.screen === s.n).length}</span>
+                )}
+                {reviewed.includes(s.n) && <span title="sudah ditinjau (Milestone A)" className={`text-[13px] ${on ? 'text-white' : 'text-hijau'}`}>✓</span>}
                 {s.status && <StatusDot kind={s.status} />}
               </button>
             )
@@ -158,7 +166,7 @@ export function TraceDrawer() {
         <button type="button" aria-label="Jejak sebelumnya" onClick={traceBack} className="cursor-pointer border-0 bg-transparent p-0 font-mono text-base text-abu hover:text-hitam">←</button>
       )}
       <div role="tablist" className="flex grow items-center border-b border-garis">
-        {(['jejak', 'pengaturan'] as const).map((t) => (
+        {(['jejak', 'review', 'pengaturan'] as const).map((t) => (
           <button
             key={t}
             role="tab"
@@ -167,13 +175,21 @@ export function TraceDrawer() {
             onClick={() => setDrawerTab(t)}
             className={`-mb-px h-9 cursor-pointer border-0 bg-transparent px-2 text-sm ${drawerTab === t ? 'border-b-2 border-solid border-hitam font-medium text-hitam' : 'text-abu'}`}
           >
-            {t === 'jejak' ? 'Jejak variabel' : 'Pengaturan'}
+            {t === 'jejak' ? 'Jejak' : t === 'review' ? 'Review' : 'Pengaturan'}
           </button>
         ))}
       </div>
       <button type="button" aria-label="Tutup laci" onClick={toggleTrace} className="cursor-pointer border-0 bg-transparent text-base text-abu">×</button>
     </div>
   )
+  if (drawerTab === 'review') {
+    return (
+      <aside aria-label="Review" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
+        {tabs}
+        <ReviewPanel />
+      </aside>
+    )
+  }
   if (drawerTab === 'pengaturan') {
     return (
       <aside aria-label="Pengaturan" className="sticky top-14 flex h-[calc(100vh-56px)] w-80 shrink-0 flex-col gap-4 overflow-y-auto border-l border-garis bg-white p-6">
@@ -265,6 +281,7 @@ export function TraceDrawer() {
         {screen !== MAP_SCREEN && <Button size="sm" variant="tipis" onClick={() => setScreen(MAP_SCREEN)}>Buka di peta</Button>}
       </div>
       {v.note && <p className="m-0 text-[13px] text-abu">{v.note}</p>}
+      <VarNotes varId={v.id} />
       {settings.showPlaceholderNote && v.kind !== 'input' && !sameCtx(shipCtx, PH_SAMPLE_CTX) && <p className="m-0 text-[13px] text-abu">Nilai turunan placeholder hanya tersedia untuk contoh in.damai · AETOS · tahun 10.</p>}
       <span className="grow" />
       {(v.audit?.length ? settings.showAuditNotes : settings.showNoAuditNote) && (

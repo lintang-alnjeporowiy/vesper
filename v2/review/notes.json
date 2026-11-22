@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "updated": "2026-11-22T06:28:46.341Z",
+  "reviewed": [
+    8
+  ],
+  "notes": [
+    {
+      "screen": 4,
+      "topic": "tampilan",
+      "text": "kalau saya ingin memasukkan TCh jenis kapal yang lian bagaimana?",
+      "id": "nmwrg0rnhexm",
+      "at": "2026-11-22T06:15:41.309Z",
+      "done": false
+    },
+    {
+      "screen": 1,
+      "topic": "tampilan",
+      "text": "asumsi ini nanti ditampilkan bagaimana diversi finalnya? dan apa efeknya? atau asumsinya nanti bersifat dropdown yang akan mengubah bagaimana model bekerja atua asumsi inii cuma panduan untuk development kita?",
+      "id": "nmwrg2mn83ee",
+      "at": "2026-11-22T06:17:08.132Z",
+      "done": false
+    },
+    {
+      "screen": 1,
+      "topic": "tampilan",
+      "text": "di parameter global itu untuk tulisan Operasi Ekonomi Petikea Mesin itu di tulis tebal aja tulisan dan garis dibawahnya agar keliahtan beda kategorti",
+      "id": "nmwrg3rop1ie",
+      "at": "2026-11-22T06:18:01.321Z",
+      "done": false
+    },
+    {
+      "screen": 5,
+      "topic": "tampilan",
+      "text": "varaibl alat per tambatan itu harusnyua bisa diubah lah boi, alat bongkar muatnya juga bisa ditambahkan, terus kemudian kecocokan alat bongkar muat yang di dermaga MP itu harusnya bisa diganti jadi tidak semua muatan pakai harbour mobie crane tapi ini untuk pengembangan lanjutan saja, untuk sekarang cukup begitu",
+      "id": "nmwrg7w1fkys",
+      "at": "2026-11-22T06:21:13.587Z",
+      "done": false
+    },
+    {
+      "screen": 7,
+      "topic": "tampilan",
+      "text": "untuk Rincian tennatn per taun itu bagaimana car gantinya tentantnya? yang mau ditampilin?\n\nterus untuk grafik disini ini apa satuan sumbu X nya? jagan hanya di jdulnyua saja",
+      "id": "nmwrgakluwxd",
+      "at": "2026-11-22T06:23:18.738Z",
+      "done": false
+    },
+    {
+      "screen": 3,
+      "topic": "tampilan",
+      "text": "biaya pelabuhan juga rinciannya dimana bosque? coba lihat referensi kasus2 yang lain harusnya ada yang detail menghitung biaya pelabuhannya (biaya tambat dsb) tapi jangan terlalu detail juga",
+      "id": "nmwrgcid5iht",
+      "at": "2026-11-22T06:24:49.145Z",
+      "done": false
+    },
+    {
+      "screen": 9,
+      "topic": "tampilan",
+      "text": "tampilkan juga biaya pelayaran setiap tahunnya di grafik",
+      "id": "nmwrgef2koxj",
+      "at": "2026-11-22T06:26:18.188Z",
+      "done": false
+    },
+    {
+      "screen": 10,
+      "topic": "tampilan",
+      "text": "saya belum tahu untuk solver Highs ini apakah memberikan catatan grafik optimasinya tau gimana?\n\nyang sumbu X nya itu iterasi keberapa dan sumbu Y nya adalah nilai dari fungsi tujuan itu, untuk melihat konvergensi dan sebagai bukti bahwa optimasi sudah dilakukan\n\nkalau dari solvernya memang tidak ada ya tidak ada gpp, atau jika akan membabni engine atau aplikasi ini",
+      "id": "nmwrghldxi6q",
+      "at": "2026-11-22T06:28:46.341Z",
+      "done": false
+    }
+  ]
+}

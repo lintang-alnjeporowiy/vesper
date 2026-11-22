@@ -7,6 +7,7 @@ export const SCREEN_COUNT = 13
 export const MAP_SCREEN = 12
 
 type Path = (string | number)[]
+export type DrawerTab = 'jejak' | 'review' | 'pengaturan'
 
 /** Pengaturan tampilan per pengguna (disimpan di localStorage browser ini). */
 export interface Settings {
@@ -62,7 +63,7 @@ interface PlannerState {
   /** Riwayat jejak untuk tombol kembali di laci. */
   traceHistory: TraceRef[]
   /** Tab aktif di laci kanan. */
-  drawerTab: 'jejak' | 'pengaturan'
+  drawerTab: DrawerTab
   settings: Settings
   setScreen: (n: number) => void
   setYear: (y: number) => void
@@ -77,7 +78,7 @@ interface PlannerState {
   setMapWide: (v: boolean) => void
   traceBack: () => void
   toggleTrace: () => void
-  setDrawerTab: (t: 'jejak' | 'pengaturan') => void
+  setDrawerTab: (t: DrawerTab) => void
   setSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => void
   resetSettings: () => void
 }

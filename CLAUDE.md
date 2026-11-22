@@ -14,6 +14,7 @@ Pengguna adalah alumni TPT dan menguasai domainnya. **Jawab dalam Bahasa Indones
 - `v2/tools/extract_k15.py` — membuat ulang kasus & data pembanding dari Excel K15; `v2/tools/export_schema.py` — JSON Schema.
 - `v2/engine/src/tpt_engine/registry.py` — registry variabel (rumus, deps, Excel) untuk jejak & peta variabel; setelah mengubahnya jalankan `uv run --project engine python tools/dump_registry.py` (dari `v2/`) — test gagal bila `web/src/mock/registry.json` basi.
 - `v2/web/` — UI React + Vite + Tailwind + Zustand (Tahap 2b). Jalankan: `npm --prefix v2/web run dev` (atau konfigurasi "web" di `.claude/launch.json`); cek: `npm --prefix v2/web run build`. Semua angka hasil dummy ada di `v2/web/src/mock/placeholders.ts`.
+- `v2/review/notes.json` — catatan koreksi Milestone A dari tab Review di UI (disinkronkan dev server). Terapkan catatan terbuka ke registry/SPEC/UI, lalu set `done: true` (perbarui `updated`).
 - `apps/` — v1, **hanya referensi**; jangan diubah kecuali diminta. Repo git tersendiri; di-gitignore.
 - `referensi/K15|K21|K24|K7/` — bahan asli TPT milik kelompok lain (xlsx/pdf/pptx): K15 (utama), K21 & K24 (uji lanjutan), K7 (varian hub-spoke, di luar cakupan). **Di-gitignore; jangan pernah di-commit.**
 - `arsip/` — catatan lama era v1 (21 Juli) dan file lepas; di-gitignore.

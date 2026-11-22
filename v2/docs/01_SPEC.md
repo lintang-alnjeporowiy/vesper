@@ -306,7 +306,7 @@ Pola UI pendukung: **slider/what-if** di samping hasil, **badge delta** (angka b
 
 ## 8. Peta layar (UI-first)
 
-Shell: sidebar kiri = langkah pengerjaan (1–10, dengan status ✓/⚠/placeholder) · bar atas = pemilih kasus + skenario + tombol hitung/optimasi · laci kanan = tab **Jejak variabel** (selalu tersedia) | **Pengaturan** (setelan tampilan per pengguna, disimpan di localStorage browser; wadah semua pengaturan berikutnya).
+Shell: sidebar kiri = langkah pengerjaan (1–10, dengan status ✓/⚠/placeholder) · bar atas = pemilih kasus + skenario + tombol hitung/optimasi · laci kanan = tab **Jejak** (selalu tersedia) | **Review** (catatan koreksi Milestone A, lihat di bawah) | **Pengaturan** (setelan tampilan per pengguna, disimpan di localStorage browser; wadah semua pengaturan berikutnya).
 
 | # | Layar | Isi utama | Interaksi kunci |
 |---|---|---|---|
@@ -340,6 +340,7 @@ Shell: sidebar kiri = langkah pengerjaan (1–10, dengan status ✓/⚠/placehol
 **Jejak & peta variabel (Tahap 3, 2026-11-21):**
 - Angka yang bisa ditelusuri = garis bawah titik-titik abu (`Tv` di `web/src/components/trace.tsx`); klik → laci jejak. Angka aktif dibingkai biru 2 px. Semua angka hasil dan input yang tampil di layar 6–9 bisa diklik.
 - Laci jejak (dari registry): konteks (flow · kapal · tahun / terminal), label, nilai (input = nilai kasus aktif, hitam; turunan = placeholder abu), badge jenis, simbol + id, **keterangan singkat apa variabel ini**, chip **Tampil di layar** (klik = pindah layar), rumus atau `case_path`, SPEC §, sel Excel; daftar **Dihitung dari** (klik = telusuri ke hulu, konteks tetap), chip **Dipakai untuk menghitung**, keterangan juga muncul sebagai tooltip di angka, masukan, dan simpul peta; jumlah hulu/hilir, tombol "Buka di peta", tombol ← riwayat; catatan `≠ Excel · A#` dari ringkasan audit di registry. Tab Pengaturan bisa menyembunyikan keterangan, catatan ≠ Excel, catatan "tidak ada temuan audit" (bawaan: **tersembunyi**), dan catatan nilai placeholder.
+- **Review Milestone A** (2026-11-22): catatan koreksi `{screen, varId?, topic, text, done}` dengan topik nama / keterangan / rumus / dependensi / satuan / data / tampilan / lainnya. Dicatat dari tab Jejak (*Catat koreksi* → terkait variabel yang dilihat) atau tab Review (catatan layar aktif, opsional dikaitkan ke variabel jejak). Tab Review: progres layar ditinjau (x/13, centang per layar), filter layar ini / terbuka / semua, tandai selesai, hapus, *Salin semua (Markdown)*. Sidebar menampilkan jumlah catatan terbuka dan ✓ per layar. Disimpan di localStorage dan, saat dev server berjalan, disinkronkan ke **`v2/review/notes.json`** (plugin Vite `/__review`, GET/POST; versi lebih baru menang) supaya agen bisa membaca dan menerapkan koreksi ke registry/SPEC lalu menandainya selesai.
 - Peta variabel: simpul input = penanda kotak biru; keputusan = bingkai putus-putus hitam; turunan/metrik = bingkai garis rambut; objektif = bidang hitam. Sorot: **hulu = bidang biru** (sisi biru 2 px), **hilir = bidang `#EEEEEE` + bingkai hitam** (sisi hitam), terpilih = bingkai biru 2 px, lainnya redup 30 %.
 
 Setiap layar di tahap UI-first menampilkan data K15 (dari JSON contoh) dan angka hasil berlabel **`placeholder`** sampai engine modul itu tersambung (lalu label berubah jadi **`dihitung`** + bisa dilacak).
