@@ -1598,6 +1598,16 @@
           "description": "HMC, MLA, …",
           "title": "Equipment Kind",
           "type": "string"
+        },
+        "berth_layout": {
+          "default": "quay",
+          "description": "quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty",
+          "enum": [
+            "quay",
+            "jetty"
+          ],
+          "title": "Berth Layout",
+          "type": "string"
         }
       },
       "required": [

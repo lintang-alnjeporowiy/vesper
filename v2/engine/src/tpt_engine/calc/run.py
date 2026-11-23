@@ -1,6 +1,7 @@
 """Orkestrasi kalkulasi per modul. Hasil berkunci id variabel registry (SPEC §9.3).
 
-Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4); modul menarik modul sebelumnya. Variabel bergantung kapal/alat memakai rencana kasus
+Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5); modul menarik modul yang
+dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
 (default plan pertama) + override dari UI.
 """
 
@@ -11,11 +12,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..domain.case import CargoFlow, Case, Ship, teu_forms
-from . import cargo, demand, shipcost, vessel, voyage
+from . import cargo, demand, shipcost, terminal, vessel, voyage
 
-Module = Literal["demand", "voyage", "shipcost"]
-MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost")
-REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage")}
+Module = Literal["demand", "voyage", "shipcost", "terminal"]
+MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal")
+REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage"),
+                                        "terminal": ("demand", "voyage")}
 
 #: modul → id variabel registry yang dihitungnya (dites terhadap registry)
 COMPUTES: dict[str, tuple[str, ...]] = {
@@ -28,7 +30,11 @@ COMPUTES: dict[str, tuple[str, ...]] = {
     "shipcost": ("vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.fuel_me_l", "shipcost.fuel_ae_l",
                  "shipcost.fuel_me", "shipcost.fuel_ae", "shipcost.voyage", "shipcost.tch_rate", "shipcost.tch",
                  "shipcost.port_call", "shipcost.port", "shipcost.total", "shipcost.unit"),
+    "terminal": ("terminal.ship_days", "terminal.berth_days", "terminal.n_berth", "terminal.bor",
+                 "terminal.berth_length", "terminal.n_equip"),
 }
+#: variabel berkunci id terminal KEK (bukan flow)
+TERMINAL_KEYED = {"terminal.n_berth", "terminal.bor", "terminal.berth_length", "terminal.n_equip"}
 PORT_PARTS = ("labuh", "pandu", "tambat", "tunda", "bm")
 
 Value = float | list[float]
@@ -243,6 +249,40 @@ def cost_chain(case: Case, flow: CargoFlow, ship: Ship, ch: dict[str, Value], un
     return out, parts
 
 
+def terminal_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]]) -> dict[str, dict[str, Value]]:
+    """§5.5 dari hasil `voyage_chain` per flow (`chains`: flow id → (kapal, rantai)). Nilai per flow (ship-days,
+    berth-days) dan per terminal (tambatan, BOR, panjang, alat)."""
+    p = case.params
+    it = p.it_hours / p.working_hours_per_day
+    n_years = case.horizon.years
+    out: dict[str, dict[str, Value]] = {k: {} for k in COMPUTES["terminal"]}
+    flows = {f.id: f for f in case.flows}
+    for term in case.kek_site.terminals:
+        tot = [0.0] * n_years
+        neq = [0.0] * n_years
+        for fid, (ship, ch) in chains.items():
+            if voyage.terminal_of(case, flows[fid]).id != term.id:
+                continue
+            freq, tk = ch["voyage.freq"], ch["voyage.t_port_kek"]
+            assert isinstance(freq, list) and isinstance(tk, list)
+            sd = [terminal.ship_days(f, t, it) for f, t in zip(freq, tk, strict=True)]
+            bd = [float(terminal.berth_days(x, ship.loa_m, term)) for x in sd]
+            out["terminal.ship_days"][fid] = sd
+            out["terminal.berth_days"][fid] = bd
+            n_eq = vessel.n_equipment(ship, case.equipment_rules, term.id)
+            for y in range(n_years):
+                tot[y] += bd[y]
+                if freq[y]:
+                    neq[y] = max(neq[y], n_eq)
+        nb = terminal.n_berth(tot, p.bor_max, p.working_days_per_year)
+        neq_c = terminal.never_decrease(neq)
+        out["terminal.n_berth"][term.id] = nb
+        out["terminal.bor"][term.id] = [terminal.bor(b, n, p.working_days_per_year) for b, n in zip(tot, nb, strict=True)]
+        out["terminal.berth_length"][term.id] = [terminal.berth_length(n, term) for n in nb]
+        out["terminal.n_equip"][term.id] = [terminal.n_equip(n, int(e)) for n, e in zip(nb, neq_c, strict=True)]
+    return out
+
+
 SHIP_KEYED = {"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
 
 
@@ -271,6 +311,7 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     breakdown: dict[str, dict[str, list[float]]] = {}
     warnings: list[str] = []
     ships = {s.id: s for s in case.ships}
+    chains: dict[str, tuple[Ship, dict[str, Value]]] = {}
 
     series = demand.project_flows(case)
     values["demand.base"] = {f.id: series[f.id] for f in case.flows if f.volume.mode == "independent"}
@@ -304,6 +345,7 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
             else:
                 chain = {**chain, **costs}
                 breakdown[f.id] = parts
+        chains[f.id] = (ship, chain)
         for k, v in chain.items():
             key = ship.id if k in SHIP_KEYED else f.id
             values.setdefault(k, {})[key] = v
@@ -311,6 +353,9 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
         if not feas.ok:
             reasons[f.id] = feas.reasons
             warnings.append(f"{f.id}: kapal {ship.name} gugur — {'; '.join(feas.reasons)}")
+
+    if "terminal" in mods:
+        values.update(terminal_chain(case, chains))
 
     matrix: dict[str, dict[str, FeasCell]] = {}
     if "voyage" in mods:

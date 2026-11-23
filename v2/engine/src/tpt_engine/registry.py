@@ -129,6 +129,7 @@ INPUTS: tuple[VarDef, ...] = (
     _in("in.term.cargo_forms", "Bentuk muatan per terminal", "kode", "kek_site.terminals[terminal].cargo_forms", scope="terminal", sec="4.5", screens=(8,)),
     _in("in.term.berth_length", "Panjang unit tambatan", "m", "kek_site.terminals[terminal].berth_unit_length_m", scope="terminal", sec="4.5", screens=(8,), symbol="L_unit"),
     _in("in.term.berth_width", "Lebar dermaga", "m", "kek_site.terminals[terminal].berth_width_m", scope="terminal", sec="4.5", screens=(8,)),
+    _in("in.term.layout", "Tata letak tambatan (dermaga menerus / jetty)", "–", "kek_site.terminals[terminal].berth_layout", scope="terminal", sec="4.5", screens=(8,)),
     _in("in.site.bathymetry", "Profil batimetri tapak", "m vs m", "kek_site.bathymetry", excel="Trestle!B34:B46", sec="4.5", screens=(3, 8)),
     _in("in.site.waterside", "Kondisi perairan (angin, arus, gelombang, alur)", "–", "kek_site.waterside", excel="Fasilitas Perairan", sec="4.5", screens=(3,)),
     _in("in.site.depth_factor", "Faktor kedalaman ÷ draft", "–", "kek_site.waterside.depth_factor_of_draft", sec="4.5", screens=(3, 8)),
@@ -306,21 +307,22 @@ DERIVED: tuple[VarDef, ...] = (
     _d("shipcost.unit", "Biaya pelayaran per satuan", "Rp/t | Rp/TEU", "flow×year", "shipping cost / D (satuan flow, A7)",
        ("shipcost.total", "cargo.demand_unit"), sec="5.4", audit=("A7",), screens=(6, 7), kind="metric"),
     # §5.5 terminal KEK
-    _d("terminal.ship_days", "Ship-days di KEK", "hari/th", "flow×year", "F · tPortKEK (+ tFix sesuai konvensi)",
-       ("voyage.freq", "voyage.t_port_kek", "voyage.t_fix"), sec="5.5", excel="Model!K101:AD102 (Σ per terminal)", screens=(8,),
-       symbol="shipDays[f]"),
-    _d("terminal.berth_days", "Berth-days required", "hari/th", "flow×year", "⌈shipDays · LOA_k / L_unit,τ⌉",
-       ("terminal.ship_days", "in.ship.loa", "dv.ship", "in.term.berth_length", "in.term.cargo_forms"), sec="5.5",
-       excel="Model!M106:AF106 · K119:AD120", screens=(6, 8), symbol="berthDaysReq[f]"),
-    _d("terminal.n_berth", "Jumlah tambatan", "unit", "terminal×year", "⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉, dibangun untuk N th ke depan",
-       ("terminal.berth_days", "in.param.bor_max", "in.param.working_days", "in.horizon.berth_lookahead", "in.horizon.lead"),
+    _d("terminal.ship_days", "Ship-days di KEK", "hari/th", "flow×year", "F · (tPortKEK + IT)",
+       ("voyage.freq", "voyage.t_port_kek", "in.param.it"), sec="5.5", excel="Model!M68:AF72 · M87:AF91 (Σ: K101:AD102)",
+       audit=("A2", "A17"), screens=(8,), symbol="shipDays[f]"),
+    _d("terminal.berth_days", "Berth-days required", "hari/th", "flow×year",
+       "dermaga menerus: ⌈shipDays · LOA_k / L_unit,τ⌉; jetty: ⌈shipDays⌉",
+       ("terminal.ship_days", "in.ship.loa", "dv.ship", "in.term.berth_length", "in.term.layout", "in.term.cargo_forms"), sec="5.5",
+       excel="Model!M106:AF115 (Σ: K119:AD120)", audit=("A16",), screens=(8,), symbol="berthDaysReq[f]"),
+    _d("terminal.n_berth", "Jumlah tambatan", "unit", "terminal×year", "⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉, tidak pernah turun",
+       ("terminal.berth_days", "in.param.bor_max", "in.param.working_days"),
        sec="5.5", excel="Model!K124:AD125", screens=(8, 9), symbol="nBerth[τ]"),
-    _d("terminal.bor", "BOR realisasi", "–", "terminal×year", "Σ shipDays / (nBerth · (Σ shipDays / Σ berthDaysReq) · WD)",
-       ("terminal.ship_days", "terminal.berth_days", "terminal.n_berth", "in.param.working_days"), sec="5.5",
+    _d("terminal.bor", "BOR realisasi", "–", "terminal×year", "Σ berthDaysReq / (nBerth · WD)",
+       ("terminal.berth_days", "terminal.n_berth", "in.param.working_days"), sec="5.5",
        excel="Model!K144:AD145", screens=(8,), kind="metric", symbol="BOR[τ]"),
-    _d("terminal.berth_length", "Panjang dermaga", "m", "terminal×year", "nBerth · L_unit,τ (jetty CC per tambatan)",
-       ("terminal.n_berth", "in.term.berth_length"), sec="5.5", screens=(8, 9)),
-    _d("terminal.n_equip", "Jumlah alat B/M", "unit", "terminal×year", "nBerth · nEq(kapal terpanjang di τ); penambahan per tahun",
+    _d("terminal.berth_length", "Panjang dermaga", "m", "terminal×year", "nBerth · L_unit,τ (jetty: panjang platform per jetty)",
+       ("terminal.n_berth", "in.term.berth_length"), sec="5.5", excel="Fasilitas Daratan Rata2!F5", screens=(8, 9)),
+    _d("terminal.n_equip", "Jumlah alat B/M", "unit", "terminal×year", "nBerth · nEq(kapal terpanjang yang melayani τ); penambahan per tahun",
        ("terminal.n_berth", "vessel.neq", "dv.equip", "dv.ship"), sec="5.5", excel="Model!K362:AD363", audit=("A10",),
        screens=(8, 9), symbol="nAlat[τ]"),
     # §5.6 penyimpanan
@@ -358,7 +360,8 @@ DERIVED: tuple[VarDef, ...] = (
        sec="5.7", excel="Trestle", screens=(8,)),
     # §5.8 investasi & staging
     _d("invest.berth", "Investasi dermaga MP & jetty CC", "Rp/th", "terminal×year", "Δ panjang dermaga · lebar · harga satuan · eskalasi, saat dibangun",
-       ("terminal.berth_length", "in.term.berth_width", "in.price.berth", "in.param.escalation_infra", "in.horizon.phases"),
+       ("terminal.berth_length", "in.term.berth_width", "in.price.berth", "in.param.escalation_infra", "in.horizon.phases",
+        "in.horizon.lead", "in.horizon.berth_lookahead"),
        sec="5.8", excel="Model!K387:AD387 · K391:AD391", screens=(9,)),
     _d("invest.handling", "Investasi alat B/M", "Rp/th", "terminal×year", "Δ jumlah alat · harga · kurs · eskalasi",
        ("terminal.n_equip", "in.equip.price", "dv.equip", "in.param.usd_rate", "in.param.escalation_equipment"),
@@ -431,6 +434,13 @@ IMPL: dict[str, str] = {
     "shipcost.port": "shipcost:port_call_cost",
     "shipcost.total": "shipcost:unit_cost",
     "shipcost.unit": "shipcost:unit_cost",
+    # Tahap 7a (§5.5)
+    "terminal.ship_days": "terminal:ship_days",
+    "terminal.berth_days": "terminal:berth_days",
+    "terminal.n_berth": "terminal:n_berth",
+    "terminal.bor": "terminal:bor",
+    "terminal.berth_length": "terminal:berth_length",
+    "terminal.n_equip": "terminal:n_equip",
 }
 
 REGISTRY: tuple[VarDef, ...] = tuple(replace(v, desc=DESC.get(v.id, ""), impl=IMPL.get(v.id))
@@ -504,6 +514,9 @@ AUDIT: dict[str, str] = {
            "v2: tarif luar negeri (USD × kurs) untuk pelabuhan luar negeri.",
     "A15": "Excel: pandu & tunda 1 gerakan/call, tunda tetap tidak dikali frekuensi, tambat × seluruh port time "
            "(KEK + asal + waktu tetap). v2: 2 gerakan, tunda tetap per call, tambat ⌈port time asal/tujuan⌉ etmal.",
+    "A16": "Excel: cek label 'CC' berth-days memakai referensi relatif yang bergeser → mulai tahun ke-2 jetty CC dibagi "
+           "300 m (unit MP); rumus aslinya LOA/40 m membuat satu tanker menempati ±4 jetty. v2: jetty = satu kapal satu jetty.",
+    "A17": "Excel: ship-days KEK hanya waktu bongkar muat. v2: + idle time (IT) di tambatan; AT dan WT tidak menempati tambatan.",
 }
 AUDIT_IDS = tuple(AUDIT)
 

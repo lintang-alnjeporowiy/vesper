@@ -45,7 +45,9 @@
     "A12": "Excel: pembulatan TEU tak seragam (tahun-1 ROUNDDOWN, lain ROUNDUP; TEU inbound dibulatkan lalu dikompounding). v2: proyeksi kontinu, ⌈·⌉ sekali di D_TEU; selisih ≤ 6 TEU di K15.",
     "A13": "Excel: lama konsumsi = ⌈payload / (D/365)⌉ (payload, dibulatkan ke hari). v2: q / (D/365) kontinu.",
     "A14": "Excel: label 'Dalam Negeri' dibandingkan dengan 'Dalam' → semua pelabuhan kena tarif dalam negeri. v2: tarif luar negeri (USD × kurs) untuk pelabuhan luar negeri.",
-    "A15": "Excel: pandu & tunda 1 gerakan/call, tunda tetap tidak dikali frekuensi, tambat × seluruh port time (KEK + asal + waktu tetap). v2: 2 gerakan, tunda tetap per call, tambat ⌈port time asal/tujuan⌉ etmal."
+    "A15": "Excel: pandu & tunda 1 gerakan/call, tunda tetap tidak dikali frekuensi, tambat × seluruh port time (KEK + asal + waktu tetap). v2: 2 gerakan, tunda tetap per call, tambat ⌈port time asal/tujuan⌉ etmal.",
+    "A16": "Excel: cek label 'CC' berth-days memakai referensi relatif yang bergeser → mulai tahun ke-2 jetty CC dibagi 300 m (unit MP); rumus aslinya LOA/40 m membuat satu tanker menempati ±4 jetty. v2: jetty = satu kapal satu jetty.",
+    "A17": "Excel: ship-days KEK hanya waktu bongkar muat. v2: + idle time (IT) di tambatan; AT dan WT tidak menempati tambatan."
   },
   "interactions": [
     {
@@ -160,7 +162,7 @@
       "desc": "Berapa tahun sebelum dipakai sebuah fasilitas (dermaga, alat, penyimpanan) harus mulai dibangun.",
       "deps": [],
       "dependents": [
-        "terminal.n_berth"
+        "invest.berth"
       ],
       "lane": 0,
       "depth": 0,
@@ -183,7 +185,7 @@
       "desc": "Dermaga dibangun sekaligus untuk kebutuhan terbesar N tahun ke depan, agar tidak membangun sedikit-sedikit tiap tahun.",
       "deps": [],
       "dependents": [
-        "terminal.n_berth"
+        "invest.berth"
       ],
       "lane": 0,
       "depth": 0,
@@ -277,7 +279,8 @@
       "desc": "Waktu kapal diam di dermaga tanpa bongkar muat (idle time: dokumen, persiapan), per kunjungan.",
       "deps": [],
       "dependents": [
-        "voyage.t_fix"
+        "voyage.t_fix",
+        "terminal.ship_days"
       ],
       "lane": 0,
       "depth": 0,
@@ -1457,6 +1460,28 @@
       "group": "term"
     },
     {
+      "id": "in.term.layout",
+      "label": "Tata letak tambatan (dermaga menerus / jetty)",
+      "unit": "–",
+      "scope": "terminal",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.terminals[terminal].berth_layout",
+      "screens": [
+        8
+      ],
+      "desc": "Dermaga menerus (kapal memakai panjang dermaga sebanding LOA) atau jetty (satu kapal satu jetty, berapa pun LOA-nya).",
+      "deps": [],
+      "dependents": [
+        "terminal.berth_days"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 102,
+      "group": "term"
+    },
+    {
       "id": "in.site.bathymetry",
       "label": "Profil batimetri tapak",
       "unit": "m vs m",
@@ -2502,7 +2527,7 @@
       ],
       "lane": 1,
       "depth": 3,
-      "topo": 119
+      "topo": 120
     },
     {
       "id": "dv.equip",
@@ -2529,7 +2554,7 @@
       ],
       "lane": 1,
       "depth": 2,
-      "topo": 112
+      "topo": 113
     },
     {
       "id": "dv.waterside",
@@ -2579,7 +2604,7 @@
       ],
       "lane": 1,
       "depth": 1,
-      "topo": 108
+      "topo": 109
     },
     {
       "id": "demand.base",
@@ -2614,7 +2639,7 @@
       ],
       "lane": 2,
       "depth": 1,
-      "topo": 102
+      "topo": 103
     },
     {
       "id": "demand.ratio",
@@ -2642,7 +2667,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 111
+      "topo": 112
     },
     {
       "id": "cargo.netmax",
@@ -2675,7 +2700,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 115
+      "topo": 116
     },
     {
       "id": "cargo.box_per_teu",
@@ -2702,7 +2727,7 @@
       ],
       "lane": 2,
       "depth": 3,
-      "topo": 118
+      "topo": 119
     },
     {
       "id": "cargo.ton_per_teu",
@@ -2732,7 +2757,7 @@
       ],
       "lane": 2,
       "depth": 4,
-      "topo": 120
+      "topo": 121
     },
     {
       "id": "cargo.demand_unit",
@@ -2771,7 +2796,7 @@
       ],
       "lane": 2,
       "depth": 5,
-      "topo": 123
+      "topo": 124
     },
     {
       "id": "vessel.teu_cap",
@@ -2799,7 +2824,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 109
+      "topo": 110
     },
     {
       "id": "vessel.payload",
@@ -2834,7 +2859,7 @@
       ],
       "lane": 3,
       "depth": 5,
-      "topo": 124
+      "topo": 125
     },
     {
       "id": "vessel.compatible",
@@ -2860,7 +2885,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 110
+      "topo": 111
     },
     {
       "id": "vessel.feasible",
@@ -2893,7 +2918,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 117
+      "topo": 118
     },
     {
       "id": "vessel.neq",
@@ -2926,7 +2951,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 105
+      "topo": 106
     },
     {
       "id": "vessel.reach_ok",
@@ -2950,7 +2975,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 104
+      "topo": 105
     },
     {
       "id": "vessel.ballast_speed",
@@ -2978,7 +3003,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 114
+      "topo": 115
     },
     {
       "id": "vessel.ae_kw",
@@ -3004,7 +3029,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 106
+      "topo": 107
     },
     {
       "id": "vessel.sfoc_me",
@@ -3030,7 +3055,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 107
+      "topo": 108
     },
     {
       "id": "vessel.sfoc_ae",
@@ -3056,7 +3081,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 113
+      "topo": 114
     },
     {
       "id": "voyage.freq",
@@ -3090,7 +3115,7 @@
       ],
       "lane": 4,
       "depth": 6,
-      "topo": 129
+      "topo": 130
     },
     {
       "id": "voyage.q",
@@ -3121,7 +3146,7 @@
       ],
       "lane": 4,
       "depth": 7,
-      "topo": 133
+      "topo": 134
     },
     {
       "id": "voyage.t_port_kek",
@@ -3156,7 +3181,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 136
+      "topo": 137
     },
     {
       "id": "voyage.t_port_ext",
@@ -3187,7 +3212,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 137
+      "topo": 138
     },
     {
       "id": "voyage.t_port",
@@ -3214,7 +3239,7 @@
       ],
       "lane": 4,
       "depth": 9,
-      "topo": 141
+      "topo": 142
     },
     {
       "id": "voyage.t_fix",
@@ -3238,12 +3263,11 @@
       "dependents": [
         "voyage.rtd",
         "shipcost.fuel_me_l",
-        "shipcost.fuel_ae_l",
-        "terminal.ship_days"
+        "shipcost.fuel_ae_l"
       ],
       "lane": 4,
       "depth": 1,
-      "topo": 103
+      "topo": 104
     },
     {
       "id": "voyage.t_sea",
@@ -3279,7 +3303,7 @@
       ],
       "lane": 4,
       "depth": 4,
-      "topo": 121
+      "topo": 122
     },
     {
       "id": "voyage.rtd",
@@ -3306,7 +3330,7 @@
       ],
       "lane": 4,
       "depth": 10,
-      "topo": 145
+      "topo": 146
     },
     {
       "id": "voyage.f_max",
@@ -3336,7 +3360,7 @@
       ],
       "lane": 4,
       "depth": 11,
-      "topo": 154
+      "topo": 155
     },
     {
       "id": "voyage.n_ship",
@@ -3364,7 +3388,7 @@
       ],
       "lane": 4,
       "depth": 12,
-      "topo": 161
+      "topo": 162
     },
     {
       "id": "voyage.utilization",
@@ -3387,7 +3411,7 @@
       "dependents": [],
       "lane": 4,
       "depth": 13,
-      "topo": 165
+      "topo": 166
     },
     {
       "id": "voyage.consumption",
@@ -3416,7 +3440,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 138
+      "topo": 139
     },
     {
       "id": "shipcost.fuel_me_l",
@@ -3452,7 +3476,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 146
+      "topo": 147
     },
     {
       "id": "shipcost.fuel_ae_l",
@@ -3489,7 +3513,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 147
+      "topo": 148
     },
     {
       "id": "shipcost.fuel_me",
@@ -3518,7 +3542,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 155
+      "topo": 156
     },
     {
       "id": "shipcost.fuel_ae",
@@ -3547,7 +3571,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 156
+      "topo": 157
     },
     {
       "id": "shipcost.voyage",
@@ -3572,7 +3596,7 @@
       ],
       "lane": 5,
       "depth": 12,
-      "topo": 162
+      "topo": 163
     },
     {
       "id": "shipcost.tch_rate",
@@ -3600,7 +3624,7 @@
       ],
       "lane": 5,
       "depth": 2,
-      "topo": 116
+      "topo": 117
     },
     {
       "id": "shipcost.tch",
@@ -3627,7 +3651,7 @@
       ],
       "lane": 5,
       "depth": 13,
-      "topo": 166
+      "topo": 167
     },
     {
       "id": "shipcost.port_call",
@@ -3669,7 +3693,7 @@
       ],
       "lane": 5,
       "depth": 9,
-      "topo": 142
+      "topo": 143
     },
     {
       "id": "shipcost.port",
@@ -3697,7 +3721,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 148
+      "topo": 149
     },
     {
       "id": "shipcost.total",
@@ -3726,7 +3750,7 @@
       ],
       "lane": 5,
       "depth": 14,
-      "topo": 168
+      "topo": 169
     },
     {
       "id": "shipcost.unit",
@@ -3752,7 +3776,7 @@
       "dependents": [],
       "lane": 5,
       "depth": 15,
-      "topo": 169
+      "topo": 170
     },
     {
       "id": "terminal.ship_days",
@@ -3760,26 +3784,30 @@
       "unit": "hari/th",
       "scope": "flow×year",
       "kind": "derived",
-      "formula": "F · tPortKEK (+ tFix sesuai konvensi)",
+      "formula": "F · (tPortKEK + IT)",
       "deps": [
         "voyage.freq",
         "voyage.t_port_kek",
-        "voyage.t_fix"
+        "in.param.it"
       ],
-      "excel_ref": "Model!K101:AD102 (Σ per terminal)",
+      "excel_ref": "Model!M68:AF72 · M87:AF91 (Σ: K101:AD102)",
       "section": "5.5",
+      "audit": [
+        "A2",
+        "A17"
+      ],
       "screens": [
         8
       ],
       "symbol": "shipDays[f]",
-      "desc": "Total hari kapal flow ini berada di dermaga KEK dalam setahun.",
+      "desc": "Total hari kapal flow ini berada di tambatan KEK dalam setahun: bongkar muat + idle time.",
+      "impl": "terminal:ship_days",
       "dependents": [
-        "terminal.berth_days",
-        "terminal.bor"
+        "terminal.berth_days"
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 140
+      "topo": 141
     },
     {
       "id": "terminal.berth_days",
@@ -3787,29 +3815,33 @@
       "unit": "hari/th",
       "scope": "flow×year",
       "kind": "derived",
-      "formula": "⌈shipDays · LOA_k / L_unit,τ⌉",
+      "formula": "dermaga menerus: ⌈shipDays · LOA_k / L_unit,τ⌉; jetty: ⌈shipDays⌉",
       "deps": [
         "terminal.ship_days",
         "in.ship.loa",
         "dv.ship",
         "in.term.berth_length",
+        "in.term.layout",
         "in.term.cargo_forms"
       ],
-      "excel_ref": "Model!M106:AF106 · K119:AD120",
+      "excel_ref": "Model!M106:AF115 (Σ: K119:AD120)",
       "section": "5.5",
+      "audit": [
+        "A16"
+      ],
       "screens": [
-        6,
         8
       ],
       "symbol": "berthDaysReq[f]",
-      "desc": "Hari pemakaian tambatan yang dibutuhkan, dikoreksi panjang kapal relatif terhadap panjang satu tambatan.",
+      "desc": "Hari pemakaian tambatan yang dibutuhkan: di dermaga menerus dikoreksi LOA relatif terhadap panjang satu tambatan, di jetty satu kapal satu jetty.",
+      "impl": "terminal:berth_days",
       "dependents": [
         "terminal.n_berth",
         "terminal.bor"
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 144
+      "topo": 145
     },
     {
       "id": "terminal.n_berth",
@@ -3817,13 +3849,11 @@
       "unit": "unit",
       "scope": "terminal×year",
       "kind": "derived",
-      "formula": "⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉, dibangun untuk N th ke depan",
+      "formula": "⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉, tidak pernah turun",
       "deps": [
         "terminal.berth_days",
         "in.param.bor_max",
-        "in.param.working_days",
-        "in.horizon.berth_lookahead",
-        "in.horizon.lead"
+        "in.param.working_days"
       ],
       "excel_ref": "Model!K124:AD125",
       "section": "5.5",
@@ -3833,6 +3863,7 @@
       ],
       "symbol": "nBerth[τ]",
       "desc": "Jumlah tambatan yang harus tersedia di tiap terminal agar BOR tidak melewati batas (I6).",
+      "impl": "terminal:n_berth",
       "dependents": [
         "terminal.bor",
         "terminal.berth_length",
@@ -3840,7 +3871,7 @@
       ],
       "lane": 6,
       "depth": 11,
-      "topo": 153
+      "topo": 154
     },
     {
       "id": "terminal.bor",
@@ -3848,9 +3879,8 @@
       "unit": "–",
       "scope": "terminal×year",
       "kind": "metric",
-      "formula": "Σ shipDays / (nBerth · (Σ shipDays / Σ berthDaysReq) · WD)",
+      "formula": "Σ berthDaysReq / (nBerth · WD)",
       "deps": [
-        "terminal.ship_days",
         "terminal.berth_days",
         "terminal.n_berth",
         "in.param.working_days"
@@ -3862,10 +3892,11 @@
       ],
       "symbol": "BOR[τ]",
       "desc": "Tingkat pemakaian tambatan sebenarnya setelah jumlah tambatan ditetapkan.",
+      "impl": "terminal:bor",
       "dependents": [],
       "lane": 6,
       "depth": 12,
-      "topo": 158
+      "topo": 159
     },
     {
       "id": "terminal.berth_length",
@@ -3873,23 +3904,25 @@
       "unit": "m",
       "scope": "terminal×year",
       "kind": "derived",
-      "formula": "nBerth · L_unit,τ (jetty CC per tambatan)",
+      "formula": "nBerth · L_unit,τ (jetty: panjang platform per jetty)",
       "deps": [
         "terminal.n_berth",
         "in.term.berth_length"
       ],
+      "excel_ref": "Fasilitas Daratan Rata2!F5",
       "section": "5.5",
       "screens": [
         8,
         9
       ],
       "desc": "Panjang dermaga total yang perlu dibangun = jumlah tambatan × panjang satu tambatan.",
+      "impl": "terminal:berth_length",
       "dependents": [
         "invest.berth"
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 159
+      "topo": 160
     },
     {
       "id": "terminal.n_equip",
@@ -3897,7 +3930,7 @@
       "unit": "unit",
       "scope": "terminal×year",
       "kind": "derived",
-      "formula": "nBerth · nEq(kapal terpanjang di τ); penambahan per tahun",
+      "formula": "nBerth · nEq(kapal terpanjang yang melayani τ); penambahan per tahun",
       "deps": [
         "terminal.n_berth",
         "vessel.neq",
@@ -3915,12 +3948,13 @@
       ],
       "symbol": "nAlat[τ]",
       "desc": "Jumlah alat bongkar muat di tiap terminal = tambatan × alat per tambatan.",
+      "impl": "terminal:n_equip",
       "dependents": [
         "invest.handling"
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 160
+      "topo": 161
     },
     {
       "id": "storage.dwell",
@@ -3948,7 +3982,7 @@
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 143
+      "topo": 144
     },
     {
       "id": "storage.throughput",
@@ -3976,7 +4010,7 @@
       ],
       "lane": 6,
       "depth": 6,
-      "topo": 128
+      "topo": 129
     },
     {
       "id": "storage.cy",
@@ -4001,7 +4035,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 149
+      "topo": 150
     },
     {
       "id": "storage.gc",
@@ -4027,7 +4061,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 150
+      "topo": 151
     },
     {
       "id": "storage.bulk",
@@ -4053,7 +4087,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 151
+      "topo": 152
     },
     {
       "id": "storage.liquid",
@@ -4079,7 +4113,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 152
+      "topo": 153
     },
     {
       "id": "storage.yard_equipment",
@@ -4105,7 +4139,7 @@
       ],
       "lane": 6,
       "depth": 7,
-      "topo": 132
+      "topo": 133
     },
     {
       "id": "waterside.governing",
@@ -4133,7 +4167,7 @@
       ],
       "lane": 7,
       "depth": 4,
-      "topo": 122
+      "topo": 123
     },
     {
       "id": "waterside.depth_req",
@@ -4158,7 +4192,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 125
+      "topo": 126
     },
     {
       "id": "waterside.channel",
@@ -4182,7 +4216,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 126
+      "topo": 127
     },
     {
       "id": "waterside.basin",
@@ -4206,7 +4240,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 127
+      "topo": 128
     },
     {
       "id": "waterside.x_star",
@@ -4231,7 +4265,7 @@
       ],
       "lane": 7,
       "depth": 6,
-      "topo": 130
+      "topo": 131
     },
     {
       "id": "waterside.trestle_len",
@@ -4257,7 +4291,7 @@
       ],
       "lane": 7,
       "depth": 7,
-      "topo": 134
+      "topo": 135
     },
     {
       "id": "waterside.dredge_vol",
@@ -4285,7 +4319,7 @@
       ],
       "lane": 7,
       "depth": 6,
-      "topo": 131
+      "topo": 132
     },
     {
       "id": "invest.berth",
@@ -4299,7 +4333,9 @@
         "in.term.berth_width",
         "in.price.berth",
         "in.param.escalation_infra",
-        "in.horizon.phases"
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.berth_lookahead"
       ],
       "excel_ref": "Model!K387:AD387 · K391:AD391",
       "section": "5.8",
@@ -4312,7 +4348,7 @@
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 163
+      "topo": 164
     },
     {
       "id": "invest.handling",
@@ -4339,7 +4375,7 @@
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 164
+      "topo": 165
     },
     {
       "id": "invest.storage",
@@ -4370,7 +4406,7 @@
       ],
       "lane": 8,
       "depth": 11,
-      "topo": 157
+      "topo": 158
     },
     {
       "id": "invest.yard_equipment",
@@ -4395,7 +4431,7 @@
       ],
       "lane": 8,
       "depth": 8,
-      "topo": 135
+      "topo": 136
     },
     {
       "id": "invest.waterside",
@@ -4424,7 +4460,7 @@
       ],
       "lane": 8,
       "depth": 8,
-      "topo": 139
+      "topo": 140
     },
     {
       "id": "invest.total",
@@ -4450,7 +4486,7 @@
       ],
       "lane": 8,
       "depth": 14,
-      "topo": 167
+      "topo": 168
     },
     {
       "id": "agg.tc",
@@ -4477,7 +4513,7 @@
       ],
       "lane": 8,
       "depth": 15,
-      "topo": 170
+      "topo": 171
     },
     {
       "id": "agg.uc",
@@ -4506,7 +4542,7 @@
       ],
       "lane": 8,
       "depth": 16,
-      "topo": 171
+      "topo": 172
     },
     {
       "id": "agg.pv_uc",
@@ -4530,7 +4566,7 @@
       ],
       "lane": 8,
       "depth": 17,
-      "topo": 173
+      "topo": 174
     },
     {
       "id": "agg.annuity",
@@ -4554,7 +4590,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 18,
-      "topo": 174
+      "topo": 175
     },
     {
       "id": "obj.npv",
@@ -4579,7 +4615,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 16,
-      "topo": 172
+      "topo": 173
     }
   ]
 }

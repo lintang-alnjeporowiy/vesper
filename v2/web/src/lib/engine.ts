@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal']
 
 /** Pasang sekali di App: hitung ulang setiap kali kasus aktif atau kapal terpilih berubah. */
 export function useEngineSync() {
@@ -66,7 +66,8 @@ export function series(result: CalcResult | undefined, id: string, key: string):
 export function computedNumber(result: CalcResult | undefined, id: string, ctx: TraceCtx | undefined, year: number): number | undefined {
   const byKey = result?.values[id]
   if (!byKey) return undefined
-  const key = VAR[id]?.scope === 'ship' ? ctx?.ship : ctx?.flow
+  const scope = VAR[id]?.scope ?? ''
+  const key = scope === 'ship' ? ctx?.ship : scope.startsWith('terminal') ? ctx?.terminal : ctx?.flow
   const v = key ? byKey[key] : undefined
   if (v === undefined) return undefined
   return Array.isArray(v) ? v[(ctx?.year ?? year) - 1] : v

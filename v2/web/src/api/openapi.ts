@@ -150,10 +150,11 @@ export interface components {
              * @default [
              *       "demand",
              *       "voyage",
-             *       "shipcost"
+             *       "shipcost",
+             *       "terminal"
              *     ]
              */
-            modules: ("demand" | "voyage" | "shipcost")[];
+            modules: ("demand" | "voyage" | "shipcost" | "terminal")[];
             /**
              * Plan Id
              * @description rencana kapal & alat; default plan pertama kasus
@@ -1081,6 +1082,13 @@ export interface components {
              * @description HMC, MLA, …
              */
             equipment_kind: string;
+            /**
+             * Berth Layout
+             * @description quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty
+             * @default quay
+             * @enum {string}
+             */
+            berth_layout: "quay" | "jetty";
         };
         /** Leg */
         Leg: {

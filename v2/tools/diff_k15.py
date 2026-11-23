@@ -3,6 +3,7 @@
 Untuk tiap flow (kapal & alat hasil Evolver K15) dan tiap seri operasi: nilai Excel vs engine pada tahun pertama
 beroperasi, selisih maksimum 20 tahun, dan efek koreksi audit satu per satu (tiruan rumus Excel di
 `engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13 → A9 → A6 → A11 → A14 → A15; hasil akhirnya = engine).
+Bagian akhir: terminal KEK (tambatan, BOR, alat) per tahun, dengan koreksi tambahan A16 → A17.
 
 Jalankan dari folder v2:  uv run --project engine python tools/diff_k15.py [--flow in.damai] [--year 10]
 """
@@ -17,7 +18,18 @@ from pathlib import Path
 V2 = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(V2 / "engine" / "tests"))
 
-from excel_k15 import CAUSES, EXCEL_SERIES, FIXES, engine_series, excel_chain  # noqa: E402
+from excel_k15 import (  # noqa: E402
+    CAUSES,
+    EXCEL_SERIES,
+    FIXES,
+    TERMINAL_CAUSES,
+    TERMINAL_FIXES,
+    TERMINAL_SERIES,
+    engine_series,
+    engine_terminal,
+    excel_chain,
+    excel_terminal,
+)
 
 from tpt_engine.calc.run import calculate  # noqa: E402
 from tpt_engine.domain import load_case  # noqa: E402
@@ -44,7 +56,7 @@ def main() -> None:
     args = ap.parse_args()
     case = load_case(V2 / "cases" / "k15-batam.json")
     golden = json.loads((V2 / "engine" / "tests" / "golden" / "k15_excel.json").read_text(encoding="utf-8"))
-    res = calculate(case, ["shipcost"], plan_id="k15-excel")
+    res = calculate(case, ["shipcost", "terminal"], plan_id="k15-excel")
     v = res.values
     steps = ["A12", *FIXES]
 
@@ -82,6 +94,43 @@ def main() -> None:
             print(f"  {LABEL[key]:<22}{fmt(a):>12}{fmt(b):>12}{d:>7.1f}%  {span:>12.1f}%  {cause:<9} ·  {trail}")
             if hit and not set(hit) - {"A12"} <= set(CAUSES[key]) | {"A12"}:
                 print(f"    ! penyebab {hit} tidak terdaftar di CAUSES[{key}]")
+
+    if not args.flow:
+        terminal_report(case, golden, v, args.year)
+
+
+TLABEL = {"ship_days_kek": "Ship-days KEK", "berth_days": "Berth-days", "berths": "Tambatan", "bor": "BOR",
+          "equipment": "Alat B/M"}
+
+
+def terminal_report(case, golden: dict, v: dict, year: int | None) -> None:
+    """Seri terminal per tahun: Excel → (koreksi flow berurutan) → A16 → A17 = engine."""
+    fids = golden["flow_order"]
+    steps = ["A12", *FIXES, *TERMINAL_FIXES]
+    trail: list[dict[str, list[float]]] = []
+    applied: set[str] = set()
+    trail.append(excel_terminal(case, golden, {f: excel_chain(case, golden, f) for f in fids}))
+    for st in steps:
+        if st != "A12":
+            applied.add(st)
+        chains = {f: excel_chain(case, golden, f, applied, v["cargo.demand_unit"][f]) for f in fids}
+        trail.append(excel_terminal(case, golden, chains, applied))
+    years = [year - 1] if year else [0, 7, 12, 19]
+    for term in ("mp", "cc"):
+        print()
+        print(f"== terminal {term.upper()}  ·  tahun {', '.join(str(y + 1) for y in years)}")
+        print(f"  {'seri':<16}{'tahun':>6}{'Excel':>10}{'v2':>10}  penyebab  ·  " + " → ".join(steps))
+        for name in TERMINAL_SERIES:
+            key = f"{name}_{term}"
+            ex, en = golden["terminal"][key]["values"], engine_terminal(case, v, key)
+            for y in years:
+                hit = [st for st, a, b in zip(steps, trail[:-1], trail[1:], strict=True)
+                       if abs(b[key][y] - a[key][y]) > 1e-9 * max(1, abs(a[key][y]))]
+                cause = ",".join(hit) if hit else ("–" if abs(ex[y] - en[y]) < 1e-9 else "?")
+                print(f"  {TLABEL[name]:<16}{y + 1:>6}{fmt(ex[y]):>10}{fmt(en[y]):>10}  {cause:<9} ·  "
+                      + " → ".join(fmt(t[key][y]) for t in trail))
+                if hit and not set(hit) - {"A12"} <= set(TERMINAL_CAUSES[name]) | {"A12", "A1", "A3", "A5", "A13"}:
+                    print(f"    ! penyebab {hit} tidak terdaftar di TERMINAL_CAUSES[{name}]")
 
 
 if __name__ == "__main__":

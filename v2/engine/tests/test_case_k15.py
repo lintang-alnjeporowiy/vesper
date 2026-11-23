@@ -13,7 +13,7 @@ V2 = Path(__file__).resolve().parents[2]
 CASE_PATH = V2 / "cases" / "k15-batam.json"
 SCHEMA_PATH = V2 / "cases" / "case.schema.json"
 GOLDEN_PATH = Path(__file__).parent / "golden" / "k15_excel.json"
-AUDIT_IDS = {f"A{i}" for i in range(1, 16)} | {"semua"}
+AUDIT_IDS = {f"A{i}" for i in range(1, 18)} | {"semua"}
 
 
 @pytest.fixture(scope="module")

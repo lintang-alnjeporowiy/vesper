@@ -131,7 +131,7 @@ nama, negara, jenis terminal, **kedalaman/draft maks**, LOA maks, **produktivita
 **Dermaga vs LOA:** dermaga boleh lebih pendek dari kapal; kapal layak bila `dermaga terpanjang ≥ berth_loa_min_ratio · LOA` (default 85 %, wajar terutama untuk dermaga dolphin 1 dermaga 1 kapal). `max_loa_m` hanya diisi bila ada batas LOA eksplisit.
 
 ### 4.5 Tapak TERSUS di KEK — sheet `Trestle`, `Fasilitas Perairan`
-profil batimetri (jarak dari garis pantai → kedalaman) dengan sumber `survei | peta_navigasi | dummy` (K15: dummy yang dikunci ke angka K15, siap diganti), panjang trestle maks, harga satuan trestle (Rp/m²), keruk (Rp/m³), dermaga MP (Rp/m²), jetty CC, lebar tambatan, panjang unit tambatan (MP 300 m; CC sesuai jetty).
+profil batimetri (jarak dari garis pantai → kedalaman) dengan sumber `survei | peta_navigasi | dummy` (K15: dummy yang dikunci ke angka K15, siap diganti), panjang trestle maks, harga satuan trestle (Rp/m²), keruk (Rp/m³), dermaga MP (Rp/m²), jetty CC, lebar tambatan, panjang unit tambatan (MP 300 m; CC sesuai jetty), tata letak tambatan `berth_layout` (`quay` dermaga menerus | `jetty` satu kapal satu jetty; Tahap 7a).
 
 ### 4.6 Kandidat kapal — sheet `Data Kapal`, `TCH`
 | Field | Catatan |
@@ -222,12 +222,14 @@ Notasi: flow `f`, tahun `t`, kapal `k`, alat `e`, terminal `τ ∈ {MP, CC}`. Se
 ### 5.5 Terminal KEK: tambatan, BOR, alat — sheet `Model` 104–152, 361–377
 | Variabel | Rumus |
 |---|---|
-| `shipDays[f]` | `F · tPortKEK` (+ tFix sesuai konvensi) |
-| `berthDaysReq[f]` | `⌈shipDays · LOA_k / L_unit,τ⌉` |
-| `nBerth[τ]` | `⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉` |
-| `BOR[τ]` | `Σ shipDays / (nBerth · (Σ shipDays / Σ berthDaysReq) · WD)` |
-| panjang dermaga | `nBerth[MP] · L_unit,MP`; jetty CC per tambatan |
-| `nAlat[τ]` | `nBerth[τ] · nEq(kapal terpanjang di τ)`; penambahan per tahun |
+| `shipDays[f]` | `F · (tPortKEK + IT)` — bongkar muat + idle time di tambatan; AT & WT tidak menempati tambatan (A17) |
+| `berthDaysReq[f]` | dermaga menerus (`berth_layout = quay`): `⌈shipDays · LOA_k / L_unit,τ⌉`; jetty: `⌈shipDays⌉` (satu kapal satu jetty, A16) |
+| `nBerth[τ]` | `⌈Σ_f∈τ berthDaysReq / (BOR_max · WD)⌉`, tidak pernah turun (tambatan yang sudah dibangun tetap ada) |
+| `BOR[τ]` | `Σ berthDaysReq / (nBerth · WD)` (= `Σ shipDays / (nBerth · (Σ shipDays / Σ berthDaysReq) · WD)` Excel) |
+| panjang dermaga | `nBerth[τ] · L_unit,τ` (jetty: panjang platform per jetty) |
+| `nAlat[τ]` | `nBerth[τ] · nEq(kapal terpanjang yang melayani τ tahun itu, kumulatif)`; penambahan per tahun |
+
+**Implementasi Tahap 7a (2026-11-23)** — `calc/terminal.py` + `run.terminal_chain`; modul API `terminal` (menarik `voyage`, `demand`), nilai per flow (`terminal.ship_days`, `terminal.berth_days`) dan per terminal (`terminal.n_berth`, `bor`, `berth_length`, `n_equip`, kunci = id terminal). Input baru `kek_site.terminals[].berth_layout` (`quay | jetty`; K15: MP quay, CC jetty). Keputusan pengguna: shipDays + IT (A17), jetty satu kapal satu jetty (A16). Kebutuhan per tahun saja; jadwal bangun dengan masa konstruksi & lookahead (`horizon.construction_lead_years`, `berth_lookahead_years`) dipindah ke §5.8 (Tahap 8). Validasi: tiruan Excel `excel_terminal` = golden `Model!K101:AD363` (ship-days, berth-days, tambatan, BOR, alat MP/CC) dan tiruan + koreksi (A2, A10, A16, A17 di atas koreksi flow) = engine; hitungan tangan MP tahun 8. Penyimpanan (§5.6) = Tahap 7b.
 
 ### 5.6 Penyimpanan — sheet `Fasilitas Daratan`
 | Fasilitas | Rumus (Q = arus/th yang masuk penyimpanan) |
@@ -384,7 +386,7 @@ Selama Tahap 2–3 (UI placeholder) web membaca JSON kasus langsung sebagai mock
 **API (Tahap 4, keputusan pengguna 2026-11-22):**
 - **Dev:** FastAPI (`uv run --project engine uvicorn tpt_api.app:app`, :8000, konfigurasi `api` di `.claude/launch.json`) berdampingan dengan Vite; Vite mem-proxy `/api` → :8000 (`TPT_API_URL` untuk mengganti target). Semua rute di bawah `/api`; Tahap 13 FastAPI juga menyajikan build web di origin yang sama.
 - **Rute:** `GET /api/health`, `GET /api/cases` (file `cases/*.json` + status validasi), `GET /api/cases/{id}`, `POST /api/calculate`, `POST /api/compare` (Tahap 5).
-- **`/calculate`:** request `{case, modules: ["demand"], plan_id?, ship_by_flow?}` — kasus aktif dikirim utuh (termasuk editan UI, tanpa state server). Respons **berkunci id registry**: `{modules, plan_id, ship_by_flow, computed: [id…], values: {id: {flow|ship: angka | seri[20]}}, units: {flow: ton|TEU}, warnings}`. `computed` = daftar variabel yang dihitung engine → UI mengganti badge `placeholder` dengan `dihitung`. Modul yang belum ada → 422. Tahap 6: modul `shipcost` (menarik `voyage`), respons menambah `port_breakdown` (flow → komponen → seri Rp/call); `/compare` ikut menghitung biaya tiap kandidat (kolom Rp/satuan layar 6). Tahap 5: modul `voyage` (menarik `demand`), request menerima `equipment_by_terminal`, respons menambah `equipment_by_terminal`, `reasons` (alasan kapal terpilih gugur) dan `feasibility` (flow → kapal kompatibel → `{ok, reasons, notes}`, dipakai layar 4).
+- **`/calculate`:** request `{case, modules: ["demand"], plan_id?, ship_by_flow?}` — kasus aktif dikirim utuh (termasuk editan UI, tanpa state server). Respons **berkunci id registry**: `{modules, plan_id, ship_by_flow, computed: [id…], values: {id: {flow|ship: angka | seri[20]}}, units: {flow: ton|TEU}, warnings}`. `computed` = daftar variabel yang dihitung engine → UI mengganti badge `placeholder` dengan `dihitung`. Modul yang belum ada → 422. Tahap 7a: modul `terminal` (menarik `voyage`); variabel terminal berkunci id terminal (`MP`, `CC`). Tahap 6: modul `shipcost` (menarik `voyage`), respons menambah `port_breakdown` (flow → komponen → seri Rp/call); `/compare` ikut menghitung biaya tiap kandidat (kolom Rp/satuan layar 6). Tahap 5: modul `voyage` (menarik `demand`), request menerima `equipment_by_terminal`, respons menambah `equipment_by_terminal`, `reasons` (alasan kapal terpilih gugur) dan `feasibility` (flow → kapal kompatibel → `{ok, reasons, notes}`, dipakai layar 4).
 - **`/compare` (keputusan pengguna 2026-11-22):** request `{case, flow_id, plan_id?, ship_by_flow?, equipment_by_terminal?}` → `{flow_id, unit, equipment_id, rows: [{ship_id, compatible, feasible, reasons, notes, selected, values: {id registry: angka | seri}, error}]}` untuk semua kapal kasus; rantai §5.1–5.3 dihitung untuk yang kompatibel (termasuk yang gugur, agar posisinya terlihat). Dipanggil hanya oleh layar 6 (`useCompare`), bukan setiap /calculate.
 - **Web memilih mock vs API otomatis:** `useEngineSync` (dipasang di App) mengirim kasus ke `/calculate` dengan debounce 300 ms setiap kali kasus/kapal terpilih berubah (dan saat Hitung ulang); bila API tak terjangkau, angka kembali ke placeholder dengan catatan "API tidak aktif" dan dicoba lagi tiap 5 detik. Kasus awal tetap dibundel dari `cases/k15-batam.json` agar UI terbuka tanpa API; `registry.json` tetap mock sampai `/registry`.
 - **Tipe:** `tools/export_openapi.py` → `web/src/api/openapi.json` → `npm --prefix web run gen:api` (openapi-typescript, dipasang terpisah di `web/tools/gen-api` karena butuh TypeScript 5 sedangkan web TypeScript 7) → `src/api/openapi.ts`; `src/api/case.ts` hanya alias `components['schemas'][…]`. FastAPI memakai `separate_input_output_schemas=False` agar satu tipe per model. Test gagal bila `openapi.json` basi. Database hanya dipertimbangkan bila nanti butuh multi-user — **bukan** di roadmap ini. Kode v1 tidak dibuang; boleh jadi referensi.
@@ -428,7 +430,7 @@ class VarDef:
 Registry diekspos lewat `/registry`; hasil `/calculate` membawa nilai + `deps` aktual → UI menggambar graf, menyorot hulu/hilir, dan menampilkan "kenapa angka ini".
 
 **Implementasi Tahap 3 (2026-11-21)** — `engine/src/tpt_engine/registry.py`, 173 variabel (100 input, 4 keputusan, 64 turunan, 4 metrik, 1 objektif):
-- `VarDef` ditambah: `impl` (Tahap 4: fungsi engine `"modul:fungsi"` di bawah `tpt_engine.calc`, dari `IMPL`; dites dapat diimpor dan sama dengan `calc.run.COMPUTES`), `section` (§ SPEC), `audit` (ID A1–A15), `case_path` (input), `screens` (layar tempat tampil), `symbol`, `note`, `desc` (keterangan 1–2 kalimat untuk pengguna, di `registry_desc.py`; test mewajibkan setiap variabel punya). `kind` ditambah **`metric`** = angka laporan yang tidak dipakai variabel lain (utilisasi, Rp/t pelayaran, BOR realisasi, anuitas).
+- `VarDef` ditambah: `impl` (Tahap 4: fungsi engine `"modul:fungsi"` di bawah `tpt_engine.calc`, dari `IMPL`; dites dapat diimpor dan sama dengan `calc.run.COMPUTES`), `section` (§ SPEC), `audit` (ID A1–A17), `case_path` (input), `screens` (layar tempat tampil), `symbol`, `note`, `desc` (keterangan 1–2 kalimat untuk pengguna, di `registry_desc.py`; test mewajibkan setiap variabel punya). `kind` ditambah **`metric`** = angka laporan yang tidak dipakai variabel lain (utilisasi, Rp/t pelayaran, BOR realisasi, anuitas).
 - Id: input `in.<entitas>.<atribut>`, keputusan `dv.*`, objektif `obj.npv`; turunan `<modul>.<nama>` dengan modul = file `calc/` (demand, cargo, vessel, voyage, shipcost, terminal, storage, waterside, invest, agg).
 - **Input per atribut** (keputusan pengguna): satu simpul per field `Case` yang dipakai rumus; `case_path` memakai `nama[kunci]` untuk elemen list yang dipilih konteks (flow, ship, port, route, terminal, equip, …). Tampilan graf bisa meringkasnya per entitas (17 kelompok).
 - Turunan = satu per baris rumus §5; beberapa baris dipecah agar jejak berguna (BBM liter vs Rp, port time KEK/ext/total, biaya pelabuhan per call vs per tahun, V ballast/daya AE/SFOC/kapasitas TEU efektif) dan beberapa ditambah: utilisasi, Rp/t pelayaran, alat lapangan, investasi total.
@@ -472,6 +474,8 @@ Semua temuan sudah diputuskan (tabel keputusan di bawah). Engine v2 **hanya** me
 | A13 | `Model!M350:AF359` | lama konsumsi = `ROUNDUP(payload / (D/365))` — memakai payload (bukan muatan per call aktual) dan dibulatkan ke hari | lama konsumsi naik ≤ 1 hari (dwelling time penyimpanan, Tahap 7) (ditemukan Tahap 5) |
 | A14 | `Biaya Pelabuhan!E71:AF142` | pilihan tarif membandingkan label `"Dalam Negeri"`/`"Luar Negeri"` dengan `"Dalam"`/`"Luar"` → tidak pernah sama, semua pelabuhan kena tarif **dalam negeri**; baris pandu out.adi (`E93:AF93`) kolomnya terbalik sehingga hanya itu yang memakai tarif luar negeri; tarif labuh luar negeri kelas utama kosong | biaya pelabuhan luar negeri (Visakhapatnam, Melbourne, Bangkok, Kobe, Chennai) jauh terlalu rendah (ditemukan Tahap 6) |
 | A15 | `Biaya Pelabuhan!E84…E133` | pandu & tunda dihitung 1 gerakan per call; biaya tetap tunda **tidak dikali frekuensi** (urutan operasi `tetap + var·GT·F`); tambat dikali seluruh port time per call (bongkar muat KEK + asal + AT/WT/IT) | pandu/tunda kurang ±½, tambat bergantung port time KEK yang tidak relevan (ditemukan Tahap 6) |
+| A16 | `Model!M106:AF115` | cek label `"CC"` berth-days memakai referensi relatif (`L107` → bergeser ke sel tahun) sehingga mulai tahun ke-2 jetty CC dibagi **300 m** (unit MP), baris pertama memakai `$L$106` absolut; rumus aslinya `LOA / 40 m` membuat satu tanker 174 m menempati ±4,4 jetty | berth-days & BOR jetty CC terlalu rendah (ditemukan Tahap 7a) |
+| A17 | `Model!M68:AF91` | ship-days KEK hanya waktu bongkar muat; idle time di tambatan tidak dihitung | berth-days & BOR sedikit terlalu rendah (ditemukan Tahap 7a) |
 
 Verifikasi: dengan rumus di atas (termasuk A1, A9, A10), rantai AETOS tahun-1 rute Badas mereproduksi `Model!M338` = Rp 734,3 M persis — lihat tab 3 blueprint.
 
@@ -493,10 +497,12 @@ Verifikasi: dengan rumus di atas (termasuk A1, A9, A10), rantai AETOS tahun-1 ru
 | A13 | **ikut rumus §5.3** (q / (D/365), kontinu) | pembulatan hari, bila perlu, diputuskan di penyimpanan (Tahap 7) |
 | A14 | **tarif sesuai jenis pelabuhan** (jelas bug) | luar negeri = kolom USD × kurs, dalam negeri = kolom Rp; satu rumus untuk semua komponen |
 | A15 | **2 gerakan, tambat ⌈tPortExt⌉ etmal, tunda tetap per call** (keputusan pengguna 2026-11-22) | pandu & tunda × 2 (masuk + keluar); tambat dari lama sandar di pelabuhan itu dibulatkan ke etmal; B/M tetap masuk shipping cost |
+| A16 | **jetty: satu kapal satu jetty** (keputusan pengguna 2026-11-23) | berth-days jetty = ⌈shipDays⌉; faktor LOA/L_unit hanya untuk dermaga menerus (`berth_layout`) |
+| A17 | **shipDays = F · (tPortKEK + IT)** (keputusan pengguna 2026-11-23) | AT (approach) dan WT (menunggu di luar) tidak menempati tambatan |
 
 **Data kasus:** celah data & asumsi ekstraksi K15 (batimetri, dermaga eksisting, mode produktivitas pelabuhan, batas LOA, kapasitas TEU, dll.) dicatat di `cases/k15-batam.json → assumptions`, bukan di dokumen ini.
 
-**Konsekuensi untuk golden test:** angka K15 yang terdampak A1–A3, A5, A6, A9–A15 (port time, RTD, jumlah kapal, BBM, biaya pelabuhan, pembulatan TEU, lama konsumsi) tidak akan sama dengan Excel. Bagian itu dites dengan hitungan tangan; laporan validasi mencatat selisih per flow vs Excel beserta penyebabnya (Tahap 5: `tools/diff_k15.py`).
+**Konsekuensi untuk golden test:** angka K15 yang terdampak A1–A3, A5, A6, A9–A17 (port time, RTD, jumlah kapal, BBM, biaya pelabuhan, pembulatan TEU, lama konsumsi, berth-days, BOR) tidak akan sama dengan Excel. Bagian itu dites dengan hitungan tangan; laporan validasi mencatat selisih per flow vs Excel beserta penyebabnya (Tahap 5: `tools/diff_k15.py`).
 
 ---
 

@@ -291,7 +291,8 @@
               "enum": [
                 "demand",
                 "voyage",
-                "shipcost"
+                "shipcost",
+                "terminal"
               ]
             },
             "type": "array",
@@ -300,7 +301,8 @@
             "default": [
               "demand",
               "voyage",
-              "shipcost"
+              "shipcost",
+              "terminal"
             ]
           },
           "plan_id": {
@@ -2420,6 +2422,16 @@
             "type": "string",
             "title": "Equipment Kind",
             "description": "HMC, MLA, …"
+          },
+          "berth_layout": {
+            "type": "string",
+            "enum": [
+              "quay",
+              "jetty"
+            ],
+            "title": "Berth Layout",
+            "description": "quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty",
+            "default": "quay"
           }
         },
         "additionalProperties": false,

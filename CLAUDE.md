@@ -30,7 +30,7 @@ Pengguna adalah alumni TPT dan menguasai domainnya. **Jawab dalam Bahasa Indones
 ## Aturan kerja
 1. Keputusan baru → perbarui `01_SPEC.md` dan Progres di `02_ROADMAP.md`. Jangan membuat dokumen baru.
 2. Angka hasil yang belum dihitung engine wajib berlabel `placeholder`.
-3. Engine hanya mengimplementasikan versi terkoreksi (tanpa mode kompatibel Excel); setiap selisih vs Excel dijelaskan dengan ID temuan audit A1–A15.
+3. Engine hanya mengimplementasikan versi terkoreksi (tanpa mode kompatibel Excel); setiap selisih vs Excel dijelaskan dengan ID temuan audit A1–A17.
 4. Satu tahap (atau sub-tahap) per sesi; akhiri dengan memperbarui Progres.
 
 ## OpenPencil (desain UI, Tahap 2a)

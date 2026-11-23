@@ -53,12 +53,6 @@ export const TERMINAL_Y13 = {
   MP: { berthDays: 547, berths: 3, equipment: 12, bor: 0.5 },
   CC: { berthDays: 183, berths: 1, equipment: 2, bor: 0.5 },
 }
-export const STAGING = {
-  years: Array.from({ length: 20 }, (_, i) => i + 1),
-  mpBerths: [1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-  mpEquipment: [4, 4, 4, 4, 4, 4, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12],
-  ccBerths: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-}
 export const STORAGE_Y13 = [
   { v: 'storage.gc', commodity: 'Jagung, pelat, profil baja', facility: 'Lapangan GC', param: 'f 1,5 · 5 m · SOR 0,7', need: '48.000 m²', cost: 'Rp 96 M' },
   { v: 'storage.bulk', commodity: 'Gandum', facility: 'Silo', param: '23.379 m³ · isi 80 %', need: '9 silo', cost: 'USD 288 rb' },

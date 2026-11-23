@@ -1,9 +1,10 @@
-"""Tiruan rumus Excel K15 (sheet `Model` baris 28–359, `Biaya Pelabuhan`) — HANYA untuk validasi, bukan engine.
+"""Tiruan rumus Excel K15 (sheet `Model` baris 28–363, `Biaya Pelabuhan`) — HANYA untuk validasi, bukan engine.
 
 Tujuannya membuktikan bahwa selisih engine v2 vs golden Excel berasal dari temuan audit yang disebut: bila tiruan
 ini (dengan kekeliruan Excel A1–A3, A5, A6, A9–A11, A13–A15 dan demand golden yang memuat A12) mereproduksi golden persis,
 maka engine — yang identik kecuali pada titik-titik itu — hanya berbeda karena temuan tersebut.
-Dipakai oleh `test_calc_voyage.py`, `test_calc_shipcost.py` dan `tools/diff_k15.py`.
+Terminal KEK (`excel_terminal`): A16, A17 di atas rantai per flow.
+Dipakai oleh `test_calc_voyage.py`, `test_calc_shipcost.py`, `test_calc_terminal.py` dan `tools/diff_k15.py`.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ from __future__ import annotations
 import math
 
 from tpt_engine.calc import shipcost, vessel
+from tpt_engine.calc.cargo import ceil_
 from tpt_engine.domain import Case
 
 EXCEL_SERIES = ("freq_required", "cargo_per_call", "port_days_kek_per_year", "port_days_ext_per_year",
@@ -139,6 +141,83 @@ def excel_chain(case: Case, golden: dict, fid: str, fixes: frozenset[str] | set[
                      ("shipping_cost_rp", me_rp + ae_rp + tch + port_cost)):
             out[k].append(float(v))
     return out
+
+
+#: seri golden terminal (per terminal KEK, Model!K101:AD363)
+TERMINAL_SERIES = ("ship_days_kek", "berth_days", "berths", "bor", "equipment")
+TERMINAL_FIXES = ("A16", "A17")
+
+
+def excel_terminal(case: Case, golden: dict, chains: dict[str, dict[str, list[float]]],
+                   fixes: frozenset[str] | set[str] = frozenset()) -> dict[str, dict[str, list[float]]]:
+    """Seri terminal Excel (`{seri}_{mp|cc}` → nilai) dari seri per flow `excel_chain` (`chains`).
+
+    Excel: shipDays = waktu bongkar muat KEK per tahun saja (A17: tanpa IT); berth-days = ⌈shipDays · LOA / L⌉ dengan
+    L = 40 m (CC) hanya di kolom tahun ke-1 — cek label `L107` relatif bergeser ke sel tahun sehingga mulai tahun ke-2
+    semua flow memakai 300 m (MP); baris pertama memakai `$L$106` absolut (A16). Jumlah alat = tambatan × CC22/CC23.
+    """
+    prm = case.params
+    flows = {f.id: f for f in case.flows}
+    order = golden["flow_order"]
+    it_days = prm.it_hours / prm.working_hours_per_day
+    n_years = len(next(iter(chains.values()))["freq_required"])
+    l_mp = next(t for t in case.kek_site.terminals if t.id == "MP").berth_unit_length_m  # Model!F54
+    l_cc = next(t for t in case.kek_site.terminals if t.id == "CC").berth_unit_length_m  # Model!C58
+    out: dict[str, list[float]] = {}
+    for term in ("mp", "cc"):
+        is_cc = term == "cc"
+        fids = [f for f in order if (flows[f].cargo_form == "CC") == is_cc]
+        sd_t, bd_t = [0.0] * n_years, [0.0] * n_years
+        ci = next(golden["flows"][f]["equipment_per_berth"] for f in fids)  # Model!CC22 / CC23
+        neq = [0] * n_years
+        for fid in fids:
+            ch = chains[fid]
+            ship = next(s for s in case.ships if s.id == golden["flows"][fid]["ship_id"])
+            for y in range(n_years):
+                f = ch["freq_required"][y]
+                sd = ch["port_days_kek_per_year"][y] + (it_days * f if "A17" in fixes else 0.0)  # Model!M68…M91
+                if "A16" in fixes:
+                    bd = (ceil_(sd) if is_cc else ceil_(sd * ship.loa_m / l_mp)) if sd else 0
+                else:
+                    cc_label = is_cc and y == 0 and fid != order[0]  # Model!M106…M115
+                    bd = ceil_(sd * ship.loa_m / (l_cc if cc_label else l_mp)) if sd else 0
+                sd_t[y] += sd
+                bd_t[y] += bd
+                if f:
+                    neq[y] = max(neq[y], vessel.n_equipment(ship, case.equipment_rules, term.upper()))
+        berths = [float(ceil_(s_ / (prm.bor_max * (s_ / b_) * prm.working_days_per_year))) if s_ else 0.0
+                  for s_, b_ in zip(sd_t, bd_t, strict=True)]  # Model!K124:AD125
+        bor = [b_ / (n * prm.working_days_per_year) if n else 0.0 for b_, n in zip(bd_t, berths, strict=True)]
+        if "A10" in fixes:
+            m = 0
+            eq = []
+            for n, e in zip(berths, neq, strict=True):
+                m = max(m, e)
+                eq.append(n * m)
+        else:
+            eq = [n * ci for n in berths]  # Model!K362:AD363
+        for k, v in (("ship_days_kek", sd_t), ("berth_days", bd_t), ("berths", berths), ("bor", bor), ("equipment", eq)):
+            out[f"{k}_{term}"] = [float(x) for x in v]
+    return out
+
+
+#: seri golden terminal → id variabel engine (per terminal; ship_days/berth_days = Σ flow di terminal)
+TERMINAL_MAP = {"ship_days_kek": "terminal.ship_days", "berth_days": "terminal.berth_days", "berths": "terminal.n_berth",
+                "bor": "terminal.bor", "equipment": "terminal.n_equip"}
+TERMINAL_CAUSES = {"ship_days_kek": ("A2", "A10", "A17"), "berth_days": ("A2", "A10", "A16", "A17"),
+                   "berths": ("A2", "A10", "A16", "A17"), "bor": ("A2", "A10", "A16", "A17"),
+                   "equipment": ("A2", "A10", "A16", "A17")}
+
+
+def engine_terminal(case: Case, values: dict, key: str) -> list[float]:
+    """Seri engine sebanding dengan seri golden terminal `key` (mis. `berths_mp`)."""
+    name, term = key.rsplit("_", 1)
+    vid = TERMINAL_MAP[name]
+    if vid in ("terminal.ship_days", "terminal.berth_days"):
+        fids = [f.id for f in case.flows if (f.cargo_form == "CC") == (term == "cc")]
+        rows = [values[vid][f] for f in fids if f in values[vid]]
+        return [float(sum(x)) for x in zip(*rows, strict=True)]
+    return list(values[vid][term.upper()])
 
 
 #: seri golden → (id variabel engine, faktor: 'per_call' = engine × F bila Excel per tahun) dan penyebab selisih

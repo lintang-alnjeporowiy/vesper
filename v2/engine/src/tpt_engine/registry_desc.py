@@ -67,6 +67,7 @@ DESC: dict[str, str] = {
     "in.term.cargo_forms": "Bentuk muatan yang dilayani tiap terminal KEK (MP multipurpose: PK/GC/CK; CC: curah cair).",
     "in.term.berth_length": "Panjang satu unit tambatan di terminal KEK; pembagi berth-days dan dasar panjang dermaga.",
     "in.term.berth_width": "Lebar dermaga, untuk luas dan biaya konstruksi.",
+    "in.term.layout": "Dermaga menerus (kapal memakai panjang dermaga sebanding LOA) atau jetty (satu kapal satu jetty, berapa pun LOA-nya).",
     "in.site.bathymetry": "Profil kedalaman laut dari garis pantai ke arah laut di tapak KEK; menentukan seberapa jauh dermaga harus menjorok (I8).",
     "in.site.waterside": "Kondisi perairan (angin, arus, gelombang, keterlindungan, alat bantu navigasi) yang menentukan lebar alur dan kolam.",
     "in.site.depth_factor": "Kedalaman perairan yang dibutuhkan = faktor ini × sarat kapal penentu (K15: 1,5; ruang bebas lunas).",
@@ -165,8 +166,8 @@ DESC: dict[str, str] = {
     "shipcost.total": "Shipping cost: total biaya pelayaran flow per tahun = BBM + sewa kapal + biaya pelabuhan.",
     "shipcost.unit": "Biaya pelayaran per ton atau per TEU yang diangkut; pembanding antarkapal di layar 6.",
     # ── Terminal ──
-    "terminal.ship_days": "Total hari kapal flow ini berada di dermaga KEK dalam setahun.",
-    "terminal.berth_days": "Hari pemakaian tambatan yang dibutuhkan, dikoreksi panjang kapal relatif terhadap panjang satu tambatan.",
+    "terminal.ship_days": "Total hari kapal flow ini berada di tambatan KEK dalam setahun: bongkar muat + idle time.",
+    "terminal.berth_days": "Hari pemakaian tambatan yang dibutuhkan: di dermaga menerus dikoreksi LOA relatif terhadap panjang satu tambatan, di jetty satu kapal satu jetty.",
     "terminal.n_berth": "Jumlah tambatan yang harus tersedia di tiap terminal agar BOR tidak melewati batas (I6).",
     "terminal.bor": "Tingkat pemakaian tambatan sebenarnya setelah jumlah tambatan ditetapkan.",
     "terminal.berth_length": "Panjang dermaga total yang perlu dibangun = jumlah tambatan × panjang satu tambatan.",

@@ -1555,7 +1555,8 @@
         ],
         "berth_unit_length_m": 300.0,
         "berth_width_m": 50.0,
-        "equipment_kind": "HMC"
+        "equipment_kind": "HMC",
+        "berth_layout": "quay"
       },
       {
         "refs": {
@@ -1569,7 +1570,8 @@
         ],
         "berth_unit_length_m": 40.0,
         "berth_width_m": 35.0,
-        "equipment_kind": "MLA"
+        "equipment_kind": "MLA",
+        "berth_layout": "jetty"
       }
     ],
     "bathymetry": [

@@ -252,6 +252,8 @@ class KekTerminal(Rec):
     berth_unit_length_m: Pos = F(unit="m")
     berth_width_m: Pos = F(unit="m")
     equipment_kind: str = F(desc="HMC, MLA, …")
+    berth_layout: Literal["quay", "jetty"] = F(
+        "quay", desc="quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty")
 
 
 class BathyPoint(Rec):
