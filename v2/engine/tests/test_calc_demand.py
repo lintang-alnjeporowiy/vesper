@@ -172,4 +172,4 @@ def res_case_flows():
 
 def test_unknown_module_rejected(case):
     with pytest.raises(ValueError):
-        calculate(case, ["storage"])
+        calculate(case, ["waterside"])

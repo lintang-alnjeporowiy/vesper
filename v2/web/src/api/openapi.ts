@@ -151,10 +151,11 @@ export interface components {
              *       "demand",
              *       "voyage",
              *       "shipcost",
-             *       "terminal"
+             *       "terminal",
+             *       "storage"
              *     ]
              */
-            modules: ("demand" | "voyage" | "shipcost" | "terminal")[];
+            modules: ("demand" | "voyage" | "shipcost" | "terminal" | "storage")[];
             /**
              * Plan Id
              * @description rencana kapal & alat; default plan pertama kasus
@@ -1848,6 +1849,13 @@ export interface components {
             name: string;
             /** Cargo Form */
             cargo_form: string;
+            /**
+             * Role
+             * @description yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)
+             * @default yard
+             * @enum {string}
+             */
+            role: "yard" | "transport";
             /** Productivity */
             productivity: number;
             /**

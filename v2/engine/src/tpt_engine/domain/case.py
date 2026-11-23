@@ -442,6 +442,9 @@ class YardEquipment(Rec):
     id: str
     name: str
     cargo_form: str
+    role: Literal["yard", "transport"] = F(
+        "yard", desc="yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan "
+                     "(truk; dihitung bersama panjang trestle, Tahap 8)")
     productivity: Pos
     productivity_unit: str = F(desc="TEU/jam, ton/jam, …")
     utilization: Rate

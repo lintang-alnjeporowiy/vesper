@@ -1,7 +1,7 @@
 """Orkestrasi kalkulasi per modul. Hasil berkunci id variabel registry (SPEC §9.3).
 
-Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5); modul menarik modul yang
-dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
+Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5) · `storage` (§5.6); modul
+menarik modul yang dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
 (default plan pertama) + override dari UI.
 """
 
@@ -12,12 +12,12 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..domain.case import CargoFlow, Case, Ship, teu_forms
-from . import cargo, demand, shipcost, terminal, vessel, voyage
+from . import cargo, demand, shipcost, storage, terminal, vessel, voyage
 
-Module = Literal["demand", "voyage", "shipcost", "terminal"]
-MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal")
+Module = Literal["demand", "voyage", "shipcost", "terminal", "storage"]
+MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal", "storage")
 REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage"),
-                                        "terminal": ("demand", "voyage")}
+                                        "terminal": ("demand", "voyage"), "storage": ("demand", "voyage")}
 
 #: modul → id variabel registry yang dihitungnya (dites terhadap registry)
 COMPUTES: dict[str, tuple[str, ...]] = {
@@ -32,9 +32,15 @@ COMPUTES: dict[str, tuple[str, ...]] = {
                  "shipcost.port_call", "shipcost.port", "shipcost.total", "shipcost.unit"),
     "terminal": ("terminal.ship_days", "terminal.berth_days", "terminal.n_berth", "terminal.bor",
                  "terminal.berth_length", "terminal.n_equip"),
+    "storage": ("storage.dwell", "storage.throughput", "storage.cy", "storage.cy_slots", "storage.gc", "storage.bulk",
+                "storage.bulk_area", "storage.silos", "storage.liquid", "storage.tanks", "storage.yard_equipment"),
 }
 #: variabel berkunci id terminal KEK (bukan flow)
 TERMINAL_KEYED = {"terminal.n_berth", "terminal.bor", "terminal.berth_length", "terminal.n_equip"}
+#: variabel penyimpanan per fasilitas: kunci flow + `total` (kapasitas terpasang, tidak pernah turun)
+STORAGE_FACILITY_VARS = {"cy": ("storage.cy", "storage.cy_slots"), "gc": ("storage.gc",),
+                         "bulk": ("storage.bulk", "storage.bulk_area", "storage.silos"),
+                         "liquid": ("storage.liquid", "storage.tanks")}
 PORT_PARTS = ("labuh", "pandu", "tambat", "tunda", "bm")
 
 Value = float | list[float]
@@ -283,6 +289,89 @@ def terminal_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]])
     return out
 
 
+def storage_chain(case: Case, d_unit: dict[str, list[float]], chains: dict[str, tuple[Ship, dict[str, Value]]],
+                  warnings: list[str]) -> dict[str, dict[str, Value]]:
+    """§5.6 dari D satuan flow (`d_unit`, TEU untuk PK) dan lama konsumsi per flow (`chains`). Nilai per flow + kunci
+    `total` per fasilitas (Σ flow, tidak pernah turun); alat lapangan berkunci id alat."""
+    sp = case.storage
+    p = case.params
+    n_years = case.horizon.years
+    teu = teu_forms(case)
+    com = {c.id: c for c in case.commodities}
+    out: dict[str, dict[str, Value]] = {k: {} for k in COMPUTES["storage"]}
+    sums: dict[str, list[float]] = {v: [0.0] * n_years for vs in STORAGE_FACILITY_VARS.values() for v in vs}
+    q_form: dict[str, list[float]] = {}
+    for f in case.flows:
+        d = d_unit.get(f.id)
+        if d is None:
+            continue
+        fac = "cy" if f.cargo_form in teu else storage.FACILITY.get(f.cargo_form)
+        if fac is None:
+            warnings.append(f"{f.id}: bentuk muatan {f.cargo_form} tidak punya fasilitas penyimpanan (§5.6)")
+            continue
+        if sp.dwell_time_mode == "fixed":
+            if f.commodity_id not in sp.fixed_dwell_days:
+                warnings.append(f"{f.id}: dwell time tetap untuk komoditas {f.commodity_id} belum diisi; penyimpanan "
+                                "tidak dihitung")
+                continue
+            cons = [0.0] * n_years
+        else:
+            ch = chains.get(f.id)
+            if ch is None:
+                warnings.append(f"{f.id}: lama konsumsi belum dihitung (rantai pelayaran gagal); penyimpanan tidak dihitung")
+                continue
+            cons_v = ch[1]["voyage.consumption"]
+            assert isinstance(cons_v, list)
+            cons = cons_v
+        rho = com[f.commodity_id].density_t_m3
+        if fac != "cy" and not rho:
+            warnings.append(f"{f.id}: densitas komoditas {f.commodity_id} kosong; penyimpanan tidak dihitung")
+            continue
+        share = sp.inbound_share if f.direction == "inbound" else sp.outbound_share
+        q = [storage.throughput(x, share) for x in d]
+        tdw = [storage.dwell(c, sp.dwell_time_mode, sp.fixed_dwell_days.get(f.commodity_id)) if x > 0 else 0.0
+               for c, x in zip(cons, q, strict=True)]
+        out["storage.throughput"][f.id] = q
+        out["storage.dwell"][f.id] = tdw
+        per: dict[str, list[float]] = {}
+        if fac == "cy":
+            per["storage.cy"] = [storage.cy_area(a, t, sp.container_yard) for a, t in zip(q, tdw, strict=True)]
+            per["storage.cy_slots"] = [storage.ground_slots(a, t, sp.container_yard) for a, t in zip(q, tdw, strict=True)]
+            qe = [a * (1.0 + sp.container_yard.empty_share) for a in q]  # alat lapangan menangani full + kosong
+        elif fac == "gc":
+            assert rho
+            per["storage.gc"] = [storage.gc_area(a, t, rho, sp.general_cargo) for a, t in zip(q, tdw, strict=True)]
+            qe = q
+        elif fac == "bulk":
+            assert rho
+            vol = [storage.bulk_volume(a, t, rho, sp.dry_bulk) for a, t in zip(q, tdw, strict=True)]
+            per["storage.bulk"] = vol
+            per["storage.bulk_area"] = [storage.bulk_area(a, t, rho, sp.dry_bulk) for a, t in zip(q, tdw, strict=True)]
+            per["storage.silos"] = [float(storage.silos(v, sp.dry_bulk)) for v in vol]
+            qe = q
+        else:
+            assert rho
+            vol = [storage.liquid_volume(a, t, rho, sp.liquid) for a, t in zip(q, tdw, strict=True)]
+            per["storage.liquid"] = vol
+            per["storage.tanks"] = [float(storage.tanks(v, sp.liquid)) for v in vol]
+            qe = q
+        for k, s in per.items():
+            out[k][f.id] = s
+            sums[k] = [a + b for a, b in zip(sums[k], s, strict=True)]
+        acc = q_form.setdefault(f.cargo_form, [0.0] * n_years)
+        q_form[f.cargo_form] = [a + b for a, b in zip(acc, qe, strict=True)]
+    for k, s in sums.items():
+        out[k][storage.TOTAL] = terminal.never_decrease(s)
+    hours = p.working_days_per_year * p.working_hours_per_day
+    for eq in sp.yard_equipment:
+        if eq.role != "yard":
+            continue
+        qf = q_form.get(eq.cargo_form, [0.0] * n_years)
+        out["storage.yard_equipment"][eq.id] = terminal.never_decrease(
+            [float(storage.yard_equipment(x, eq, hours)) for x in qf])
+    return out
+
+
 SHIP_KEYED = {"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
 
 
@@ -356,6 +445,9 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
 
     if "terminal" in mods:
         values.update(terminal_chain(case, chains))
+    if "storage" in mods:
+        d_unit = {k: v for k, v in values["cargo.demand_unit"].items() if isinstance(v, list)}
+        values.update(storage_chain(case, d_unit, chains, warnings))
 
     matrix: dict[str, dict[str, FeasCell]] = {}
     if "voyage" in mods:

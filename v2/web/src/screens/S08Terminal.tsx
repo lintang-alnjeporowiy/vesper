@@ -4,7 +4,7 @@ import { Badge, InputMark, Note, PH, ScreenHeader, Section, Slider, Table } from
 import { series, useCalc } from '../lib/engine'
 import { num, pct } from '../lib/format'
 import { useField } from '../lib/useField'
-import { REQUIRED_DEPTH_PH, STORAGE_Y13, TERMINAL_Y13, WATERSIDE_OPTIONS } from '../mock/placeholders'
+import { REQUIRED_DEPTH_PH, TERMINAL_Y13, WATERSIDE_OPTIONS } from '../mock/placeholders'
 import { usePlanner } from '../store'
 
 export default function S08Terminal() {
@@ -21,7 +21,21 @@ export default function S08Terminal() {
   const sumFlows = (vid: string, t: string, y: number) => flowsOf(t).reduce((a, f) => a + (series(res, vid, f.id)?.[y] ?? 0), 0)
   const shipOf = (fid: string) => c.ships.find((s) => s.id === (res?.ship_by_flow[fid] ?? shipByFlow[fid]))
   const at = (vid: string, fid: string) => series(res, vid, fid)?.[y0] ?? 0
-  const STORAGE_INPUT: Record<string, string> = { 'storage.gc': 'in.storage.gc', 'storage.bulk': 'in.storage.bulk', 'storage.cy': 'in.storage.cy', 'storage.liquid': 'in.storage.liquid' }
+  const sres = calc.ok && calc.result?.modules.includes('storage') ? calc.result : undefined
+  const st = (vid: string, key: string) => series(sres, vid, key)?.[y0] ?? 0
+  const sat = st
+  const sp = c.storage
+  const teuForms = c.cargo_forms.filter((f) => f.default_unit === 'TEU').map((f) => f.code)
+  const cmdOf = (forms: string[]) => [...new Set(c.flows.filter((f) => forms.includes(f.cargo_form)).map((f) => c.commodities.find((x) => x.id === f.commodity_id)?.name ?? f.commodity_id))].join(', ')
+  type Facility = { id: string; name: string; forms: string[]; pv: string; param: string; need: { vid: string; unit: string }[]; flowNeed: { vid: string; unit: string } }
+  const facilities: (Facility & { commodities: string })[] = ([
+    { id: 'cy', name: 'Container yard', forms: teuForms, pv: 'in.storage.cy', param: `${num(sp.container_yard.area_per_teu_m2)} m²/TEU · ${sp.container_yard.max_tiers} tier · YOR ${pct(sp.container_yard.yor_max)} · kosong ${pct(sp.container_yard.empty_share)}`, need: [{ vid: 'storage.cy', unit: 'm²' }, { vid: 'storage.cy_slots', unit: 'slot' }], flowNeed: { vid: 'storage.cy', unit: 'm²' } },
+    { id: 'gc', name: 'Gudang / lapangan GC', forms: ['GC'], pv: 'in.storage.gc', param: `f ${num(sp.general_cargo.f_area, 1)} × ${num(sp.general_cargo.f_bulk, 1)} · ${num(sp.general_cargo.stack_height_m)} m · SOR ${pct(sp.general_cargo.sor_max)}`, need: [{ vid: 'storage.gc', unit: 'm²' }], flowNeed: { vid: 'storage.gc', unit: 'm²' } },
+    { id: 'bulk', name: 'Silo curah kering', forms: ['CK'], pv: 'in.storage.bulk', param: `${num(sp.dry_bulk.silo_capacity_m3 ?? 0)} m³ · isi ${pct(sp.dry_bulk.silo_fill_ratio ?? 0.8)} · Rc ${num(sp.dry_bulk.capacity_ratio, 1)}`, need: [{ vid: 'storage.silos', unit: 'silo' }, { vid: 'storage.bulk', unit: 'm³' }], flowNeed: { vid: 'storage.bulk', unit: 'm³' } },
+    { id: 'liquid', name: 'Tangki timbun', forms: ['CC'], pv: 'in.storage.liquid', param: `${num(sp.liquid.tank_capacity_m3)} m³ · okupansi ${pct(sp.liquid.occupancy)}`, need: [{ vid: 'storage.tanks', unit: 'tangki' }, { vid: 'storage.liquid', unit: 'm³' }], flowNeed: { vid: 'storage.liquid', unit: 'm³' } },
+  ] as Facility[]).map((x) => ({ ...x, commodities: cmdOf(x.forms) }))
+  const yardEq = (forms: string[]) => (sp.yard_equipment ?? []).filter((e) => (e.role ?? 'yard') === 'yard' && forms.includes(e.cargo_form))
+  const TOTAL = 'total'
   const site = c.kek_site
   const plan = c.plans?.[0]
   const eqName = (id?: string) => c.equipment.find((e) => e.id === id)
@@ -31,7 +45,7 @@ export default function S08Terminal() {
 
   return (
     <>
-      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan & alat dihitung · penyimpanan & perairan placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>} />
+      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan, alat & penyimpanan dihitung · perairan & biaya placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>} />
 
       <div className="flex w-full gap-8 border-y border-garis py-4">
         <div className="flex w-[300px] shrink-0 flex-col gap-2">
@@ -123,15 +137,25 @@ export default function S08Terminal() {
               </tr>
             </thead>
             <tbody>
-              {site.terminals.flatMap((t) => [
-                { label: `Tambatan ${t.id}`, vid: 'terminal.n_berth', term: t.id },
-                { label: `Alat ${t.equipment_kind}`, vid: 'terminal.n_equip', term: t.id },
-              ]).map(({ label, vid, term }) => ({ label, vid, term, arr: termSeries(vid, term) ?? Array<number>(nYears).fill(0) })).map(({ label, arr, vid, term }) => (
+              {[
+                ...site.terminals.flatMap((t) => [
+                  { label: `Tambatan ${t.id}`, vid: 'terminal.n_berth', ctx: (y: number) => ({ terminal: t.id, year: y }), arr: termSeries('terminal.n_berth', t.id), k: 1 },
+                  { label: `Alat ${t.equipment_kind}`, vid: 'terminal.n_equip', ctx: (y: number) => ({ terminal: t.id, year: y }), arr: termSeries('terminal.n_equip', t.id), k: 1 },
+                ]),
+                ...[
+                  { label: 'CY (rb m²)', vid: 'storage.cy', k: 1000 },
+                  { label: 'Gudang GC (rb m²)', vid: 'storage.gc', k: 1000 },
+                  { label: 'Silo', vid: 'storage.silos', k: 1 },
+                  { label: 'Tangki', vid: 'storage.tanks', k: 1 },
+                ].map((r) => ({ ...r, ctx: (y: number) => ({ flow: TOTAL, year: y }), arr: series(sres, r.vid, TOTAL) })),
+                ...yardEq(c.cargo_forms.map((f) => f.code)).map((e) => ({ label: e.name.replace(/ \(.*\)$/, ''), vid: 'storage.yard_equipment', ctx: (y: number) => ({ flow: e.id, year: y }), arr: series(sres, 'storage.yard_equipment', e.id), k: 1 })),
+              ].map(({ label, vid, ctx, arr: a, k }) => ({ label, vid, ctx, k, arr: a ?? Array<number>(nYears).fill(0) })).map(({ label, arr, vid, ctx, k }) => (
                 <tr key={label} className="border-b border-garis">
                   <td className="py-2 font-sans">{label}</td>
                   {arr.map((v, i) => {
-                    const step = i > 0 && v > arr[i - 1]
-                    return <td key={i}><Tv v={vid} ctx={{ terminal: term, year: i + 1 }} value={String(v)} className="no-underline">{step ? <span className="bg-hitam px-1 text-white">{v}</span> : <span className="text-abu">{v}</span>}</Tv></td>
+                    const step = i > 0 && Math.round(v / k) > Math.round(arr[i - 1] / k)
+                    const txt = num(v / k)
+                    return <td key={i}><Tv v={vid} ctx={ctx(i + 1)} value={txt} className="no-underline">{step ? <span className="bg-hitam px-1 text-white">{txt}</span> : <span className="text-abu">{txt}</span>}</Tv></td>
                   })}
                 </tr>
               ))}
@@ -139,22 +163,58 @@ export default function S08Terminal() {
           </table>
         </div>
         <Note>
-          Kotak hitam = tahun jumlahnya bertambah (tambatan yang sudah dibangun tidak berkurang). Ini kebutuhan per tahun; jadwal bangun dengan
+          Kotak hitam = tahun jumlahnya bertambah (tambatan, penyimpanan, dan alat yang sudah ada tidak berkurang). Ini kebutuhan per tahun; jadwal bangun dengan
           masa konstruksi <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} th`}</Tv> dan lookahead <Tv v="in.horizon.berth_lookahead">{`${c.horizon.berth_lookahead_years} th`}</Tv> menyusul di tahap 8 (investasi).
           {res ? '' : ' API tidak aktif: semua angka 0.'}
         </Note>
       </Section>
 
-      <Section title="Penyimpanan per komoditas" aside={<span className="text-[13px] text-abu">dwell dari lama konsumsi · tahun 13</span>}>
+      <Section title="Penyimpanan per fasilitas" aside={sres ? <Badge kind="dihitung">dihitung · tahun {year} · kapasitas terpasang</Badge> : <PH>placeholder · API tidak aktif</PH>}>
         <Table
-          rowKey={(r) => r.facility}
-          rows={STORAGE_Y13}
+          rowKey={(r) => r.id}
+          rows={facilities}
           columns={[
-            { key: 'k', head: 'Komoditas', width: 200, render: (r) => r.commodity },
-            { key: 'f', head: 'Fasilitas', width: 140, render: (r) => r.facility },
-            { key: 'p', head: 'Parameter', width: 230, input: true, mono: true, render: (r) => <Tv v={STORAGE_INPUT[r.v]} className="text-[13px]">{r.param}</Tv> },
-            { key: 'n', head: 'Kebutuhan', width: 110, mono: true, render: (r) => <Tv v={r.v} ctx={{ year: 13 }} className="text-abu">{r.need}</Tv> },
-            { key: 'c', head: 'Biaya', mono: true, render: (r) => <Tv v="invest.storage" ctx={{ year: 13 }} className="text-abu">{r.cost}</Tv> },
+            { key: 'f', head: 'Fasilitas', width: 150, render: (r) => r.name },
+            { key: 'k', head: 'Komoditas', width: 190, render: (r) => r.commodities || '–' },
+            { key: 'p', head: 'Parameter', width: 250, input: true, mono: true, render: (r) => <Tv v={r.pv} className="text-[13px]">{r.param}</Tv> },
+            { key: 'n', head: 'Kebutuhan', width: 170, mono: true, render: (r) => (
+              <span className="flex flex-col">
+                {r.need.map((n) => <Tv key={n.vid} v={n.vid} ctx={{ flow: TOTAL, year }} className={sres ? '' : 'text-abu'}>{sres ? `${num(st(n.vid, TOTAL))} ${n.unit}` : '–'}</Tv>)}
+              </span>
+            ) },
+            { key: 'a', head: 'Alat lapangan', width: 130, mono: true, render: (r) => (
+              <span className="flex flex-col">
+                {yardEq(r.forms).map((e) => <Tv key={e.id} v="storage.yard_equipment" ctx={{ flow: e.id, year }} className={sres ? '' : 'text-abu'}>{`${sres ? num(st('storage.yard_equipment', e.id)) : '–'} ${e.name.replace(/ \(.*\)$/, '')}`}</Tv>)}
+                {yardEq(r.forms).length === 0 ? '–' : null}
+              </span>
+            ) },
+            { key: 'c', head: 'Biaya', render: () => <Tv v="invest.storage" ctx={{ year }} className="no-underline"><PH>placeholder · Tahap 8</PH></Tv> },
+          ]}
+        />
+        <Note>
+          <Tv v="storage.dwell">Dwell time</Tv> = <Tv v="voyage.consumption">lama konsumsi</Tv> tahun itu (selang antar-pengapalan), sehingga stok = satu muatan per call: luas mengikuti ukuran kapal, bukan langsung demand (I1).
+          Excel K15 merata-rata lama konsumsi 20 tahun termasuk tahun tanpa muatan (A18). <Tv v="storage.yard_equipment">Alat lapangan</Tv> = satu armada per bentuk muatan; Excel menghitung RTG per tenant dengan produktivitas berbeda (A19).
+          Tangki memakai densitas komoditas, Excel 0,9 tetap (A20). Kapasitas terpasang tidak pernah turun; truk dermaga–lapangan dan biaya menyusul di tahap 8.
+        </Note>
+      </Section>
+
+      <Section title="Penyimpanan per flow" aside={sres ? <Badge kind="dihitung">dihitung · tahun {year}</Badge> : <PH />}>
+        <Table
+          rowKey={(f) => f.id}
+          rows={c.flows}
+          muted={(f) => sres !== undefined && sat('storage.throughput', f.id) === 0}
+          columns={[
+            { key: 'f', head: 'Flow', width: 110, mono: true, render: (f) => f.id },
+            { key: 'k', head: 'Komoditas', width: 170, render: (f) => c.commodities.find((x) => x.id === f.commodity_id)?.name ?? f.commodity_id },
+            { key: 'fa', head: 'Fasilitas', width: 120, render: (f) => facilities.find((x) => x.forms.includes(f.cargo_form))?.name ?? '–' },
+            { key: 'q', head: 'Arus/th', width: 110, mono: true, render: (f) => <Tv v="storage.throughput" ctx={{ flow: f.id, year }}>{sres ? `${num(sat('storage.throughput', f.id))} ${res?.units[f.id] === 'TEU' ? 'TEU' : 't'}` : '–'}</Tv> },
+            { key: 'c', head: 'Muatan/call', width: 110, mono: true, render: (f) => <Tv v="voyage.q" ctx={{ flow: f.id, year }}>{sres ? num(at('voyage.q', f.id)) : '–'}</Tv> },
+            { key: 'd', head: 'Dwell hr', width: 80, mono: true, render: (f) => <Tv v="storage.dwell" ctx={{ flow: f.id, year }}>{sres ? num(sat('storage.dwell', f.id), 2) : '–'}</Tv> },
+            { key: 'n', head: 'Kebutuhan', mono: true, render: (f) => {
+              const fac = facilities.find((x) => x.forms.includes(f.cargo_form))
+              const n = fac?.flowNeed
+              return n ? <Tv v={n.vid} ctx={{ flow: f.id, year }}>{sres ? `${num(sat(n.vid, f.id))} ${n.unit}` : '–'}</Tv> : '–'
+            } },
           ]}
         />
       </Section>

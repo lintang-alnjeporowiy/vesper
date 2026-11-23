@@ -220,6 +220,135 @@ def engine_terminal(case: Case, values: dict, key: str) -> list[float]:
     return list(values[vid][term.upper()])
 
 
+#: koreksi penyimpanan (§5.6), di atas koreksi per flow (A12 demand, A13 lama konsumsi)
+STORAGE_FIXES = ("A18", "A19", "A20")
+
+
+def _never_decrease(seq: list[float]) -> list[float]:
+    m, out = 0.0, []
+    for v in seq:
+        m = max(m, v)
+        out.append(m)
+    return out
+
+
+def excel_storage(case: Case, golden: dict, chains: dict[str, dict[str, list[float]]],
+                  demands: dict[str, list[float]], fixes: frozenset[str] | set[str] = frozenset()) -> dict[str, dict]:
+    """Tiruan sheet `Fasilitas Daratan` dari demand (`demands`, satuan flow; TEU untuk PK) dan lama konsumsi per flow
+    (`chains[f]["consumption_days"]`). Mengembalikan `flows`/`total` (bentuk golden, kebutuhan per tahun apa adanya)
+    dan `engine` (bentuk variabel engine `storage.*`: kunci flow + `total` = Σ tidak pernah turun; alat berkunci id).
+
+    Excel: dwell = AVERAGE lama konsumsi 20 tahun (termasuk tahun nol); in.fantasi per tahun kecuali F13/J13/O13 = MAX
+    blok tahun 1–5 / 6–10 / 11–20 (A18). RTG per flow & per full/kosong, produktivitas per tenant (A19). Densitas curah
+    cair 0,9 tetap (A20). Luas kosong = salinan luas full (F29:F32) — sama dengan (1 + porsi kosong) bila porsi = 100 %.
+    """
+    gs = golden["storage"]
+    xp = gs["excel_params"]
+    sp = case.storage
+    cy, gc, db, lq = sp.container_yard, sp.general_cargo, sp.dry_bulk, sp.liquid
+    prm = case.params
+    hours = prm.working_days_per_year * prm.working_hours_per_day  # Fasilitas Daratan: 365 · 24
+    flows = {f.id: f for f in case.flows}
+    com = {c.id: c for c in case.commodities}
+    eq = {e.id: e for e in sp.yard_equipment}
+    n = len(next(iter(demands.values())))
+    e_share = cy.empty_share
+
+    def dwell(fid: str) -> list[float]:
+        c = list(chains[fid]["consumption_days"])
+        if "A18" in fixes:
+            return c
+        if fid == "in.fantasi":  # Fasilitas Daratan!F13:Y13
+            out = list(c)
+            out[0], out[4], out[9] = max(c[0:5]), max(c[5:10]), max(c[10:20])
+            return out
+        return [sum(c) / len(c)] * n  # AVERAGE(Model!M35x:AF35x)
+
+    res_f: dict[str, dict[str, list[float]]] = {}
+    eng: dict[str, dict[str, list[float]]] = {}
+
+    def put(var: str, fid: str, s: list[float]) -> None:
+        eng.setdefault(var, {})[fid] = [float(x) for x in s]
+
+    cy_tot = [0.0] * n
+    rtg_xl = [0.0] * n
+    q_by_form: dict[str, list[float]] = {}
+    for fid, rows in gs["flows"].items():
+        fl = flows[fid]
+        q = list(demands[fid])
+        t = dwell(fid)
+        r: dict[str, list[float]] = {"dwell_days": t}
+        put("storage.throughput", fid, q)
+        put("storage.dwell", fid, [tt if qq > 0 else 0.0 for qq, tt in zip(q, t, strict=True)])
+        if "cy_area_full_m2" in rows:
+            area = [qq * tt * cy.area_per_teu_m2 / (cy.height_ratio * 365 * cy.yor_max) for qq, tt in zip(q, t, strict=True)]
+            gsf = [qq * tt / (cy.height_ratio * 365 * cy.yor_max * cy.max_tiers) for qq, tt in zip(q, t, strict=True)]
+            gse = [qq * e_share * tt / (cy.height_ratio * 365 * cy.yor_max * cy.max_tiers) for qq, tt in zip(q, t, strict=True)]
+            p_full, p_empty = xp["rtg_productivity_teu_h"][fid]
+            u = eq["rtg"].utilization
+            rf = [float(ceil_(qq / (p_full * hours * u))) if qq else 0.0 for qq in q]
+            re_ = [float(ceil_(qq * e_share / (p_empty * hours * u))) if qq else 0.0 for qq in q]
+            r.update(cy_area_full_m2=area, ground_slots_full=gsf, ground_slots_empty=gse, rtg_full=rf, rtg_empty=re_)
+            cy_tot = [a + 2 * b for a, b in zip(cy_tot, area, strict=True)]  # F33 = Σ full + salinan kosong
+            rtg_xl = [a + b + c for a, b, c in zip(rtg_xl, rf, re_, strict=True)]
+            put("storage.cy", fid, [(1 + e_share) * a for a in area])
+            put("storage.cy_slots", fid, [a + b for a, b in zip(gsf, gse, strict=True)])
+            qe = [qq * (1 + e_share) for qq in q]
+        elif "gc_area_m2" in rows:
+            rho = com[fl.commodity_id].density_t_m3
+            assert rho
+            area = [gc.f_area * gc.f_bulk * qq * tt / (gc.stack_height_m * 365 * gc.sor_max * rho) for qq, tt in zip(q, t, strict=True)]
+            r["gc_area_m2"] = area
+            put("storage.gc", fid, area)
+            qe = q
+        elif "silo_volume_m3" in rows:
+            rho = com[fl.commodity_id].density_t_m3
+            assert rho
+            vol = [qq * tt * db.capacity_ratio / (365 * rho * db.sor_max) for qq, tt in zip(q, t, strict=True)]
+            area = [db.f_area * qq * tt * db.capacity_ratio / (db.stack_height_m * 365 * db.sor_max * rho) for qq, tt in zip(q, t, strict=True)]
+            assert db.silo_capacity_m3
+            ns = [float(ceil_(v / (db.silo_capacity_m3 * db.silo_fill_ratio))) if v else 0.0 for v in vol]
+            r.update(bulk_area_m2=area, silo_volume_m3=vol, silos=ns)
+            put("storage.bulk", fid, [db.gross_volume_factor * v for v in vol])
+            put("storage.bulk_area", fid, area)
+            put("storage.silos", fid, ns)
+            qe = q
+        else:
+            rho = com[fl.commodity_id].density_t_m3 if "A20" in fixes else xp["liquid_density_t_m3"]
+            assert rho
+            vol = [qq * tt / (365 * lq.occupancy * rho) for qq, tt in zip(q, t, strict=True)]
+            nt = [float(ceil_(v / lq.tank_capacity_m3)) if v else 0.0 for v in vol]
+            r.update(tank_volume_m3=vol, tanks=nt)
+            put("storage.liquid", fid, vol)
+            put("storage.tanks", fid, nt)
+            qe = q
+        res_f[fid] = r
+        acc = q_by_form.setdefault(fl.cargo_form, [0.0] * n)
+        q_by_form[fl.cargo_form] = [a + b for a, b in zip(acc, qe, strict=True)]
+
+    def pool(eid: str) -> list[float]:
+        e = eq[eid]
+        return [float(ceil_(x / (e.productivity * e.utilization * hours))) if x else 0.0 for x in q_by_form[e.cargo_form]]
+
+    dozers, forklifts = pool("dozer"), pool("forklift")  # F150 (curah), F205 (GC: sudah satu armada di Excel)
+    rtg = pool("rtg") if "A19" in fixes else rtg_xl
+    for var, by in list(eng.items()):
+        if var in ("storage.throughput", "storage.dwell"):
+            continue
+        by["total"] = _never_decrease([sum(x) for x in zip(*by.values(), strict=True)])
+    eng["storage.yard_equipment"] = {"rtg": _never_decrease(rtg), "dozer": _never_decrease(dozers),
+                                     "forklift": _never_decrease(forklifts)}
+    return dict(flows=res_f, total=dict(cy_area_m2=cy_tot, dozers=dozers, forklifts=forklifts, rtg=rtg), engine=eng)
+
+
+#: penyebab selisih per variabel penyimpanan engine (selain A12/A13 dari demand & lama konsumsi)
+STORAGE_CAUSES = {"storage.dwell": ("A13", "A18"), "storage.throughput": ("A12",),
+                  "storage.cy": ("A12", "A13", "A18"), "storage.cy_slots": ("A12", "A13", "A18"),
+                  "storage.gc": ("A13", "A18"), "storage.bulk": ("A13", "A18"), "storage.bulk_area": ("A13", "A18"),
+                  "storage.silos": ("A13", "A18"), "storage.liquid": ("A13", "A18", "A20"),
+                  "storage.tanks": ("A13", "A18", "A20"), "storage.yard_equipment": ("A12", "A19")}
+
+
 #: seri golden → (id variabel engine, faktor: 'per_call' = engine × F bila Excel per tahun) dan penyebab selisih
 ENGINE_MAP: dict[str, tuple[str, str | None]] = {
     "freq_required": ("voyage.freq", None),

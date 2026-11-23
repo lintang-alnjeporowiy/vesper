@@ -47,7 +47,10 @@
     "A14": "Excel: label 'Dalam Negeri' dibandingkan dengan 'Dalam' → semua pelabuhan kena tarif dalam negeri. v2: tarif luar negeri (USD × kurs) untuk pelabuhan luar negeri.",
     "A15": "Excel: pandu & tunda 1 gerakan/call, tunda tetap tidak dikali frekuensi, tambat × seluruh port time (KEK + asal + waktu tetap). v2: 2 gerakan, tunda tetap per call, tambat ⌈port time asal/tujuan⌉ etmal.",
     "A16": "Excel: cek label 'CC' berth-days memakai referensi relatif yang bergeser → mulai tahun ke-2 jetty CC dibagi 300 m (unit MP); rumus aslinya LOA/40 m membuat satu tanker menempati ±4 jetty. v2: jetty = satu kapal satu jetty.",
-    "A17": "Excel: ship-days KEK hanya waktu bongkar muat. v2: + idle time (IT) di tambatan; AT dan WT tidak menempati tambatan."
+    "A17": "Excel: ship-days KEK hanya waktu bongkar muat. v2: + idle time (IT) di tambatan; AT dan WT tidak menempati tambatan.",
+    "A18": "Excel (Fasilitas Daratan): dwell time = rata-rata lama konsumsi 20 tahun termasuk tahun tanpa muatan (in.fantasi per tahun, kecuali 3 sel MAX blok). v2: lama konsumsi tahun itu.",
+    "A19": "Excel: RTG dihitung per tenant & per full/kosong, masing-masing dibulatkan, produktivitas di-hardcode beda per tenant (4, 8/12, 5 TEU/jam). v2: satu armada per bentuk muatan, satu produktivitas per jenis alat.",
+    "A20": "Excel: densitas CPO & RBD olein di tangki = 0,9 tetap. v2: densitas komoditas (CPO 0,909; RBD 0,91)."
   },
   "interactions": [
     {
@@ -963,6 +966,7 @@
       "dependents": [
         "storage.gc",
         "storage.bulk",
+        "storage.bulk_area",
         "storage.liquid"
       ],
       "lane": 0,
@@ -1410,7 +1414,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 101,
+      "topo": 102,
       "group": "term"
     },
     {
@@ -1434,7 +1438,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 99,
+      "topo": 100,
       "group": "term"
     },
     {
@@ -1456,7 +1460,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 100,
+      "topo": 101,
       "group": "term"
     },
     {
@@ -1478,7 +1482,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 102,
+      "topo": 103,
       "group": "term"
     },
     {
@@ -1959,7 +1963,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 92,
+      "topo": 93,
       "group": "stype"
     },
     {
@@ -2101,7 +2105,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 95,
+      "topo": 96,
       "group": "tariff"
     },
     {
@@ -2125,7 +2129,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 96,
+      "topo": 97,
       "group": "tariff"
     },
     {
@@ -2149,7 +2153,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 97,
+      "topo": 98,
       "group": "tariff"
     },
     {
@@ -2173,7 +2177,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 98,
+      "topo": 99,
       "group": "tariff"
     },
     {
@@ -2197,7 +2201,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 93,
+      "topo": 94,
       "group": "tariff"
     },
     {
@@ -2220,7 +2224,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 94,
+      "topo": 95,
       "group": "tariff"
     },
     {
@@ -2230,7 +2234,7 @@
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
-      "excel_ref": "Fasilitas Daratan Rata2!F134",
+      "excel_ref": "Fasilitas Daratan!F13:F16 · F132 · F173:F175 · F224:F225",
       "section": "4.9",
       "case_path": "storage.dwell_time_mode",
       "screens": [
@@ -2284,7 +2288,9 @@
       "desc": "Parameter lapangan petikemas: luas per TEU, tinggi tumpukan, YOR maksimum, porsi kontainer kosong.",
       "deps": [],
       "dependents": [
-        "storage.cy"
+        "storage.cy",
+        "storage.cy_slots",
+        "storage.yard_equipment"
       ],
       "lane": 0,
       "depth": 0,
@@ -2331,6 +2337,8 @@
       "deps": [],
       "dependents": [
         "storage.bulk",
+        "storage.bulk_area",
+        "storage.silos",
         "invest.storage"
       ],
       "lane": 0,
@@ -2354,7 +2362,8 @@
       "desc": "Parameter tangki timbun: kapasitas satu tangki dan tingkat isi.",
       "deps": [],
       "dependents": [
-        "storage.liquid"
+        "storage.liquid",
+        "storage.tanks"
       ],
       "lane": 0,
       "depth": 0,
@@ -2382,6 +2391,28 @@
       "lane": 0,
       "depth": 0,
       "topo": 91,
+      "group": "storage"
+    },
+    {
+      "id": "in.storage.yard_role",
+      "label": "Peran alat lapangan (penumpukan / angkutan)",
+      "unit": "yard | transport",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.9",
+      "case_path": "storage.yard_equipment[alat].role",
+      "screens": [
+        8
+      ],
+      "desc": "Peran alat lapangan: alat penumpukan (jumlahnya dari arus muatan) atau angkutan dermaga–lapangan seperti truk (dihitung bersama panjang trestle).",
+      "deps": [],
+      "dependents": [
+        "storage.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 92,
       "group": "storage"
     },
     {
@@ -2527,7 +2558,7 @@
       ],
       "lane": 1,
       "depth": 3,
-      "topo": 120
+      "topo": 121
     },
     {
       "id": "dv.equip",
@@ -2554,7 +2585,7 @@
       ],
       "lane": 1,
       "depth": 2,
-      "topo": 113
+      "topo": 114
     },
     {
       "id": "dv.waterside",
@@ -2604,7 +2635,7 @@
       ],
       "lane": 1,
       "depth": 1,
-      "topo": 109
+      "topo": 110
     },
     {
       "id": "demand.base",
@@ -2639,7 +2670,7 @@
       ],
       "lane": 2,
       "depth": 1,
-      "topo": 103
+      "topo": 104
     },
     {
       "id": "demand.ratio",
@@ -2667,7 +2698,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 112
+      "topo": 113
     },
     {
       "id": "cargo.netmax",
@@ -2700,7 +2731,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 116
+      "topo": 117
     },
     {
       "id": "cargo.box_per_teu",
@@ -2727,7 +2758,7 @@
       ],
       "lane": 2,
       "depth": 3,
-      "topo": 119
+      "topo": 120
     },
     {
       "id": "cargo.ton_per_teu",
@@ -2757,7 +2788,7 @@
       ],
       "lane": 2,
       "depth": 4,
-      "topo": 121
+      "topo": 122
     },
     {
       "id": "cargo.demand_unit",
@@ -2796,7 +2827,7 @@
       ],
       "lane": 2,
       "depth": 5,
-      "topo": 124
+      "topo": 125
     },
     {
       "id": "vessel.teu_cap",
@@ -2824,7 +2855,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 110
+      "topo": 111
     },
     {
       "id": "vessel.payload",
@@ -2859,7 +2890,7 @@
       ],
       "lane": 3,
       "depth": 5,
-      "topo": 125
+      "topo": 126
     },
     {
       "id": "vessel.compatible",
@@ -2885,7 +2916,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 111
+      "topo": 112
     },
     {
       "id": "vessel.feasible",
@@ -2918,7 +2949,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 118
+      "topo": 119
     },
     {
       "id": "vessel.neq",
@@ -2951,7 +2982,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 106
+      "topo": 107
     },
     {
       "id": "vessel.reach_ok",
@@ -2975,7 +3006,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 105
+      "topo": 106
     },
     {
       "id": "vessel.ballast_speed",
@@ -3003,7 +3034,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 115
+      "topo": 116
     },
     {
       "id": "vessel.ae_kw",
@@ -3029,7 +3060,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 107
+      "topo": 108
     },
     {
       "id": "vessel.sfoc_me",
@@ -3055,7 +3086,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 108
+      "topo": 109
     },
     {
       "id": "vessel.sfoc_ae",
@@ -3081,7 +3112,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 114
+      "topo": 115
     },
     {
       "id": "voyage.freq",
@@ -3115,7 +3146,7 @@
       ],
       "lane": 4,
       "depth": 6,
-      "topo": 130
+      "topo": 131
     },
     {
       "id": "voyage.q",
@@ -3146,7 +3177,7 @@
       ],
       "lane": 4,
       "depth": 7,
-      "topo": 134
+      "topo": 135
     },
     {
       "id": "voyage.t_port_kek",
@@ -3181,7 +3212,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 137
+      "topo": 138
     },
     {
       "id": "voyage.t_port_ext",
@@ -3212,7 +3243,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 138
+      "topo": 139
     },
     {
       "id": "voyage.t_port",
@@ -3239,7 +3270,7 @@
       ],
       "lane": 4,
       "depth": 9,
-      "topo": 142
+      "topo": 143
     },
     {
       "id": "voyage.t_fix",
@@ -3267,7 +3298,7 @@
       ],
       "lane": 4,
       "depth": 1,
-      "topo": 104
+      "topo": 105
     },
     {
       "id": "voyage.t_sea",
@@ -3303,7 +3334,7 @@
       ],
       "lane": 4,
       "depth": 4,
-      "topo": 122
+      "topo": 123
     },
     {
       "id": "voyage.rtd",
@@ -3330,7 +3361,7 @@
       ],
       "lane": 4,
       "depth": 10,
-      "topo": 146
+      "topo": 147
     },
     {
       "id": "voyage.f_max",
@@ -3360,7 +3391,7 @@
       ],
       "lane": 4,
       "depth": 11,
-      "topo": 155
+      "topo": 158
     },
     {
       "id": "voyage.n_ship",
@@ -3388,7 +3419,7 @@
       ],
       "lane": 4,
       "depth": 12,
-      "topo": 162
+      "topo": 166
     },
     {
       "id": "voyage.utilization",
@@ -3411,7 +3442,7 @@
       "dependents": [],
       "lane": 4,
       "depth": 13,
-      "topo": 166
+      "topo": 171
     },
     {
       "id": "voyage.consumption",
@@ -3440,7 +3471,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 139
+      "topo": 140
     },
     {
       "id": "shipcost.fuel_me_l",
@@ -3476,7 +3507,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 147
+      "topo": 148
     },
     {
       "id": "shipcost.fuel_ae_l",
@@ -3513,7 +3544,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 148
+      "topo": 149
     },
     {
       "id": "shipcost.fuel_me",
@@ -3542,7 +3573,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 156
+      "topo": 159
     },
     {
       "id": "shipcost.fuel_ae",
@@ -3571,7 +3602,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 157
+      "topo": 160
     },
     {
       "id": "shipcost.voyage",
@@ -3596,7 +3627,7 @@
       ],
       "lane": 5,
       "depth": 12,
-      "topo": 163
+      "topo": 167
     },
     {
       "id": "shipcost.tch_rate",
@@ -3624,7 +3655,7 @@
       ],
       "lane": 5,
       "depth": 2,
-      "topo": 117
+      "topo": 118
     },
     {
       "id": "shipcost.tch",
@@ -3651,7 +3682,7 @@
       ],
       "lane": 5,
       "depth": 13,
-      "topo": 167
+      "topo": 172
     },
     {
       "id": "shipcost.port_call",
@@ -3693,7 +3724,7 @@
       ],
       "lane": 5,
       "depth": 9,
-      "topo": 143
+      "topo": 144
     },
     {
       "id": "shipcost.port",
@@ -3721,7 +3752,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 149
+      "topo": 150
     },
     {
       "id": "shipcost.total",
@@ -3750,7 +3781,7 @@
       ],
       "lane": 5,
       "depth": 14,
-      "topo": 169
+      "topo": 174
     },
     {
       "id": "shipcost.unit",
@@ -3776,7 +3807,7 @@
       "dependents": [],
       "lane": 5,
       "depth": 15,
-      "topo": 170
+      "topo": 175
     },
     {
       "id": "terminal.ship_days",
@@ -3807,7 +3838,7 @@
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 141
+      "topo": 142
     },
     {
       "id": "terminal.berth_days",
@@ -3841,7 +3872,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 145
+      "topo": 146
     },
     {
       "id": "terminal.n_berth",
@@ -3871,7 +3902,7 @@
       ],
       "lane": 6,
       "depth": 11,
-      "topo": 154
+      "topo": 157
     },
     {
       "id": "terminal.bor",
@@ -3896,7 +3927,7 @@
       "dependents": [],
       "lane": 6,
       "depth": 12,
-      "topo": 159
+      "topo": 163
     },
     {
       "id": "terminal.berth_length",
@@ -3922,7 +3953,7 @@
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 160
+      "topo": 164
     },
     {
       "id": "terminal.n_equip",
@@ -3954,108 +3985,98 @@
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 161
+      "topo": 165
     },
     {
       "id": "storage.dwell",
       "label": "Dwell time",
       "unit": "hari",
-      "scope": "commodity×year",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "dari lama konsumsi (maks atas tahun) atau isian tetap",
+      "formula": "lama konsumsi tahun itu (atau isian tetap per komoditas)",
       "deps": [
         "voyage.consumption",
         "in.storage.dwell"
       ],
-      "excel_ref": "Fasilitas Daratan Rata2!F134",
+      "excel_ref": "Fasilitas Daratan!F13:Y16 · F132 · F173:F175 · F224:F225",
       "section": "5.6",
+      "audit": [
+        "A13",
+        "A18"
+      ],
       "screens": [
         8
       ],
       "symbol": "Tdw",
-      "desc": "Lama rata-rata muatan menginap di penyimpanan KEK.",
+      "desc": "Lama muatan menginap di penyimpanan KEK; K15: selang antar-pengapalan (lama konsumsi) tahun itu.",
+      "impl": "storage:dwell",
       "dependents": [
         "storage.cy",
+        "storage.cy_slots",
         "storage.gc",
         "storage.bulk",
+        "storage.bulk_area",
         "storage.liquid"
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 144
+      "topo": 145
     },
     {
       "id": "storage.throughput",
       "label": "Arus masuk penyimpanan",
       "unit": "t | TEU per th",
-      "scope": "commodity×year",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "Q = porsi masuk · D",
+      "formula": "Q = porsi masuk · D (TEU untuk petikemas)",
       "deps": [
         "cargo.demand_unit",
         "in.storage.share"
       ],
+      "excel_ref": "Fasilitas Daratan!F8:Y11 · F128 · F167:F169 · F222:F223",
       "section": "5.6",
       "screens": [
         8
       ],
       "symbol": "Q",
-      "desc": "Volume muatan per tahun yang melewati penyimpanan KEK.",
+      "desc": "Volume muatan per tahun yang melewati penyimpanan KEK (petikemas dalam TEU).",
+      "impl": "storage:throughput",
       "dependents": [
         "storage.cy",
+        "storage.cy_slots",
         "storage.gc",
         "storage.bulk",
+        "storage.bulk_area",
         "storage.liquid",
         "storage.yard_equipment"
       ],
       "lane": 6,
       "depth": 6,
-      "topo": 129
+      "topo": 130
     },
     {
       "id": "storage.cy",
       "label": "Lapangan penumpukan petikemas",
-      "unit": "m² · slot",
-      "scope": "year",
+      "unit": "m²",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "A = Q_TEU · Tdw · A_TEU / (365 · H_ratio · YOR)",
+      "formula": "(1 + porsi kosong) · Q_TEU · Tdw · A_TEU / (365 · H_ratio · YOR); total = Σ flow, tidak pernah turun",
       "deps": [
         "storage.throughput",
         "storage.dwell",
         "in.storage.cy"
       ],
-      "excel_ref": "Fasilitas Daratan",
+      "excel_ref": "Fasilitas Daratan!F25:Y33",
       "section": "5.6",
+      "audit": [
+        "A18"
+      ],
       "screens": [
         8
       ],
-      "desc": "Luas lapangan penumpukan petikemas (dan jumlah ground slot) yang dibutuhkan.",
-      "dependents": [
-        "invest.storage"
-      ],
-      "lane": 6,
-      "depth": 10,
-      "topo": 150
-    },
-    {
-      "id": "storage.gc",
-      "label": "Gudang / lapangan GC",
-      "unit": "m²",
-      "scope": "year",
-      "kind": "derived",
-      "formula": "A = Q · Tdw · f_area · f_bulk / (365 · ρ · H · YOR)",
-      "deps": [
-        "storage.throughput",
-        "storage.dwell",
-        "in.storage.gc",
-        "in.cmdty.density"
-      ],
-      "excel_ref": "Fasilitas Daratan",
-      "section": "5.6",
-      "screens": [
-        8
-      ],
-      "desc": "Luas gudang/lapangan general cargo yang dibutuhkan.",
+      "symbol": "A_CY",
+      "desc": "Luas lapangan penumpukan petikemas (isi + kosong) per flow; kunci total = kapasitas terpasang.",
+      "impl": "storage:cy_area",
       "dependents": [
         "invest.storage"
       ],
@@ -4064,24 +4085,27 @@
       "topo": 151
     },
     {
-      "id": "storage.bulk",
-      "label": "Curah kering: lapangan / silo",
-      "unit": "m² | unit",
-      "scope": "year",
+      "id": "storage.cy_slots",
+      "label": "Ground slot petikemas",
+      "unit": "slot",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "V_silo = Q · Tdw · Rc / (365 · ρ · YOR); nSilo = ⌈V / cap⌉",
+      "formula": "(1 + porsi kosong) · Q_TEU · Tdw / (365 · H_ratio · YOR · tier maks)",
       "deps": [
         "storage.throughput",
         "storage.dwell",
-        "in.storage.bulk",
-        "in.cmdty.density"
+        "in.storage.cy"
       ],
-      "excel_ref": "Fasilitas Daratan",
+      "excel_ref": "Fasilitas Daratan!F47:Y58",
       "section": "5.6",
+      "audit": [
+        "A18"
+      ],
       "screens": [
         8
       ],
-      "desc": "Kebutuhan penyimpanan curah kering: luas lapangan atau jumlah silo.",
+      "desc": "Jumlah ground slot petikemas (isi + kosong) dengan tinggi tumpukan maksimum.",
+      "impl": "storage:ground_slots",
       "dependents": [
         "invest.storage"
       ],
@@ -4090,24 +4114,29 @@
       "topo": 152
     },
     {
-      "id": "storage.liquid",
-      "label": "Tangki curah cair",
-      "unit": "m³ | unit",
-      "scope": "year",
+      "id": "storage.gc",
+      "label": "Gudang / lapangan GC",
+      "unit": "m²",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "V = Q · Tdw / (365 · ρ · okupansi); nTangki = ⌈V / cap⌉",
+      "formula": "Q · Tdw · f_area · f_bulk / (365 · ρ · H · SOR)",
       "deps": [
         "storage.throughput",
         "storage.dwell",
-        "in.storage.liquid",
+        "in.storage.gc",
         "in.cmdty.density"
       ],
-      "excel_ref": "Fasilitas Daratan",
+      "excel_ref": "Fasilitas Daratan!F184:Y186",
       "section": "5.6",
+      "audit": [
+        "A18"
+      ],
       "screens": [
         8
       ],
-      "desc": "Kebutuhan tangki timbun curah cair: volume dan jumlah tangki.",
+      "symbol": "A_GC",
+      "desc": "Luas gudang/lapangan general cargo yang dibutuhkan per flow; kunci total = kapasitas terpasang.",
+      "impl": "storage:gc_area",
       "dependents": [
         "invest.storage"
       ],
@@ -4116,30 +4145,181 @@
       "topo": 153
     },
     {
-      "id": "storage.yard_equipment",
-      "label": "Alat lapangan",
-      "unit": "unit",
-      "scope": "cargo_form×year",
+      "id": "storage.bulk",
+      "label": "Volume silo curah kering",
+      "unit": "m³",
+      "scope": "flow×year",
       "kind": "derived",
-      "formula": "⌈Q / (produktivitas · utilisasi · jam kerja)⌉",
+      "formula": "faktor bruto · Q · Tdw · Rc / (365 · ρ · SOR)",
       "deps": [
         "storage.throughput",
-        "in.storage.yard_equipment",
-        "in.param.working_days",
-        "in.param.working_hours"
+        "storage.dwell",
+        "in.storage.bulk",
+        "in.cmdty.density"
       ],
-      "excel_ref": "Fasilitas Daratan",
+      "excel_ref": "Fasilitas Daratan!F138:Y138",
+      "section": "5.6",
+      "audit": [
+        "A18"
+      ],
+      "screens": [
+        8
+      ],
+      "symbol": "V_silo",
+      "desc": "Volume penyimpanan curah kering (silo) per flow; kunci total = kapasitas terpasang.",
+      "impl": "storage:bulk_volume",
+      "dependents": [
+        "storage.silos"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 154
+    },
+    {
+      "id": "storage.bulk_area",
+      "label": "Lapangan curah kering (alternatif silo)",
+      "unit": "m²",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "f_area · V_netto / H",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.bulk",
+        "in.cmdty.density"
+      ],
+      "excel_ref": "Fasilitas Daratan!F137:Y137",
+      "section": "5.6",
+      "audit": [
+        "A18"
+      ],
+      "screens": [
+        8
+      ],
+      "desc": "Luas lapangan curah kering bila disimpan terbuka, sebagai alternatif silo.",
+      "impl": "storage:bulk_area",
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 155
+    },
+    {
+      "id": "storage.silos",
+      "label": "Jumlah silo",
+      "unit": "unit",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "⌈V_silo / (kapasitas silo · rasio isi)⌉",
+      "deps": [
+        "storage.bulk",
+        "in.storage.bulk"
+      ],
+      "excel_ref": "Fasilitas Daratan!F139:Y139",
       "section": "5.6",
       "screens": [
         8
       ],
-      "desc": "Jumlah alat lapangan (RTG, reach stacker, forklift, …) yang dibutuhkan per bentuk muatan.",
+      "symbol": "nSilo",
+      "desc": "Jumlah silo yang dibutuhkan: volume dibagi kapasitas silo dikali rasio isi, dibulatkan ke atas.",
+      "impl": "storage:silos",
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 11,
+      "topo": 161
+    },
+    {
+      "id": "storage.liquid",
+      "label": "Volume tangki curah cair",
+      "unit": "m³",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "Q · Tdw / (365 · ρ · okupansi)",
+      "deps": [
+        "storage.throughput",
+        "storage.dwell",
+        "in.storage.liquid",
+        "in.cmdty.density"
+      ],
+      "excel_ref": "Fasilitas Daratan!F229:Y230",
+      "section": "5.6",
+      "audit": [
+        "A18",
+        "A20"
+      ],
+      "screens": [
+        8
+      ],
+      "symbol": "V_tank",
+      "desc": "Volume tangki timbun curah cair per produk; kunci total = kapasitas terpasang.",
+      "impl": "storage:liquid_volume",
+      "dependents": [
+        "storage.tanks"
+      ],
+      "lane": 6,
+      "depth": 10,
+      "topo": 156
+    },
+    {
+      "id": "storage.tanks",
+      "label": "Jumlah tangki",
+      "unit": "unit",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "⌈V_tank / kapasitas tangki⌉ per produk",
+      "deps": [
+        "storage.liquid",
+        "in.storage.liquid"
+      ],
+      "excel_ref": "Fasilitas Daratan!F233:Y234",
+      "section": "5.6",
+      "screens": [
+        8
+      ],
+      "symbol": "nTangki",
+      "desc": "Jumlah tangki timbun per produk (produk berbeda tidak berbagi tangki), dibulatkan ke atas.",
+      "impl": "storage:tanks",
+      "dependents": [
+        "invest.storage"
+      ],
+      "lane": 6,
+      "depth": 11,
+      "topo": 162
+    },
+    {
+      "id": "storage.yard_equipment",
+      "label": "Alat lapangan",
+      "unit": "unit",
+      "scope": "equipment×year",
+      "kind": "derived",
+      "formula": "⌈Σ_bentuk Q (petikemas: × (1 + porsi kosong)) / (produktivitas · utilisasi · WD · jam/hari)⌉, tidak pernah turun",
+      "deps": [
+        "storage.throughput",
+        "in.storage.yard_equipment",
+        "in.storage.yard_role",
+        "in.storage.cy",
+        "in.param.working_days",
+        "in.param.working_hours"
+      ],
+      "excel_ref": "Fasilitas Daratan!F73:Y115 (RTG) · F150 (dozer) · F205 (forklift)",
+      "section": "5.6",
+      "audit": [
+        "A19"
+      ],
+      "screens": [
+        8
+      ],
+      "desc": "Jumlah alat lapangan (RTG, forklift, dozer) per jenis alat: satu armada melayani semua flow sebentuk muatan.",
+      "impl": "storage:yard_equipment",
       "dependents": [
         "invest.yard_equipment"
       ],
       "lane": 6,
       "depth": 7,
-      "topo": 133
+      "topo": 134
     },
     {
       "id": "waterside.governing",
@@ -4167,7 +4347,7 @@
       ],
       "lane": 7,
       "depth": 4,
-      "topo": 123
+      "topo": 124
     },
     {
       "id": "waterside.depth_req",
@@ -4192,7 +4372,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 126
+      "topo": 127
     },
     {
       "id": "waterside.channel",
@@ -4216,7 +4396,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 127
+      "topo": 128
     },
     {
       "id": "waterside.basin",
@@ -4240,7 +4420,7 @@
       ],
       "lane": 7,
       "depth": 5,
-      "topo": 128
+      "topo": 129
     },
     {
       "id": "waterside.x_star",
@@ -4265,7 +4445,7 @@
       ],
       "lane": 7,
       "depth": 6,
-      "topo": 131
+      "topo": 132
     },
     {
       "id": "waterside.trestle_len",
@@ -4291,7 +4471,7 @@
       ],
       "lane": 7,
       "depth": 7,
-      "topo": 135
+      "topo": 136
     },
     {
       "id": "waterside.dredge_vol",
@@ -4319,7 +4499,7 @@
       ],
       "lane": 7,
       "depth": 6,
-      "topo": 132
+      "topo": 133
     },
     {
       "id": "invest.berth",
@@ -4348,7 +4528,7 @@
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 164
+      "topo": 169
     },
     {
       "id": "invest.handling",
@@ -4375,7 +4555,7 @@
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 165
+      "topo": 170
     },
     {
       "id": "invest.storage",
@@ -4387,8 +4567,10 @@
       "deps": [
         "storage.cy",
         "storage.gc",
-        "storage.bulk",
-        "storage.liquid",
+        "storage.silos",
+        "storage.tanks",
+        "storage.bulk_area",
+        "storage.cy_slots",
         "in.price.storage",
         "in.storage.bulk",
         "in.param.escalation_infra",
@@ -4405,8 +4587,8 @@
         "invest.total"
       ],
       "lane": 8,
-      "depth": 11,
-      "topo": 158
+      "depth": 12,
+      "topo": 168
     },
     {
       "id": "invest.yard_equipment",
@@ -4431,7 +4613,7 @@
       ],
       "lane": 8,
       "depth": 8,
-      "topo": 136
+      "topo": 137
     },
     {
       "id": "invest.waterside",
@@ -4460,7 +4642,7 @@
       ],
       "lane": 8,
       "depth": 8,
-      "topo": 140
+      "topo": 141
     },
     {
       "id": "invest.total",
@@ -4486,7 +4668,7 @@
       ],
       "lane": 8,
       "depth": 14,
-      "topo": 168
+      "topo": 173
     },
     {
       "id": "agg.tc",
@@ -4513,7 +4695,7 @@
       ],
       "lane": 8,
       "depth": 15,
-      "topo": 171
+      "topo": 176
     },
     {
       "id": "agg.uc",
@@ -4542,7 +4724,7 @@
       ],
       "lane": 8,
       "depth": 16,
-      "topo": 172
+      "topo": 177
     },
     {
       "id": "agg.pv_uc",
@@ -4566,7 +4748,7 @@
       ],
       "lane": 8,
       "depth": 17,
-      "topo": 174
+      "topo": 179
     },
     {
       "id": "agg.annuity",
@@ -4590,7 +4772,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 18,
-      "topo": 175
+      "topo": 180
     },
     {
       "id": "obj.npv",
@@ -4615,7 +4797,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 16,
-      "topo": 173
+      "topo": 178
     }
   ]
 }

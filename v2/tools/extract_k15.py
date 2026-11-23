@@ -140,6 +140,32 @@ MLA = [6, 14, 22, 30, 38]  # baris nama di kolom J
 YEAR_COLS_M = [get_column_letter(column_index_from_string("M") + i) for i in range(20)]  # M..AF
 YEAR_COLS_N = [get_column_letter(column_index_from_string("N") + i) for i in range(20)]  # N..AG
 YEAR_COLS_K = [get_column_letter(column_index_from_string("K") + i) for i in range(20)]  # K..AD
+YEAR_COLS_F = [get_column_letter(column_index_from_string("F") + i) for i in range(20)]  # F..Y (Fasilitas Daratan)
+
+# Fasilitas Daratan: baris per flow (seri → baris) dan total; dwell dari Model!M350:AF359 (A13, A18)
+STORAGE_FLOW_ROWS: dict[str, dict[str, int]] = {
+    "in.fantasi": dict(dwell_days=13, cy_area_full_m2=25, ground_slots_full=47, ground_slots_empty=48, rtg_full=73,
+                       rtg_empty=79),
+    "out.damai": dict(dwell_days=14, cy_area_full_m2=26, ground_slots_full=49, ground_slots_empty=50, rtg_full=85,
+                      rtg_empty=91),
+    "out.fantasi": dict(dwell_days=15, cy_area_full_m2=27, ground_slots_full=51, ground_slots_empty=52, rtg_full=97,
+                        rtg_empty=103),
+    "out.baru": dict(dwell_days=16, cy_area_full_m2=28, ground_slots_full=53, ground_slots_empty=54, rtg_full=109,
+                     rtg_empty=115),
+    "in.baru": dict(dwell_days=132, bulk_area_m2=137, silo_volume_m3=138, silos=139),
+    "in.damai": dict(dwell_days=173, gc_area_m2=184),
+    "in.esa": dict(dwell_days=174, gc_area_m2=185),
+    "out.esa": dict(dwell_days=175, gc_area_m2=186),
+    "in.adi": dict(dwell_days=224, tank_volume_m3=229, tanks=233),
+    "out.adi": dict(dwell_days=225, tank_volume_m3=230, tanks=234),
+}
+STORAGE_TOTAL_ROWS = dict(cy_area_m2=33, dozers=150, forklifts=205)
+STORAGE_AFFECTED = dict(dwell_days=["A13", "A18"], cy_area_full_m2=["A12", "A13", "A18"],
+                        ground_slots_full=["A12", "A13", "A18"], ground_slots_empty=["A12", "A13", "A18"],
+                        rtg_full=["A12", "A19"], rtg_empty=["A12", "A19"], bulk_area_m2=["A13", "A18"],
+                        silo_volume_m3=["A13", "A18"], silos=["A13", "A18"], gc_area_m2=["A13", "A18"],
+                        tank_volume_m3=["A13", "A18", "A20"], tanks=["A13", "A18", "A20"],
+                        cy_area_m2=["A12", "A13", "A18"], dozers=[], forklifts=[])
 FLOW_ORDER = [f"in.{t}" for t, _ in TENANTS] + [f"out.{t}" for t, _ in TENANTS]
 
 
@@ -200,7 +226,7 @@ def build_case(b: Book, xlsx: Path) -> dict:
     )
     r.note_ref("phases", "Laporan K15 §2.5 (PM 51/2015)")
     r.note_ref("berth_lookahead_years", "Investasi!L9 = SUM(L8:R8) → 7 tahun")
-    r.note_ref("storage_lookahead_years", "Fasilitas Daratan Rata2!F157 = SUM(F154:J154) → 5 tahun")
+    r.note_ref("storage_lookahead_years", "Fasilitas Daratan!F196 = SUM(F193:J193) → 5 tahun")
     horizon["refs"] = r.take()
 
     # --- parameter global
@@ -594,52 +620,59 @@ def build_case(b: Book, xlsx: Path) -> dict:
                    note="Nilai 'foreign' dalam USD (dikonversi dengan params.usd_rate), 'domestic' dalam Rp; "
                         "tarif B/M sudah dalam Rp.")
 
-    # --- penyimpanan
-    dry_bulk = dict(f_area=r("f_area", "daratan_rata", "F92"), capacity_ratio=r("capacity_ratio", "daratan_rata", "F93"),
-                    stack_height_m=r("stack_height_m", "daratan_rata", "F97"),
-                    sor_max=r("sor_max", "daratan_rata", "F96"), gross_volume_factor=1.3,
+    # --- penyimpanan — sheet `Fasilitas Daratan` (dirujuk Investasi & Rangkuman; `Fasilitas Daratan Rata2` tidak
+    # dirujuk sheet mana pun → bukan acuan, keputusan Tahap 7b)
+    dry_bulk = dict(f_area=r("f_area", "daratan", "F130"), capacity_ratio=r("capacity_ratio", "daratan", "F131"),
+                    stack_height_m=r("stack_height_m", "daratan", "F135"),
+                    sor_max=r("sor_max", "daratan", "F134"), gross_volume_factor=1.0,
                     silo_capacity_m3=r("silo_capacity_m3", "daratan", "AC140"), silo_fill_ratio=0.8,
                     silo_price_usd=r("silo_price_usd", "daratan", "AC143"))
-    r.note_ref("gross_volume_factor", "Fasilitas Daratan Rata2!F101 = (30%+1)*F100")
+    r.note_ref("gross_volume_factor", "Fasilitas Daratan!F138→F139: volume netto langsung dibagi kapasitas silo "
+                                      "(faktor bruto 1,3 hanya di sheet Rata2 yang tidak dipakai)")
     r.note_ref("silo_fill_ratio", "Fasilitas Daratan!F139 (×80%)")
     dry_bulk["refs"] = r.take()
     storage = dict(
         dwell_time_mode="from_consumption", inbound_share=1.0, outbound_share=1.0,
-        container_yard=dict(area_per_teu_m2=r("area_per_teu_m2", "daratan_rata", "F18"),
-                            height_ratio=r("height_ratio", "daratan_rata", "F19"),
-                            yor_max=r("yor_max", "daratan_rata", "F20"),
-                            max_tiers=r("max_tiers", "daratan_rata", "F34", int),
-                            empty_share=r("empty_share", "daratan_rata", "F29"), refs=r.take()),
-        general_cargo=dict(f_area=r("f_area", "daratan_rata", "F132"), f_bulk=r("f_bulk", "daratan_rata", "F133"),
-                           stack_height_m=r("stack_height_m", "daratan_rata", "F138"),
-                           sor_max=r("sor_max", "daratan_rata", "F137"), refs=r.take()),
+        container_yard=dict(area_per_teu_m2=r("area_per_teu_m2", "daratan", "G22"),
+                            height_ratio=r("height_ratio", "daratan", "F23"),
+                            yor_max=r("yor_max", "daratan", "F24"),
+                            max_tiers=r("max_tiers", "daratan", "F46", int),
+                            empty_share=r("empty_share", "daratan", "F37"), refs=r.take()),
+        general_cargo=dict(f_area=r("f_area", "daratan", "F171"), f_bulk=r("f_bulk", "daratan", "F172"),
+                           stack_height_m=r("stack_height_m", "daratan", "F177"),
+                           sor_max=r("sor_max", "daratan", "F176"), refs=r.take()),
         dry_bulk=dry_bulk,
         liquid=dict(occupancy=r("occupancy", "daratan", "F228"),
                     tank_capacity_m3=r("tank_capacity_m3", "daratan", "F231"), refs=r.take()),
         yard_equipment=[
             dict(id="rtg", name="Rubber tyred gantry (RTG)", cargo_form="PK", productivity=5, productivity_unit="TEU/jam",
                  utilization=0.75, unit_price_key="rtg",
-                 refs={"productivity": "Fasilitas Daratan Rata2!F67 (konstanta di rumus)", "utilization": "Fasilitas Daratan Rata2!F69"}),
-            dict(id="truk_petikemas", name="Truk petikemas", cargo_form="PK", productivity=35, productivity_unit="box/jam",
-                 utilization=1.0, unit_price_key="headtruck", params={"speed_kmh": 30},
+                 refs={"productivity": "Fasilitas Daratan!F93:F111 (5 TEU/jam, konstanta di rumus; in.fantasi 4, "
+                                       "out.damai 8/12 → A19)", "utilization": "Fasilitas Daratan!F71:F113"}),
+            dict(id="truk_petikemas", name="Truk petikemas", cargo_form="PK", role="transport", productivity=35,
+                 productivity_unit="box/jam", utilization=1.0, unit_price_key="headtruck", params={"speed_kmh": 30},
                  refs={"speed_kmh": "Fasilitas Daratan Rata2!F80", "productivity": "Fasilitas Daratan Rata2!F82",
-                       "utilization": "asumsi 100% (tidak ada di Excel)"}),
-            dict(id="dozer", name="Bull dozer", cargo_form="CK", productivity=50, productivity_unit="ton/jam",
+                       "utilization": "asumsi 100% (tidak ada di Excel)",
+                       "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"}),
+            dict(id="dozer", name="Bull dozer", cargo_form="CK", productivity=20, productivity_unit="ton/jam",
                  utilization=0.7, unit_price_key="bull_dozer",
-                 refs={"productivity": "Fasilitas Daratan Rata2!F108 (konstanta di rumus)", "utilization": "Fasilitas Daratan Rata2!F110"}),
-            dict(id="truk_curah", name="Truk curah", cargo_form="CK", productivity=80, productivity_unit="ton/jam",
-                 utilization=1.0, params={"capacity_t": 40, "cycles_per_hour": 10, "speed_kmh": 15,
-                                          "load_min": 3, "unload_min": 3},
+                 refs={"productivity": "Fasilitas Daratan!M146:Y146 (20 t/jam di tahun bermuatan curah; F146:L146 = 50 "
+                                       "saat muatan 0)", "utilization": "Fasilitas Daratan!F148"}),
+            dict(id="truk_curah", name="Truk curah", cargo_form="CK", role="transport", productivity=80,
+                 productivity_unit="ton/jam", utilization=1.0,
+                 params={"capacity_t": 40, "cycles_per_hour": 10, "speed_kmh": 15, "load_min": 3, "unload_min": 3},
                  refs={"params": "Fasilitas Daratan Rata2!F115:F124", "productivity": "Fasilitas Daratan Rata2!F116",
-                       "utilization": "asumsi 100% (tidak ada di Excel)"}),
+                       "utilization": "asumsi 100% (tidak ada di Excel)",
+                       "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"}),
             dict(id="forklift", name="Forklift", cargo_form="GC", productivity=20, productivity_unit="ton/jam",
                  utilization=0.7, unit_price_key="forklift",
-                 refs={"productivity": "Fasilitas Daratan Rata2!F162", "utilization": "Fasilitas Daratan Rata2!F164"}),
+                 refs={"productivity": "Fasilitas Daratan!F201", "utilization": "Fasilitas Daratan!F203"}),
         ],
     )
-    storage["refs"] = {"dwell_time_mode": "Fasilitas Daratan Rata2!F134 = MAX(Model!M350:AF350)",
-                       "inbound_share": "Fasilitas Daratan Rata2!F128 (100% muatan inbound)",
-                       "outbound_share": "Fasilitas Daratan Rata2!F12 (100% muatan outbound)"}
+    storage["refs"] = {"dwell_time_mode": "Model!M350:AF359 (lama konsumsi); Fasilitas Daratan merata-rata 20 th "
+                                          "(F173 = AVERAGE(Model!M350:AF350)) → v2 per tahun (A18)",
+                       "inbound_share": "Fasilitas Daratan!F167 (100% muatan inbound)",
+                       "outbound_share": "Fasilitas Daratan!F9 (100% muatan outbound)"}
 
     # --- harga satuan
     unit_prices, keys = [], set()
@@ -811,6 +844,23 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
         "annuity": dict(ref="Model!K407", value=num(b.raw("model", "K407"))),
         "grand_total_cost_rp": dict(ref="Model!K408", value=num(b.raw("model", "K408"))),
     }
+    def fs(row, aff):
+        return dict(ref=rng("daratan", row, YEAR_COLS_F), affected_by=list(aff), values=series(b, "daratan", row, YEAR_COLS_F))
+
+    storage = dict(
+        note="Sheet `Fasilitas Daratan` (dirujuk Investasi & Rangkuman). Luas petikemas kosong = salinan luas full "
+             "(F29:F32), jadi luas total CY = 2 × Σ luas full. Kebutuhan per tahun apa adanya (bisa turun).",
+        excel_params=dict(
+            rtg_productivity_teu_h={"in.fantasi": [4.0, 4.0], "out.damai": [8.0, 12.0], "out.fantasi": [5.0, 5.0],
+                                    "out.baru": [5.0, 5.0]},
+            liquid_density_t_m3=num(b.raw("daratan", "F226")),
+            refs={"rtg_productivity_teu_h": "[full, kosong] Fasilitas Daratan!F69/F75, F81/F87, F93/F99, F105/F111 "
+                                            "(konstanta di rumus, A19)",
+                  "liquid_density_t_m3": "Fasilitas Daratan!F226:F227 (CPO & RBD olein, A20)"}),
+        flows={fid: {k: fs(row, STORAGE_AFFECTED[k]) for k, row in rows.items()}
+               for fid, rows in STORAGE_FLOW_ROWS.items()},
+        total={k: fs(row, STORAGE_AFFECTED[k]) for k, row in STORAGE_TOTAL_ROWS.items()},
+    )
     tch_reg = {}
     for code, ic, sc in (("bulk_carrier", "C15", "C16"), ("tanker", "I15", "I16"),
                          ("container_ship", "O15", "O16"), ("general_cargo_ship", "U15", "U16")):
@@ -845,8 +895,8 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
         note="Nilai Excel K15 (rumus lama) sebagai pembanding, BUKAN kunci jawaban. Seri dengan affected_by "
              "kosong seharusnya sama dengan engine v2; selain itu selisih harus bisa dijelaskan oleh temuan "
              "audit yang disebut (SPEC §11). Indeks tahun: values[0] = tahun ke-1.",
-        flow_order=FLOW_ORDER, plan=case["plans"][0], flows=flows, terminal=terminal, investment=investment,
-        aggregate=aggregate, waterside=waterside, derived=derived,
+        flow_order=FLOW_ORDER, plan=case["plans"][0], flows=flows, terminal=terminal, storage=storage,
+        investment=investment, aggregate=aggregate, waterside=waterside, derived=derived,
     )
 
 

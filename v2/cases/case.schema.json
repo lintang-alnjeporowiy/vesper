@@ -3463,6 +3463,16 @@
           "title": "Cargo Form",
           "type": "string"
         },
+        "role": {
+          "default": "yard",
+          "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)",
+          "enum": [
+            "yard",
+            "transport"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
         "productivity": {
           "exclusiveMinimum": 0,
           "title": "Productivity",

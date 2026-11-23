@@ -3,7 +3,8 @@
 Untuk tiap flow (kapal & alat hasil Evolver K15) dan tiap seri operasi: nilai Excel vs engine pada tahun pertama
 beroperasi, selisih maksimum 20 tahun, dan efek koreksi audit satu per satu (tiruan rumus Excel di
 `engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13 → A9 → A6 → A11 → A14 → A15; hasil akhirnya = engine).
-Bagian akhir: terminal KEK (tambatan, BOR, alat) per tahun, dengan koreksi tambahan A16 → A17.
+Bagian akhir: terminal KEK (tambatan, BOR, alat) per tahun, dengan koreksi tambahan A16 → A17; penyimpanan
+(sheet `Fasilitas Daratan`) dengan koreksi tambahan A18 → A19 → A20.
 
 Jalankan dari folder v2:  uv run --project engine python tools/diff_k15.py [--flow in.damai] [--year 10]
 """
@@ -22,12 +23,15 @@ from excel_k15 import (  # noqa: E402
     CAUSES,
     EXCEL_SERIES,
     FIXES,
+    STORAGE_CAUSES,
+    STORAGE_FIXES,
     TERMINAL_CAUSES,
     TERMINAL_FIXES,
     TERMINAL_SERIES,
     engine_series,
     engine_terminal,
     excel_chain,
+    excel_storage,
     excel_terminal,
 )
 
@@ -56,7 +60,7 @@ def main() -> None:
     args = ap.parse_args()
     case = load_case(V2 / "cases" / "k15-batam.json")
     golden = json.loads((V2 / "engine" / "tests" / "golden" / "k15_excel.json").read_text(encoding="utf-8"))
-    res = calculate(case, ["shipcost", "terminal"], plan_id="k15-excel")
+    res = calculate(case, ["shipcost", "terminal", "storage"], plan_id="k15-excel")
     v = res.values
     steps = ["A12", *FIXES]
 
@@ -97,6 +101,7 @@ def main() -> None:
 
     if not args.flow:
         terminal_report(case, golden, v, args.year)
+        storage_report(case, golden, v, args.year)
 
 
 TLABEL = {"ship_days_kek": "Ship-days KEK", "berth_days": "Berth-days", "berths": "Tambatan", "bor": "BOR",
@@ -131,6 +136,44 @@ def terminal_report(case, golden: dict, v: dict, year: int | None) -> None:
                       + " → ".join(fmt(t[key][y]) for t in trail))
                 if hit and not set(hit) - {"A12"} <= set(TERMINAL_CAUSES[name]) | {"A12", "A1", "A3", "A5", "A13"}:
                     print(f"    ! penyebab {hit} tidak terdaftar di TERMINAL_CAUSES[{name}]")
+
+
+SROWS = (("storage.cy", "total", "Luas CY (m²)"), ("storage.cy_slots", "total", "Ground slot"),
+         ("storage.yard_equipment", "rtg", "RTG"), ("storage.gc", "total", "Gudang GC (m²)"),
+         ("storage.yard_equipment", "forklift", "Forklift"), ("storage.bulk", "total", "Volume silo (m³)"),
+         ("storage.silos", "total", "Silo"), ("storage.yard_equipment", "dozer", "Dozer"),
+         ("storage.liquid", "total", "Volume tangki (m³)"), ("storage.tanks", "total", "Tangki"))
+
+
+def storage_report(case, golden: dict, v: dict, year: int | None) -> None:
+    """Kapasitas penyimpanan per fasilitas: Excel (Fasilitas Daratan) → koreksi flow → A18 → A19 → A20 = engine."""
+    fids = golden["flow_order"]
+    steps = ["A12", *FIXES, *STORAGE_FIXES]
+    dem_xl = {f: golden["flows"][f]["series"]["demand"]["values"] for f in fids}
+    dem_v2 = v["cargo.demand_unit"]
+    trail = [excel_storage(case, golden, {f: excel_chain(case, golden, f) for f in fids}, dem_xl)["engine"]]
+    applied: set[str] = set()
+    for st in steps:
+        if st != "A12":
+            applied.add(st)
+        chains = {f: excel_chain(case, golden, f, applied, dem_v2[f]) for f in fids}
+        trail.append(excel_storage(case, golden, chains, dem_v2, applied)["engine"])
+    years = [year - 1] if year else [0, 7, 12, 19]
+    print()
+    print(f"== penyimpanan (Fasilitas Daratan)  ·  tahun {', '.join(str(y + 1) for y in years)}  ·  total = kapasitas "
+          "terpasang (tidak pernah turun)")
+    print(f"  {'fasilitas':<20}{'tahun':>6}{'Excel':>12}{'v2':>12}  penyebab  ·  " + " → ".join(steps))
+    for var, key, label in SROWS:
+        en = v[var][key]
+        for y in years:
+            hit = [st for st, a, b in zip(steps, trail[:-1], trail[1:], strict=True)
+                   if abs(b[var][key][y] - a[var][key][y]) > 1e-9 * max(1, abs(a[var][key][y]))]
+            ex = trail[0][var][key][y]
+            cause = ",".join(hit) if hit else ("–" if abs(ex - en[y]) < 1e-9 else "?")
+            print(f"  {label:<20}{y + 1:>6}{fmt(ex):>12}{fmt(en[y]):>12}  {cause:<11} ·  "
+                  + " → ".join(fmt(t[var][key][y]) for t in trail))
+            if hit and not set(hit) <= set(STORAGE_CAUSES[var]) | {"A12"}:
+                print(f"    ! penyebab {hit} tidak terdaftar di STORAGE_CAUSES[{var}]")
 
 
 if __name__ == "__main__":

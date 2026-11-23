@@ -292,7 +292,8 @@
                 "demand",
                 "voyage",
                 "shipcost",
-                "terminal"
+                "terminal",
+                "storage"
               ]
             },
             "type": "array",
@@ -302,7 +303,8 @@
               "demand",
               "voyage",
               "shipcost",
-              "terminal"
+              "terminal",
+              "storage"
             ]
           },
           "plan_id": {
@@ -4279,6 +4281,16 @@
           "cargo_form": {
             "type": "string",
             "title": "Cargo Form"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "yard",
+              "transport"
+            ],
+            "title": "Role",
+            "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)",
+            "default": "yard"
           },
           "productivity": {
             "type": "number",

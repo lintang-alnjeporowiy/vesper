@@ -53,12 +53,6 @@ export const TERMINAL_Y13 = {
   MP: { berthDays: 547, berths: 3, equipment: 12, bor: 0.5 },
   CC: { berthDays: 183, berths: 1, equipment: 2, bor: 0.5 },
 }
-export const STORAGE_Y13 = [
-  { v: 'storage.gc', commodity: 'Jagung, pelat, profil baja', facility: 'Lapangan GC', param: 'f 1,5 · 5 m · SOR 0,7', need: '48.000 m²', cost: 'Rp 96 M' },
-  { v: 'storage.bulk', commodity: 'Gandum', facility: 'Silo', param: '23.379 m³ · isi 80 %', need: '9 silo', cost: 'USD 288 rb' },
-  { v: 'storage.cy', commodity: 'Petikemas, 4 flow', facility: 'Container yard', param: '15 m²/TEU · 5 tier · YOR 0,7', need: '62.000 m²', cost: 'Rp 124 M' },
-  { v: 'storage.liquid', commodity: 'CPO, RBD olein', facility: 'Tangki timbun', param: '20.000 m³ · okupansi 0,65', need: '14 tangki', cost: 'Rp 210 M' },
-]
 export const WATERSIDE_OPTIONS = [
   { id: 'trestle', name: 'Trestle penuh', spec: '500 × 40 m · tinggi 3,3 m · tanpa keruk', cost: 'Rp 1,9 T · PV Rp 1,6 T', delta: null },
   { id: 'trestle_dredge', name: 'Trestle 250 m + keruk', spec: '250 × 50 m · keruk 10,0 → 21,3 m', cost: 'Rp 2,1 T · PV Rp 1,8 T', delta: '+12 %' },

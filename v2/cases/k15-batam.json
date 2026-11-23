@@ -14,7 +14,7 @@
       "K15_Laporan Revisi.pdf",
       "K15_Presentasi Sidang Revisi.pptx"
     ],
-    "extracted_at": "2026-11-21"
+    "extracted_at": "2026-11-23"
   },
   "horizon": {
     "refs": {
@@ -22,7 +22,7 @@
       "construction_lead_years": "Investasi!C13",
       "phases": "Laporan K15 §2.5 (PM 51/2015)",
       "berth_lookahead_years": "Investasi!L9 = SUM(L8:R8) → 7 tahun",
-      "storage_lookahead_years": "Fasilitas Daratan Rata2!F157 = SUM(F154:J154) → 5 tahun"
+      "storage_lookahead_years": "Fasilitas Daratan!F196 = SUM(F193:J193) → 5 tahun"
     },
     "years": 20,
     "phases": [
@@ -4553,9 +4553,9 @@
   },
   "storage": {
     "refs": {
-      "dwell_time_mode": "Fasilitas Daratan Rata2!F134 = MAX(Model!M350:AF350)",
-      "inbound_share": "Fasilitas Daratan Rata2!F128 (100% muatan inbound)",
-      "outbound_share": "Fasilitas Daratan Rata2!F12 (100% muatan outbound)"
+      "dwell_time_mode": "Model!M350:AF359 (lama konsumsi); Fasilitas Daratan merata-rata 20 th (F173 = AVERAGE(Model!M350:AF350)) → v2 per tahun (A18)",
+      "inbound_share": "Fasilitas Daratan!F167 (100% muatan inbound)",
+      "outbound_share": "Fasilitas Daratan!F9 (100% muatan outbound)"
     },
     "dwell_time_mode": "from_consumption",
     "fixed_dwell_days": {},
@@ -4563,24 +4563,24 @@
     "outbound_share": 1.0,
     "container_yard": {
       "refs": {
-        "area_per_teu_m2": "Fasilitas Daratan Rata2!F18",
-        "height_ratio": "Fasilitas Daratan Rata2!F19",
-        "yor_max": "Fasilitas Daratan Rata2!F20",
-        "max_tiers": "Fasilitas Daratan Rata2!F34",
-        "empty_share": "Fasilitas Daratan Rata2!F29"
+        "area_per_teu_m2": "Fasilitas Daratan!G22",
+        "height_ratio": "Fasilitas Daratan!F23",
+        "yor_max": "Fasilitas Daratan!F24",
+        "max_tiers": "Fasilitas Daratan!F46",
+        "empty_share": "Fasilitas Daratan!F37"
       },
       "area_per_teu_m2": 15.0,
       "height_ratio": 0.9,
       "yor_max": 0.7,
-      "max_tiers": 5,
+      "max_tiers": 6,
       "empty_share": 1.0
     },
     "general_cargo": {
       "refs": {
-        "f_area": "Fasilitas Daratan Rata2!F132",
-        "f_bulk": "Fasilitas Daratan Rata2!F133",
-        "stack_height_m": "Fasilitas Daratan Rata2!F138",
-        "sor_max": "Fasilitas Daratan Rata2!F137"
+        "f_area": "Fasilitas Daratan!F171",
+        "f_bulk": "Fasilitas Daratan!F172",
+        "stack_height_m": "Fasilitas Daratan!F177",
+        "sor_max": "Fasilitas Daratan!F176"
       },
       "f_area": 1.5,
       "f_bulk": 1.2,
@@ -4589,20 +4589,20 @@
     },
     "dry_bulk": {
       "refs": {
-        "f_area": "Fasilitas Daratan Rata2!F92",
-        "capacity_ratio": "Fasilitas Daratan Rata2!F93",
-        "stack_height_m": "Fasilitas Daratan Rata2!F97",
-        "sor_max": "Fasilitas Daratan Rata2!F96",
+        "f_area": "Fasilitas Daratan!F130",
+        "capacity_ratio": "Fasilitas Daratan!F131",
+        "stack_height_m": "Fasilitas Daratan!F135",
+        "sor_max": "Fasilitas Daratan!F134",
         "silo_capacity_m3": "Fasilitas Daratan!AC140",
         "silo_price_usd": "Fasilitas Daratan!AC143",
-        "gross_volume_factor": "Fasilitas Daratan Rata2!F101 = (30%+1)*F100",
+        "gross_volume_factor": "Fasilitas Daratan!F138→F139: volume netto langsung dibagi kapasitas silo (faktor bruto 1,3 hanya di sheet Rata2 yang tidak dipakai)",
         "silo_fill_ratio": "Fasilitas Daratan!F139 (×80%)"
       },
-      "f_area": 1.25,
+      "f_area": 1.5,
       "capacity_ratio": 1.2,
       "stack_height_m": 10.0,
       "sor_max": 0.7,
-      "gross_volume_factor": 1.3,
+      "gross_volume_factor": 1.0,
       "silo_capacity_m3": 23379.0,
       "silo_fill_ratio": 0.8,
       "silo_price_usd": 31950.0
@@ -4618,12 +4618,13 @@
     "yard_equipment": [
       {
         "refs": {
-          "productivity": "Fasilitas Daratan Rata2!F67 (konstanta di rumus)",
-          "utilization": "Fasilitas Daratan Rata2!F69"
+          "productivity": "Fasilitas Daratan!F93:F111 (5 TEU/jam, konstanta di rumus; in.fantasi 4, out.damai 8/12 → A19)",
+          "utilization": "Fasilitas Daratan!F71:F113"
         },
         "id": "rtg",
         "name": "Rubber tyred gantry (RTG)",
         "cargo_form": "PK",
+        "role": "yard",
         "productivity": 5.0,
         "productivity_unit": "TEU/jam",
         "utilization": 0.75,
@@ -4634,11 +4635,13 @@
         "refs": {
           "speed_kmh": "Fasilitas Daratan Rata2!F80",
           "productivity": "Fasilitas Daratan Rata2!F82",
-          "utilization": "asumsi 100% (tidak ada di Excel)"
+          "utilization": "asumsi 100% (tidak ada di Excel)",
+          "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"
         },
         "id": "truk_petikemas",
         "name": "Truk petikemas",
         "cargo_form": "PK",
+        "role": "transport",
         "productivity": 35.0,
         "productivity_unit": "box/jam",
         "utilization": 1.0,
@@ -4649,13 +4652,14 @@
       },
       {
         "refs": {
-          "productivity": "Fasilitas Daratan Rata2!F108 (konstanta di rumus)",
-          "utilization": "Fasilitas Daratan Rata2!F110"
+          "productivity": "Fasilitas Daratan!M146:Y146 (20 t/jam di tahun bermuatan curah; F146:L146 = 50 saat muatan 0)",
+          "utilization": "Fasilitas Daratan!F148"
         },
         "id": "dozer",
         "name": "Bull dozer",
         "cargo_form": "CK",
-        "productivity": 50.0,
+        "role": "yard",
+        "productivity": 20.0,
         "productivity_unit": "ton/jam",
         "utilization": 0.7,
         "unit_price_key": "bull_dozer",
@@ -4665,11 +4669,13 @@
         "refs": {
           "params": "Fasilitas Daratan Rata2!F115:F124",
           "productivity": "Fasilitas Daratan Rata2!F116",
-          "utilization": "asumsi 100% (tidak ada di Excel)"
+          "utilization": "asumsi 100% (tidak ada di Excel)",
+          "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"
         },
         "id": "truk_curah",
         "name": "Truk curah",
         "cargo_form": "CK",
+        "role": "transport",
         "productivity": 80.0,
         "productivity_unit": "ton/jam",
         "utilization": 1.0,
@@ -4683,12 +4689,13 @@
       },
       {
         "refs": {
-          "productivity": "Fasilitas Daratan Rata2!F162",
-          "utilization": "Fasilitas Daratan Rata2!F164"
+          "productivity": "Fasilitas Daratan!F201",
+          "utilization": "Fasilitas Daratan!F203"
         },
         "id": "forklift",
         "name": "Forklift",
         "cargo_form": "GC",
+        "role": "yard",
         "productivity": 20.0,
         "productivity_unit": "ton/jam",
         "utilization": 0.7,

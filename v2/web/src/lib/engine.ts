@@ -11,7 +11,7 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal', 'storage']
 
 /** Pasang sekali di App: hitung ulang setiap kali kasus aktif atau kapal terpilih berubah. */
 export function useEngineSync() {
