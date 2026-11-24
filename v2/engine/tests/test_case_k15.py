@@ -56,15 +56,17 @@ def test_reference_values(case):
     assert case.plans[0].equipment_by_terminal == {"MP": "eq.liebherr_lhm_280", "CC": "eq.emco_wheaton_b0300_10"}
 
 
-def test_dummy_bathymetry_matches_k15(case):
-    """Profil dummy dikunci ke K15: 10 m @250 m, 21,3 m pertama tercapai @500 m (trestle penuh)."""
+def test_dummy_bathymetry_matches_k15(case, golden):
+    """Profil dummy dikunci ke K15: 10 m @250 m (Trestle!C69/C73), 21,3 m pertama tercapai @500 m (Trestle!C50, trestle
+    penuh). Trestle!C50 = x*, bukan batas panjang → max_length_m kosong."""
     site = case.kek_site
     assert site.bathymetry_source == "dummy"
     pts = {p.distance_m: p.depth_m for p in site.bathymetry}
-    assert pts[site.trestle_dredge.trestle_length_m] == site.trestle_dredge.existing_depth_m == 10.0
+    assert pts[site.trestle_dredge.trestle_length_m] == golden["trestle"]["mixed_existing_depth_mp_m"]["value"] == 10.0
     req = 1.5 * 14.2  # kapal penentu K15: ALS CERES T = 14,2 m × depth_factor 1,5 (Fasilitas Perairan!K18)
     first = next(p.distance_m for p in site.bathymetry if p.depth_m >= req - 1e-9)
-    assert first == site.trestle.max_length_m == 500.0
+    assert first == golden["trestle"]["full_length_mp_m"]["value"] == 500.0
+    assert site.trestle.max_length_m is None
     depths = [p.depth_m for p in site.bathymetry]
     assert depths == sorted(depths)
 

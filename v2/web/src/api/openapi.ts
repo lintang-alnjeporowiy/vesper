@@ -152,10 +152,11 @@ export interface components {
              *       "voyage",
              *       "shipcost",
              *       "terminal",
-             *       "storage"
+             *       "storage",
+             *       "waterside"
              *     ]
              */
-            modules: ("demand" | "voyage" | "shipcost" | "terminal" | "storage")[];
+            modules: ("demand" | "voyage" | "shipcost" | "terminal" | "storage" | "waterside")[];
             /**
              * Plan Id
              * @description rencana kapal & alat; default plan pertama kasus
@@ -249,6 +250,30 @@ export interface components {
                 [key: string]: {
                     [key: string]: number[];
                 };
+            };
+            /**
+             * Waterside Options
+             * @description modul waterside: trestle penuh / trestle + keruk / keruk dengan biaya dasar (I8)
+             * @default []
+             */
+            waterside_options: components["schemas"]["WatersideOption"][];
+            /**
+             * Governing Ships
+             * @description modul waterside: terminal | site → dimensi (loa, beam, draft) → kapal yang menentukan nilai akhir horizon
+             * @default {}
+             */
+            governing_ships: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            /**
+             * Channel Parts
+             * @description modul waterside: komponen lebar alur site (wm, wa_*, wa, wb, ws), seri tahunan m
+             * @default {}
+             */
+            channel_parts: {
+                [key: string]: number[];
             };
             /**
              * Warnings
@@ -1090,6 +1115,11 @@ export interface components {
              * @enum {string}
              */
             berth_layout: "quay" | "jetty";
+            /**
+             * Trestle Width M
+             * @description lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; jetty: pipa + catwalk), sama untuk semua opsi perairan
+             */
+            trestle_width_m: number;
         };
         /** Leg */
         Leg: {
@@ -1238,10 +1268,14 @@ export interface components {
             };
             /**
              * Waterside Mode
+             * @description trestle = trestle penuh sampai x*; mixed = trestle + keruk; dredge = tambatan di garis pantai + keruk
              * @enum {string}
              */
             waterside_mode: "trestle" | "dredge" | "mixed";
-            /** Trestle Fraction */
+            /**
+             * Trestle Fraction
+             * @description θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)
+             */
             trestle_fraction?: number | null;
         };
         /** PortProductivity */
@@ -1610,12 +1644,17 @@ export interface components {
             };
             /** Note */
             note?: string | null;
-            /** Trestle Length M */
+            /**
+             * Trestle Length M
+             * @description panjang trestle opsi trestle + keruk per terminal (dibatasi x*); plans[].trestle_fraction θ, bila diisi, menggantikannya dengan θ · x*
+             */
             trestle_length_m: number;
-            /** Trestle Width M */
-            trestle_width_m: number;
-            /** Existing Depth M */
-            existing_depth_m: number;
+            /**
+             * Unit Price Key
+             * @description kunci harga satuan pengerukan (Rp/m³) di unit_prices
+             * @default dredging
+             */
+            unit_price_key: string;
         };
         /** TrestleSpec */
         TrestleSpec: {
@@ -1629,14 +1668,19 @@ export interface components {
             };
             /** Note */
             note?: string | null;
-            /** Max Length M */
-            max_length_m: number;
-            /** Width Mp M */
-            width_mp_m: number;
-            /** Width Jetty M */
-            width_jetty_m: number;
+            /**
+             * Max Length M
+             * @description batas fisik panjang trestle; kosong = tanpa batas (trestle penuh gugur bila x* melebihi batas)
+             */
+            max_length_m?: number | null;
             /** Height M */
             height_m: number;
+            /**
+             * Unit Price Key
+             * @description kunci harga satuan trestle (Rp/m²) di unit_prices
+             * @default trestle
+             */
+            unit_price_key: string;
         };
         /** TugTariff */
         TugTariff: {
@@ -1803,6 +1847,13 @@ export interface components {
              */
             channel_slope: "landai" | "sedang" | "curam";
             /**
+             * Ship Speed Class
+             * @description kelas kecepatan kapal di alur (menentukan Wa kecepatan, angin, arus, Wb, Ws)
+             * @default sedang
+             * @enum {string}
+             */
+            ship_speed_class: "cepat" | "sedang" | "lambat";
+            /**
              * Lanes
              * @default 2
              * @enum {integer}
@@ -1831,6 +1882,92 @@ export interface components {
              */
             depth_factor_of_draft: number;
         };
+        /**
+         * WatersideOption
+         * @description Satu opsi perairan (desain akhir horizon per terminal, harga satuan tahun dasar).
+         */
+        WatersideOption: {
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "trestle" | "mixed" | "dredge";
+            /**
+             * Selected
+             * @description opsi rencana (plans[].waterside_mode) yang dipakai variabel waterside.*
+             */
+            selected: boolean;
+            /** Feasible */
+            feasible: boolean;
+            /**
+             * Reasons
+             * @description alasan opsi tidak layak (x* tidak tercapai / melebihi panjang maks)
+             * @default []
+             */
+            reasons: string[];
+            /**
+             * Trestle Len
+             * @description terminal → panjang trestle, m
+             * @default {}
+             */
+            trestle_len: {
+                [key: string]: number;
+            };
+            /**
+             * Theta
+             * @description terminal → panjang trestle / x*
+             * @default {}
+             */
+            theta: {
+                [key: string]: number;
+            };
+            /**
+             * Tip Depth
+             * @description terminal → kedalaman eksisting di ujung trestle, m
+             * @default {}
+             */
+            tip_depth: {
+                [key: string]: number;
+            };
+            /**
+             * Trestle Area
+             * @description terminal → luas trestle, m²
+             * @default {}
+             */
+            trestle_area: {
+                [key: string]: number;
+            };
+            /**
+             * Dredge Vol
+             * @description terminal → volume keruk kolam tambat akhir horizon, m³
+             * @default {}
+             */
+            dredge_vol: {
+                [key: string]: number;
+            };
+            /**
+             * Cost Trestle
+             * @description terminal → biaya trestle, Rp
+             * @default {}
+             */
+            cost_trestle: {
+                [key: string]: number;
+            };
+            /**
+             * Cost Dredge
+             * @description terminal → biaya keruk, Rp
+             * @default {}
+             */
+            cost_dredge: {
+                [key: string]: number;
+            };
+            /**
+             * Cost
+             * @description Σ biaya dasar semua terminal, Rp
+             * @default 0
+             */
+            cost: number;
+        };
         /** YardEquipment */
         YardEquipment: {
             /**
@@ -1851,16 +1988,19 @@ export interface components {
             cargo_form: string;
             /**
              * Role
-             * @description yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)
+             * @description yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk per alat B/M × alat aktif, jarak = panjang trestle, §5.6; params speed_kmh, unload_min)
              * @default yard
              * @enum {string}
              */
             role: "yard" | "transport";
-            /** Productivity */
+            /**
+             * Productivity
+             * @description yard: produktivitas per jam; transport: muatan per rit (box atau ton)
+             */
             productivity: number;
             /**
              * Productivity Unit
-             * @description TEU/jam, ton/jam, …
+             * @description yard: TEU/jam, ton/jam, …; transport: box/rit, ton/rit
              */
             productivity_unit: string;
             /** Utilization */

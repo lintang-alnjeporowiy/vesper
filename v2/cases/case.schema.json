@@ -1608,6 +1608,13 @@
           ],
           "title": "Berth Layout",
           "type": "string"
+        },
+        "trestle_width_m": {
+          "description": "lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; jetty: pipa + catwalk), sama untuk semua opsi perairan",
+          "exclusiveMinimum": 0,
+          "title": "Trestle Width M",
+          "type": "number",
+          "unit": "m"
         }
       },
       "required": [
@@ -1616,7 +1623,8 @@
         "cargo_forms",
         "berth_unit_length_m",
         "berth_width_m",
-        "equipment_kind"
+        "equipment_kind",
+        "trestle_width_m"
       ],
       "title": "KekTerminal",
       "type": "object"
@@ -1961,6 +1969,7 @@
           "type": "object"
         },
         "waterside_mode": {
+          "description": "trestle = trestle penuh sampai x*; mixed = trestle + keruk; dredge = tambatan di garis pantai + keruk",
           "enum": [
             "trestle",
             "dredge",
@@ -1981,6 +1990,7 @@
             }
           ],
           "default": null,
+          "description": "θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)",
           "title": "Trestle Fraction"
         }
       },
@@ -2957,28 +2967,21 @@
           "title": "Note"
         },
         "trestle_length_m": {
+          "description": "panjang trestle opsi trestle + keruk per terminal (dibatasi x*); plans[].trestle_fraction θ, bila diisi, menggantikannya dengan θ · x*",
           "exclusiveMinimum": 0,
           "title": "Trestle Length M",
           "type": "number",
           "unit": "m"
         },
-        "trestle_width_m": {
-          "exclusiveMinimum": 0,
-          "title": "Trestle Width M",
-          "type": "number",
-          "unit": "m"
-        },
-        "existing_depth_m": {
-          "minimum": 0,
-          "title": "Existing Depth M",
-          "type": "number",
-          "unit": "m"
+        "unit_price_key": {
+          "default": "dredging",
+          "description": "kunci harga satuan pengerukan (Rp/m³) di unit_prices",
+          "title": "Unit Price Key",
+          "type": "string"
         }
       },
       "required": [
-        "trestle_length_m",
-        "trestle_width_m",
-        "existing_depth_m"
+        "trestle_length_m"
       ],
       "title": "TrestleDredgeSpec",
       "type": "object"
@@ -3008,21 +3011,18 @@
           "title": "Note"
         },
         "max_length_m": {
-          "exclusiveMinimum": 0,
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "batas fisik panjang trestle; kosong = tanpa batas (trestle penuh gugur bila x* melebihi batas)",
           "title": "Max Length M",
-          "type": "number",
-          "unit": "m"
-        },
-        "width_mp_m": {
-          "exclusiveMinimum": 0,
-          "title": "Width Mp M",
-          "type": "number",
-          "unit": "m"
-        },
-        "width_jetty_m": {
-          "exclusiveMinimum": 0,
-          "title": "Width Jetty M",
-          "type": "number",
           "unit": "m"
         },
         "height_m": {
@@ -3030,12 +3030,15 @@
           "title": "Height M",
           "type": "number",
           "unit": "m"
+        },
+        "unit_price_key": {
+          "default": "trestle",
+          "description": "kunci harga satuan trestle (Rp/m²) di unit_prices",
+          "title": "Unit Price Key",
+          "type": "string"
         }
       },
       "required": [
-        "max_length_m",
-        "width_mp_m",
-        "width_jetty_m",
         "height_m"
       ],
       "title": "TrestleSpec",
@@ -3379,6 +3382,17 @@
           "title": "Channel Slope",
           "type": "string"
         },
+        "ship_speed_class": {
+          "default": "sedang",
+          "description": "kelas kecepatan kapal di alur (menentukan Wa kecepatan, angin, arus, Wb, Ws)",
+          "enum": [
+            "cepat",
+            "sedang",
+            "lambat"
+          ],
+          "title": "Ship Speed Class",
+          "type": "string"
+        },
         "lanes": {
           "default": 2,
           "enum": [
@@ -3465,7 +3479,7 @@
         },
         "role": {
           "default": "yard",
-          "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)",
+          "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk per alat B/M × alat aktif, jarak = panjang trestle, §5.6; params speed_kmh, unload_min)",
           "enum": [
             "yard",
             "transport"
@@ -3474,12 +3488,13 @@
           "type": "string"
         },
         "productivity": {
+          "description": "yard: produktivitas per jam; transport: muatan per rit (box atau ton)",
           "exclusiveMinimum": 0,
           "title": "Productivity",
           "type": "number"
         },
         "productivity_unit": {
-          "description": "TEU/jam, ton/jam, …",
+          "description": "yard: TEU/jam, ton/jam, …; transport: box/rit, ton/rit",
           "title": "Productivity Unit",
           "type": "string"
         },

@@ -48,6 +48,7 @@ export type UnitPrice = S['UnitPrice']
 export type VolumeIndependent = S['VolumeIndependent']
 export type VolumeRatio = S['VolumeRatio']
 export type WatersideConditions = S['WatersideConditions']
+export type WatersideOption = S['WatersideOption']
 export type YardEquipment = S['YardEquipment']
 export type Volume = CargoFlow['volume']
 

@@ -293,7 +293,8 @@
                 "voyage",
                 "shipcost",
                 "terminal",
-                "storage"
+                "storage",
+                "waterside"
               ]
             },
             "type": "array",
@@ -304,7 +305,8 @@
               "voyage",
               "shipcost",
               "terminal",
-              "storage"
+              "storage",
+              "waterside"
             ]
           },
           "plan_id": {
@@ -473,6 +475,39 @@
             "type": "object",
             "title": "Port Breakdown",
             "description": "modul shipcost: biaya pelabuhan per call per komponen (labuh, pandu, tambat, tunda, bm; ext + KEK) per flow, seri tahunan Rp/call",
+            "default": {}
+          },
+          "waterside_options": {
+            "items": {
+              "$ref": "#/components/schemas/WatersideOption"
+            },
+            "type": "array",
+            "title": "Waterside Options",
+            "description": "modul waterside: trestle penuh / trestle + keruk / keruk dengan biaya dasar (I8)",
+            "default": []
+          },
+          "governing_ships": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Governing Ships",
+            "description": "modul waterside: terminal | site → dimensi (loa, beam, draft) → kapal yang menentukan nilai akhir horizon",
+            "default": {}
+          },
+          "channel_parts": {
+            "additionalProperties": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Channel Parts",
+            "description": "modul waterside: komponen lebar alur site (wm, wa_*, wa, wb, ws), seri tahunan m",
             "default": {}
           },
           "warnings": {
@@ -2434,6 +2469,13 @@
             "title": "Berth Layout",
             "description": "quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty",
             "default": "quay"
+          },
+          "trestle_width_m": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Trestle Width M",
+            "description": "lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; jetty: pipa + catwalk), sama untuk semua opsi perairan",
+            "unit": "m"
           }
         },
         "additionalProperties": false,
@@ -2444,7 +2486,8 @@
           "cargo_forms",
           "berth_unit_length_m",
           "berth_width_m",
-          "equipment_kind"
+          "equipment_kind",
+          "trestle_width_m"
         ],
         "title": "KekTerminal"
       },
@@ -2784,7 +2827,8 @@
               "dredge",
               "mixed"
             ],
-            "title": "Waterside Mode"
+            "title": "Waterside Mode",
+            "description": "trestle = trestle penuh sampai x*; mixed = trestle + keruk; dredge = tambatan di garis pantai + keruk"
           },
           "trestle_fraction": {
             "anyOf": [
@@ -2797,7 +2841,8 @@
                 "type": "null"
               }
             ],
-            "title": "Trestle Fraction"
+            "title": "Trestle Fraction",
+            "description": "θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)"
           }
         },
         "additionalProperties": false,
@@ -3748,27 +3793,20 @@
             "type": "number",
             "exclusiveMinimum": 0.0,
             "title": "Trestle Length M",
+            "description": "panjang trestle opsi trestle + keruk per terminal (dibatasi x*); plans[].trestle_fraction θ, bila diisi, menggantikannya dengan θ · x*",
             "unit": "m"
           },
-          "trestle_width_m": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Trestle Width M",
-            "unit": "m"
-          },
-          "existing_depth_m": {
-            "type": "number",
-            "minimum": 0.0,
-            "title": "Existing Depth M",
-            "unit": "m"
+          "unit_price_key": {
+            "type": "string",
+            "title": "Unit Price Key",
+            "description": "kunci harga satuan pengerukan (Rp/m³) di unit_prices",
+            "default": "dredging"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "trestle_length_m",
-          "trestle_width_m",
-          "existing_depth_m"
+          "trestle_length_m"
         ],
         "title": "TrestleDredgeSpec"
       },
@@ -3795,21 +3833,17 @@
             "title": "Note"
           },
           "max_length_m": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Max Length M",
-            "unit": "m"
-          },
-          "width_mp_m": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Width Mp M",
-            "unit": "m"
-          },
-          "width_jetty_m": {
-            "type": "number",
-            "exclusiveMinimum": 0.0,
-            "title": "Width Jetty M",
+            "description": "batas fisik panjang trestle; kosong = tanpa batas (trestle penuh gugur bila x* melebihi batas)",
             "unit": "m"
           },
           "height_m": {
@@ -3817,14 +3851,17 @@
             "exclusiveMinimum": 0.0,
             "title": "Height M",
             "unit": "m"
+          },
+          "unit_price_key": {
+            "type": "string",
+            "title": "Unit Price Key",
+            "description": "kunci harga satuan trestle (Rp/m²) di unit_prices",
+            "default": "trestle"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "max_length_m",
-          "width_mp_m",
-          "width_jetty_m",
           "height_m"
         ],
         "title": "TrestleSpec"
@@ -4199,6 +4236,17 @@
             ],
             "title": "Channel Slope"
           },
+          "ship_speed_class": {
+            "type": "string",
+            "enum": [
+              "cepat",
+              "sedang",
+              "lambat"
+            ],
+            "title": "Ship Speed Class",
+            "description": "kelas kecepatan kapal di alur (menentukan Wa kecepatan, angin, arus, Wb, Ws)",
+            "default": "sedang"
+          },
           "lanes": {
             "type": "integer",
             "enum": [
@@ -4248,6 +4296,114 @@
         ],
         "title": "WatersideConditions"
       },
+      "WatersideOption": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "trestle",
+              "mixed",
+              "dredge"
+            ],
+            "title": "Mode"
+          },
+          "selected": {
+            "type": "boolean",
+            "title": "Selected",
+            "description": "opsi rencana (plans[].waterside_mode) yang dipakai variabel waterside.*"
+          },
+          "feasible": {
+            "type": "boolean",
+            "title": "Feasible"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "description": "alasan opsi tidak layak (x* tidak tercapai / melebihi panjang maks)",
+            "default": []
+          },
+          "trestle_len": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Trestle Len",
+            "description": "terminal → panjang trestle, m",
+            "default": {}
+          },
+          "theta": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Theta",
+            "description": "terminal → panjang trestle / x*",
+            "default": {}
+          },
+          "tip_depth": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Tip Depth",
+            "description": "terminal → kedalaman eksisting di ujung trestle, m",
+            "default": {}
+          },
+          "trestle_area": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Trestle Area",
+            "description": "terminal → luas trestle, m²",
+            "default": {}
+          },
+          "dredge_vol": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Dredge Vol",
+            "description": "terminal → volume keruk kolam tambat akhir horizon, m³",
+            "default": {}
+          },
+          "cost_trestle": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Cost Trestle",
+            "description": "terminal → biaya trestle, Rp",
+            "default": {}
+          },
+          "cost_dredge": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Cost Dredge",
+            "description": "terminal → biaya keruk, Rp",
+            "default": {}
+          },
+          "cost": {
+            "type": "number",
+            "title": "Cost",
+            "description": "Σ biaya dasar semua terminal, Rp",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "selected",
+          "feasible"
+        ],
+        "title": "WatersideOption",
+        "description": "Satu opsi perairan (desain akhir horizon per terminal, harga satuan tahun dasar)."
+      },
       "YardEquipment": {
         "properties": {
           "refs": {
@@ -4289,18 +4445,19 @@
               "transport"
             ],
             "title": "Role",
-            "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk; dihitung bersama panjang trestle, Tahap 8)",
+            "description": "yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan (truk per alat B/M × alat aktif, jarak = panjang trestle, §5.6; params speed_kmh, unload_min)",
             "default": "yard"
           },
           "productivity": {
             "type": "number",
             "exclusiveMinimum": 0.0,
-            "title": "Productivity"
+            "title": "Productivity",
+            "description": "yard: produktivitas per jam; transport: muatan per rit (box atau ton)"
           },
           "productivity_unit": {
             "type": "string",
             "title": "Productivity Unit",
-            "description": "TEU/jam, ton/jam, …"
+            "description": "yard: TEU/jam, ton/jam, …; transport: box/rit, ton/rit"
           },
           "utilization": {
             "type": "number",

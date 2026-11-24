@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { BathyPoint, KekSite } from '../api/case'
 import { BathyProfile } from '../charts/charts'
+import { bathyLines, useCalc } from '../lib/engine'
 import { num, parseNum } from '../lib/format'
-import { REQUIRED_DEPTH_PH } from '../mock/placeholders'
 import { usePlanner } from '../store'
 import { Tv } from './trace'
 import { Badge, Button, EditNum, InputMark, Note } from './ui'
@@ -46,6 +46,8 @@ export function BathyEditor() {
   const site = usePlanner((s) => s.caseData.kek_site)
   const changed = usePlanner((s) => Object.keys(s.dirty).some((k) => k.startsWith('kek_site.bathymetry')))
   const setInput = usePlanner((s) => s.setInput)
+  const calc = useCalc()
+  const lines = bathyLines(site, calc.ok ? calc.result : undefined)
   const [sel, setSel] = useState<number | undefined>()
   const [paste, setPaste] = useState<string | null>(null)
   const [pasteMsg, setPasteMsg] = useState<string | null>(null)
@@ -78,6 +80,7 @@ export function BathyEditor() {
   const unsorted = pts.some((p, i) => i > 0 && p.distance_m <= pts[i - 1].distance_m)
   const td = site.trestle_dredge
   const marks = [
+    ...lines.marks,
     ...(td?.trestle_length_m ? [{ at: td.trestle_length_m, label: `trestle+keruk ${num(td.trestle_length_m)} m` }] : []),
     ...(site.trestle?.max_length_m ? [{ at: site.trestle.max_length_m, label: `trestle maks ${num(site.trestle.max_length_m)} m` }] : []),
   ]
@@ -157,12 +160,13 @@ export function BathyEditor() {
         <BathyProfile
           points={pts}
           highlight={sel}
-          required={{ depth: REQUIRED_DEPTH_PH, label: `kedalaman perlu ${num(REQUIRED_DEPTH_PH, 1)} m · placeholder` }}
+          required={lines.required}
           marks={marks}
         />
         <Note>
-          {pts.length} titik, sampai {num(pts[pts.length - 1]?.distance_m ?? 0)} m dari pantai. Garis merah = <Tv v="waterside.depth_req">kedalaman perlu</Tv> (placeholder sampai engine Tahap 8);
-          titik tempat profil memotong garis ini menentukan panjang trestle (<Tv v="waterside.x_star">x*</Tv>). Arahkan kursor ke baris tabel untuk menyorot titiknya.
+          {pts.length} titik, sampai {num(pts[pts.length - 1]?.distance_m ?? 0)} m dari pantai. Garis merah = <Tv v="waterside.depth_req">kedalaman perlu</Tv> per terminal
+          {lines.computed ? ' (dihitung engine: faktor × sarat kapal penentu akhir horizon)' : ' (placeholder · API tidak aktif)'};
+          titik tempat profil memotong garis ini = <Tv v="waterside.x_star">x*</Tv>, panjang trestle penuh. Opsi perairan dibandingkan di layar 8. Arahkan kursor ke baris tabel untuk menyorot titiknya.
         </Note>
       </div>
     </div>

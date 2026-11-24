@@ -4,7 +4,8 @@ Untuk tiap flow (kapal & alat hasil Evolver K15) dan tiap seri operasi: nilai Ex
 beroperasi, selisih maksimum 20 tahun, dan efek koreksi audit satu per satu (tiruan rumus Excel di
 `engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13 → A9 → A6 → A11 → A14 → A15; hasil akhirnya = engine).
 Bagian akhir: terminal KEK (tambatan, BOR, alat) per tahun, dengan koreksi tambahan A16 → A17; penyimpanan
-(sheet `Fasilitas Daratan`) dengan koreksi tambahan A18 → A19 → A20.
+(sheet `Fasilitas Daratan`) dengan koreksi tambahan A18 → A19 → A20; perairan (`Fasilitas Perairan`, `Trestle`) dan
+truk dermaga–lapangan dengan koreksi tambahan A21 → A22 → A23 → A24 → A25.
 
 Jalankan dari folder v2:  uv run --project engine python tools/diff_k15.py [--flow in.damai] [--year 10]
 """
@@ -28,11 +29,16 @@ from excel_k15 import (  # noqa: E402
     TERMINAL_CAUSES,
     TERMINAL_FIXES,
     TERMINAL_SERIES,
+    TRUCK_FIXES,
+    WATERSIDE_CAUSES,
+    WATERSIDE_FIXES,
     engine_series,
     engine_terminal,
     excel_chain,
     excel_storage,
     excel_terminal,
+    excel_trucks,
+    excel_waterside,
 )
 
 from tpt_engine.calc.run import calculate  # noqa: E402
@@ -60,7 +66,7 @@ def main() -> None:
     args = ap.parse_args()
     case = load_case(V2 / "cases" / "k15-batam.json")
     golden = json.loads((V2 / "engine" / "tests" / "golden" / "k15_excel.json").read_text(encoding="utf-8"))
-    res = calculate(case, ["shipcost", "terminal", "storage"], plan_id="k15-excel")
+    res = calculate(case, ["shipcost", "terminal", "storage", "waterside"], plan_id="k15-excel")
     v = res.values
     steps = ["A12", *FIXES]
 
@@ -102,6 +108,7 @@ def main() -> None:
     if not args.flow:
         terminal_report(case, golden, v, args.year)
         storage_report(case, golden, v, args.year)
+        waterside_report(case, golden, res, args.year)
 
 
 TLABEL = {"ship_days_kek": "Ship-days KEK", "berth_days": "Berth-days", "berths": "Tambatan", "bor": "BOR",
@@ -174,6 +181,65 @@ def storage_report(case, golden: dict, v: dict, year: int | None) -> None:
                   + " → ".join(fmt(t[var][key][y]) for t in trail))
             if hit and not set(hit) <= set(STORAGE_CAUSES[var]) | {"A12"}:
                 print(f"    ! penyebab {hit} tidak terdaftar di STORAGE_CAUSES[{var}]")
+
+
+WROWS = (("waterside.gov_loa", "site", "LOA penentu (m)"), ("waterside.gov_beam", "site", "B penentu (m)"),
+         ("waterside.gov_draft", "MP", "T penentu MP (m)"), ("waterside.gov_draft", "CC", "T penentu CC (m)"),
+         ("waterside.depth_req", "MP", "Kedalaman MP (m)"), ("waterside.depth_req", "CC", "Kedalaman CC (m)"),
+         ("waterside.channel_width", "site", "Lebar alur (m)"), ("waterside.turning_area", "site", "Kolam putar (m²)"),
+         ("waterside.x_star", "MP", "x* MP (m)"), ("waterside.x_star", "CC", "x* CC (m)"),
+         ("waterside.trestle_len", "CC", "Trestle CC (m)"), ("waterside.pocket_length", "CC", "Kolam jetty (m)"),
+         ("waterside.pocket_width", "CC", "Lebar kolam CC (m)"), ("waterside.cost", "MP", "Biaya dasar MP (Rp)"),
+         ("waterside.cost", "CC", "Biaya dasar CC (Rp)"), ("storage.trucks", "truk_petikemas", "Truk PK"),
+         ("storage.trucks", "truk_curah", "Truk CK"), ("storage.trucks", "truk_gc", "Truk GC"))
+
+
+def waterside_report(case, golden: dict, res, year: int | None) -> None:
+    """Perairan & truk: Excel (Fasilitas Perairan, Trestle, Fasilitas Daratan truk) → koreksi hulu → A21 … A25 = engine.
+    Excel hanya punya satu nilai per sel (tidak per tahun); seri Excel di sini = sel itu dengan pola engine
+    (fasilitas ada sejak tahun pertama terminal punya tambatan). Truk Excel: Fasilitas Daratan!F125/F163/F217."""
+    v = res.values
+    fids = golden["flow_order"]
+    steps = ["A12", *FIXES, *TERMINAL_FIXES, *STORAGE_FIXES, *WATERSIDE_FIXES, *TRUCK_FIXES]
+    dem_xl = {f: golden["flows"][f]["series"]["demand"]["values"] for f in fids}
+    dem_v2 = v["cargo.demand_unit"]
+
+    def snap(applied: set[str], dem: dict, chains: dict) -> tuple[dict, dict]:
+        term = excel_terminal(case, golden, chains, applied)
+        ws = excel_waterside(case, golden, chains, term, applied)
+        tl = max(ws["engine"]["waterside.trestle_len"]["MP"]) if "A25" in applied else 500.0
+        vals = dict(ws["engine"])
+        vals["storage.trucks"] = excel_trucks(case, golden, chains, term, tl, dem, applied)["engine"]
+        return vals, ws["options"]
+
+    trail = [snap(set(), dem_xl, {f: excel_chain(case, golden, f) for f in fids})]
+    applied: set[str] = set()
+    for st in steps:
+        if st != "A12":
+            applied.add(st)
+        trail.append(snap(set(applied), dem_v2, {f: excel_chain(case, golden, f, applied, dem_v2[f]) for f in fids}))
+    years = [year - 1] if year else [0, 7, 12, 19]
+    print()
+    print(f"== perairan & truk (Fasilitas Perairan, Trestle, Fasilitas Daratan)  ·  tahun {', '.join(str(y + 1) for y in years)}")
+    print(f"  {'variabel':<22}{'tahun':>6}{'Excel':>18}{'v2':>18}  penyebab  ·  langkah yang mengubah")
+    for var, key, label in WROWS:
+        en = v[var][key]
+        for y in years:
+            vals = [t[0][var][key][y] for t in trail]
+            hit = [st for st, a, b in zip(steps, vals[:-1], vals[1:], strict=True) if abs(b - a) > 1e-9 * max(1, abs(a))]
+            cause = ",".join(hit) if hit else ("–" if abs(vals[0] - en[y]) < 1e-9 else "?")
+            moves = " → ".join(f"{st} {fmt(b)}" for st, a, b in zip(steps, vals[:-1], vals[1:], strict=True)
+                               if abs(b - a) > 1e-9 * max(1, abs(a)))
+            print(f"  {label:<22}{y + 1:>6}{fmt(vals[0]):>18}{fmt(en[y]):>18}  {cause:<11} ·  {moves}")
+            if hit and not set(hit) <= set(WATERSIDE_CAUSES[var]) | {"A2", "A3", "A5", "A10", "A12", "A13", "A16", "A17"}:
+                print(f"    ! penyebab {hit} tidak terdaftar di WATERSIDE_CAUSES[{var}]")
+    print()
+    print("  opsi perairan (biaya dasar, Rp)   Excel → v2   ·   " + " · ".join(
+        f"{o.mode}{' (rencana)' if o.selected else ''}" for o in res.waterside_options))
+    for o in res.waterside_options:
+        ex = trail[0][1][o.mode]["cost"]
+        print(f"  {o.mode:<12}{fmt(ex):>22}{fmt(o.cost):>22}  "
+              + ("  ".join(f"{t}: trestle {fmt(o.trestle_len[t])} m, keruk {fmt(o.dredge_vol[t])} m³" for t in o.trestle_len)))
 
 
 if __name__ == "__main__":

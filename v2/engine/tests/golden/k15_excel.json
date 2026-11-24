@@ -1,6 +1,6 @@
 {
  "source": "TPT_Kelompok 15 Revisi 02-Januari-2025.xlsx",
- "extracted_at": "2026-11-23",
+ "extracted_at": "2026-11-24",
  "note": "Nilai Excel K15 (rumus lama) sebagai pembanding, BUKAN kunci jawaban. Seri dengan affected_by kosong seharusnya sama dengan engine v2; selain itu selisih harus bisa dijelaskan oleh temuan audit yang disebut (SPEC §11). Indeks tahun: values[0] = tahun ke-1.",
  "flow_order": [
   "in.damai",
@@ -8537,6 +8537,70 @@
    "ref": "Fasilitas Perairan!C4",
    "value": 255.0
   },
+  "governing_beam_m": {
+   "ref": "Fasilitas Perairan!C5",
+   "value": 42.8
+  },
+  "governing_draft_m": {
+   "ref": "Fasilitas Perairan!C6",
+   "value": 14.2
+  },
+  "governing_depth_m": {
+   "ref": "Fasilitas Perairan!C7",
+   "value": 24.6
+  },
+  "governing_speed_kn": {
+   "ref": "Fasilitas Perairan!C8",
+   "value": 25.3
+  },
+  "wm_m": {
+   "ref": "Fasilitas Perairan!E12",
+   "value": 64.19999999999999
+  },
+  "wa_speed_m": {
+   "ref": "Fasilitas Perairan!G18",
+   "value": 2.5300000000000002
+  },
+  "wa_wind_m": {
+   "ref": "Fasilitas Perairan!G22",
+   "value": 17.12
+  },
+  "wa_cross_current_m": {
+   "ref": "Fasilitas Perairan!G32",
+   "value": 29.959999999999997
+  },
+  "wa_long_current_m": {
+   "ref": "Fasilitas Perairan!G42",
+   "value": 4.28
+  },
+  "wa_wave_m": {
+   "ref": "Fasilitas Perairan!G50",
+   "value": 21.4
+  },
+  "wa_nav_aids_m": {
+   "ref": "Fasilitas Perairan!G54",
+   "value": 8.56
+  },
+  "wa_bottom_m": {
+   "ref": "Fasilitas Perairan!G58",
+   "value": 4.28
+  },
+  "wa_depth_m": {
+   "ref": "Fasilitas Perairan!G63",
+   "value": 0.0
+  },
+  "wa_total_m": {
+   "ref": "Fasilitas Perairan!G66",
+   "value": 88.13
+  },
+  "wb_m": {
+   "ref": "Fasilitas Perairan!G70",
+   "value": 21.4
+  },
+  "ws_m": {
+   "ref": "Fasilitas Perairan!G82",
+   "value": 68.48
+  },
   "channel_width_1lane_m": {
    "ref": "Fasilitas Perairan!K14",
    "value": 173.73
@@ -8549,9 +8613,21 @@
    "ref": "Fasilitas Perairan!K18",
    "value": 21.299999999999997
   },
+  "channel_length_long_high_m": {
+   "ref": "Fasilitas Perairan!L21",
+   "value": 510.0
+  },
+  "channel_length_long_low_m": {
+   "ref": "Fasilitas Perairan!L22",
+   "value": 382.5
+  },
   "channel_length_m": {
    "ref": "Fasilitas Perairan!L23",
    "value": 382.5
+  },
+  "channel_length_short_low_m": {
+   "ref": "Fasilitas Perairan!L24",
+   "value": 255.0
   },
   "entrance_width_m": {
    "ref": "Fasilitas Perairan!K29",
@@ -8561,9 +8637,17 @@
    "ref": "Fasilitas Perairan!K32",
    "value": 1785.0
   },
+  "turning_basin_d_no_tug_m": {
+   "ref": "Fasilitas Perairan!K34",
+   "value": 1020.0
+  },
   "turning_basin_d_m": {
    "ref": "Fasilitas Perairan!K35",
    "value": 510.0
+  },
+  "turning_basin_d_thruster_m": {
+   "ref": "Fasilitas Perairan!K36",
+   "value": 382.5
   },
   "turning_basin_area_m2": {
    "ref": "Fasilitas Perairan!K37",
@@ -8577,9 +8661,1033 @@
    "ref": "Fasilitas Perairan!K42",
    "value": 64.19999999999999
   },
+  "anchorage_depth_m": {
+   "ref": "Fasilitas Perairan!K47",
+   "value": 21.299999999999997
+  },
   "anchorage_radius_m": {
    "ref": "Fasilitas Perairan!L50",
    "value": 382.79999999999995
+  },
+  "anchorage_radius_poor_m": {
+   "ref": "Fasilitas Perairan!L51",
+   "value": 412.79999999999995
+  },
+  "anchorage_radius_wind20_m": {
+   "ref": "Fasilitas Perairan!L52",
+   "value": 348.9
+  },
+  "anchorage_radius_wind30_m": {
+   "ref": "Fasilitas Perairan!L53",
+   "value": 485.2
+  }
+ },
+ "trestle": {
+  "required_depth_m": {
+   "ref": "Trestle!C9",
+   "value": 21.299999999999997
+  },
+  "mp_berth_length_m": {
+   "ref": "Trestle!C25",
+   "value": 300.0
+  },
+  "mp_berth_width_m": {
+   "ref": "Trestle!C26",
+   "value": 50.0
+  },
+  "cc_berth_length_m": {
+   "ref": "Trestle!C30",
+   "value": 40.0
+  },
+  "cc_berth_width_m": {
+   "ref": "Trestle!C31",
+   "value": 35.0
+  },
+  "turning_basin_m": {
+   "ref": "Trestle!C35",
+   "value": 510.0
+  },
+  "stopping_distance_m": {
+   "ref": "Trestle!C36",
+   "value": 1785.0
+  },
+  "channel_width_m": {
+   "ref": "Trestle!C37",
+   "value": 415.94
+  },
+  "berth_area_width_m": {
+   "ref": "Trestle!C38",
+   "value": 64.19999999999999
+  },
+  "channel_length_m": {
+   "ref": "Trestle!C40",
+   "value": 382.5
+  },
+  "turning_area_m2": {
+   "ref": "Trestle!C41",
+   "value": 114908.66004356791
+  },
+  "stopping_area_m2": {
+   "ref": "Trestle!C42",
+   "value": 742452.9
+  },
+  "channel_area_m2": {
+   "ref": "Trestle!C43",
+   "value": 159097.05
+  },
+  "anchorage_m": {
+   "ref": "Trestle!C44",
+   "value": 382.79999999999995
+  },
+  "berth_area_mp_m2": {
+   "ref": "Trestle!C45",
+   "value": 19235.924999999996
+  },
+  "full_length_mp_m": {
+   "ref": "Trestle!C50",
+   "value": 500.0
+  },
+  "full_width_mp_m": {
+   "ref": "Trestle!C51",
+   "value": 40.0
+  },
+  "full_area_mp_m2": {
+   "ref": "Trestle!C53",
+   "value": 20000.0
+  },
+  "full_cost_mp_rp": {
+   "ref": "Trestle!C55",
+   "value": 400000000000.0
+  },
+  "full_length_jetty_m": {
+   "ref": "Trestle!C59",
+   "value": 500.0
+  },
+  "full_width_jetty_m": {
+   "ref": "Trestle!C60",
+   "value": 1.5
+  },
+  "full_area_jetty_m2": {
+   "ref": "Trestle!C62",
+   "value": 750.0
+  },
+  "full_cost_jetty_rp": {
+   "ref": "Trestle!C64",
+   "value": 15000000000.0
+  },
+  "full_cost_rp": {
+   "ref": "Trestle!C92",
+   "value": 415000000000.0
+  },
+  "full_total_rp": {
+   "ref": "Trestle!C94",
+   "value": 415000000000.0
+  },
+  "mixed_length_mp_m": {
+   "ref": "Trestle!C69",
+   "value": 250.0
+  },
+  "mixed_width_mp_m": {
+   "ref": "Trestle!C70",
+   "value": 50.0
+  },
+  "mixed_area_mp_m2": {
+   "ref": "Trestle!C72",
+   "value": 12500.0
+  },
+  "mixed_existing_depth_mp_m": {
+   "ref": "Trestle!C73",
+   "value": 10.0
+  },
+  "mixed_dredge_depth_mp_m": {
+   "ref": "Trestle!C74",
+   "value": 11.299999999999997
+  },
+  "mixed_length_jetty_m": {
+   "ref": "Trestle!C78",
+   "value": 250.0
+  },
+  "mixed_width_jetty_m": {
+   "ref": "Trestle!C79",
+   "value": 50.0
+  },
+  "mixed_area_jetty_m2": {
+   "ref": "Trestle!C81",
+   "value": 12500.0
+  },
+  "mixed_existing_depth_jetty_m": {
+   "ref": "Trestle!C82",
+   "value": 10.0
+  },
+  "mixed_dredge_depth_jetty_m": {
+   "ref": "Trestle!C83",
+   "value": 11.299999999999997
+  },
+  "mixed_total_rp": {
+   "ref": "Trestle!C110",
+   "value": 602289860000.0
+  },
+  "dredge_vol_mp_m3": {
+   "ref": "Trestle!C105,I105,N105",
+   "years": [
+    -1,
+    5,
+    10
+   ],
+   "values": [
+    217637.9999999999,
+    217637.9999999999,
+    217637.9999999999
+   ]
+  },
+  "dredge_vol_cc_m3": {
+   "ref": "Trestle!C106,I106,N106",
+   "years": [
+    -1,
+    5,
+    10
+   ],
+   "values": [
+    0.0,
+    0.0,
+    29018.399999999987
+   ]
+  },
+  "dredge_vol_total_m3": {
+   "ref": "Trestle!C107,I107,N107",
+   "years": [
+    -1,
+    5,
+    10
+   ],
+   "values": [
+    217637.9999999999,
+    217637.9999999999,
+    246656.3999999999
+   ]
+  },
+  "invest_mixed_rp": {
+   "ref": "Trestle!C108,I108,N108",
+   "years": [
+    -1,
+    5,
+    10
+   ],
+   "values": [
+    532645700000.0,
+    32645699999.99999,
+    36998459999.999985
+   ]
+  },
+  "berth_added_mp": {
+   "ref": "Trestle!C103:X103",
+   "years": [
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "values": [
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "berth_added_cc": {
+   "ref": "Trestle!C104:X104",
+   "years": [
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ],
+   "values": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ },
+ "trucks": {
+  "PK": {
+   "speed_kmh": {
+    "ref": "Fasilitas Daratan!F118:Y118",
+    "values": [
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0
+    ]
+   },
+   "distance_km": {
+    "ref": "Fasilitas Daratan!F119:Y119",
+    "values": [
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   },
+   "crane_box_h": {
+    "ref": "Fasilitas Daratan!F120:Y120",
+    "values": [
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0,
+     35.0
+    ]
+   },
+   "t_crane_min": {
+    "ref": "Fasilitas Daratan!F121:Y121",
+    "values": [
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334,
+     0.5833333333333334
+    ]
+   },
+   "t_rtg_load_min": {
+    "ref": "Fasilitas Daratan!F122:Y122",
+    "values": [
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222,
+     0.009722222222222222
+    ]
+   },
+   "t_rtg_unload_min": {
+    "ref": "Fasilitas Daratan!F123:Y123",
+    "values": [
+     0.0,
+     0.0,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667,
+     0.06666666666666667
+    ]
+   },
+   "t_travel_min": {
+    "ref": "Fasilitas Daratan!F124:Y124",
+    "values": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "trucks": {
+    "ref": "Fasilitas Daratan!F125:Y125",
+    "values": [
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0
+    ]
+   }
+  },
+  "CK": {
+   "crane_t_h": {
+    "ref": "Fasilitas Daratan!F153:Y153",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0
+    ]
+   },
+   "capacity_t": {
+    "ref": "Fasilitas Daratan!F154:Y154",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0
+    ]
+   },
+   "t_quay_min": {
+    "ref": "Fasilitas Daratan!F156:Y156",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   "speed_kmh": {
+    "ref": "Fasilitas Daratan!F158:Y158",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0
+    ]
+   },
+   "distance_km": {
+    "ref": "Fasilitas Daratan!F159:Y159",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   },
+   "t_yard_min": {
+    "ref": "Fasilitas Daratan!F160:Y160",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ]
+   },
+   "t_travel_min": {
+    "ref": "Fasilitas Daratan!F161:Y161",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "t_load_min": {
+    "ref": "Fasilitas Daratan!F162:Y162",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ]
+   },
+   "trucks": {
+    "ref": "Fasilitas Daratan!F163:Y163",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0
+    ]
+   },
+   "cycle_min": {
+    "ref": "Fasilitas Daratan!F164:Y164",
+    "values": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5
+    ]
+   }
+  },
+  "GC": {
+   "capacity_t": {
+    "ref": "Fasilitas Daratan!F208:Y208",
+    "values": [
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0,
+     25.0
+    ]
+   },
+   "crane_t_h": {
+    "ref": "Fasilitas Daratan!F209:Y209",
+    "values": [
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0,
+     1000.0
+    ]
+   },
+   "t_quay_min": {
+    "ref": "Fasilitas Daratan!F210:Y210",
+    "values": [
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5,
+     1.5
+    ]
+   },
+   "speed_kmh": {
+    "ref": "Fasilitas Daratan!F211:Y211",
+    "values": [
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0,
+     15.0
+    ]
+   },
+   "distance_km": {
+    "ref": "Fasilitas Daratan!F212:Y212",
+    "values": [
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ]
+   },
+   "t_yard_min": {
+    "ref": "Fasilitas Daratan!F213:Y213",
+    "values": [
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ]
+   },
+   "t_travel_min": {
+    "ref": "Fasilitas Daratan!F214:Y214",
+    "values": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   "t_load_min": {
+    "ref": "Fasilitas Daratan!F215:Y215",
+    "values": [
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0,
+     3.0
+    ]
+   },
+   "cycle_min": {
+    "ref": "Fasilitas Daratan!F216:Y216",
+    "values": [
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5,
+     8.5
+    ]
+   },
+   "trucks": {
+    "ref": "Fasilitas Daratan!F217:Y217",
+    "values": [
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0,
+     6.0
+    ]
+   }
   }
  },
  "derived": {

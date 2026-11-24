@@ -1,7 +1,7 @@
 """Orkestrasi kalkulasi per modul. Hasil berkunci id variabel registry (SPEC §9.3).
 
-Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5) · `storage` (§5.6); modul
-menarik modul yang dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
+Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5) · `storage` (§5.6) ·
+`waterside` (§5.7 + truk dermaga–lapangan, menarik `terminal`); modul menarik modul yang dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
 (default plan pertama) + override dari UI.
 """
 
@@ -11,13 +11,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from ..domain.case import CargoFlow, Case, Ship, teu_forms
-from . import cargo, demand, shipcost, storage, terminal, vessel, voyage
+from ..domain.case import CargoFlow, Case, Plan, Ship, teu_forms
+from . import cargo, demand, shipcost, storage, terminal, vessel, voyage, waterside
 
-Module = Literal["demand", "voyage", "shipcost", "terminal", "storage"]
-MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal", "storage")
+Module = Literal["demand", "voyage", "shipcost", "terminal", "storage", "waterside"]
+MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal", "storage", "waterside")
 REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage"),
-                                        "terminal": ("demand", "voyage"), "storage": ("demand", "voyage")}
+                                        "terminal": ("demand", "voyage"), "storage": ("demand", "voyage"),
+                                        "waterside": ("demand", "voyage", "terminal")}
 
 #: modul → id variabel registry yang dihitungnya (dites terhadap registry)
 COMPUTES: dict[str, tuple[str, ...]] = {
@@ -34,6 +35,12 @@ COMPUTES: dict[str, tuple[str, ...]] = {
                  "terminal.berth_length", "terminal.n_equip"),
     "storage": ("storage.dwell", "storage.throughput", "storage.cy", "storage.cy_slots", "storage.gc", "storage.bulk",
                 "storage.bulk_area", "storage.silos", "storage.liquid", "storage.tanks", "storage.yard_equipment"),
+    "waterside": ("waterside.gov_loa", "waterside.gov_beam", "waterside.gov_draft", "waterside.depth_req",
+                  "waterside.channel_width", "waterside.channel_length", "waterside.entrance_width",
+                  "waterside.stopping_distance", "waterside.turning_basin", "waterside.turning_area",
+                  "waterside.anchorage_radius", "waterside.x_star", "waterside.trestle_len", "waterside.tip_depth",
+                  "waterside.pocket_length", "waterside.pocket_width", "waterside.dredge_vol", "waterside.cost",
+                  "storage.trucks"),
 }
 #: variabel berkunci id terminal KEK (bukan flow)
 TERMINAL_KEYED = {"terminal.n_berth", "terminal.bor", "terminal.berth_length", "terminal.n_equip"}
@@ -42,6 +49,11 @@ STORAGE_FACILITY_VARS = {"cy": ("storage.cy", "storage.cy_slots"), "gc": ("stora
                          "bulk": ("storage.bulk", "storage.bulk_area", "storage.silos"),
                          "liquid": ("storage.liquid", "storage.tanks")}
 PORT_PARTS = ("labuh", "pandu", "tambat", "tunda", "bm")
+#: variabel perairan berkunci id terminal dan/atau `site` (alur & kolam bersama); `storage.trucks` berkunci id alat
+WATERSIDE_SITE = {"waterside.channel_width", "waterside.channel_length", "waterside.entrance_width",
+                  "waterside.stopping_distance", "waterside.turning_basin", "waterside.turning_area",
+                  "waterside.anchorage_radius"}
+GOV_DIMS = (("loa", "loa_m"), ("beam", "beam_m"), ("draft", "draft_m"))
 
 Value = float | list[float]
 ShipUnit = Literal["ton", "TEU"]
@@ -68,7 +80,31 @@ class CalcResult(BaseModel):
     port_breakdown: dict[str, dict[str, list[float]]] = Field(
         {}, description="modul shipcost: biaya pelabuhan per call per komponen (labuh, pandu, tambat, tunda, bm; "
                         "ext + KEK) per flow, seri tahunan Rp/call")
+    waterside_options: list[WatersideOption] = Field(
+        [], description="modul waterside: trestle penuh / trestle + keruk / keruk dengan biaya dasar (I8)")
+    governing_ships: dict[str, dict[str, str]] = Field(
+        {}, description="modul waterside: terminal | site → dimensi (loa, beam, draft) → kapal yang menentukan nilai "
+                        "akhir horizon")
+    channel_parts: dict[str, list[float]] = Field(
+        {}, description="modul waterside: komponen lebar alur site (wm, wa_*, wa, wb, ws), seri tahunan m")
     warnings: list[str] = []
+
+
+class WatersideOption(BaseModel):
+    """Satu opsi perairan (desain akhir horizon per terminal, harga satuan tahun dasar)."""
+
+    mode: Literal["trestle", "mixed", "dredge"]
+    selected: bool = Field(description="opsi rencana (plans[].waterside_mode) yang dipakai variabel waterside.*")
+    feasible: bool
+    reasons: list[str] = Field([], description="alasan opsi tidak layak (x* tidak tercapai / melebihi panjang maks)")
+    trestle_len: dict[str, float] = Field({}, description="terminal → panjang trestle, m")
+    theta: dict[str, float] = Field({}, description="terminal → panjang trestle / x*")
+    tip_depth: dict[str, float] = Field({}, description="terminal → kedalaman eksisting di ujung trestle, m")
+    trestle_area: dict[str, float] = Field({}, description="terminal → luas trestle, m²")
+    dredge_vol: dict[str, float] = Field({}, description="terminal → volume keruk kolam tambat akhir horizon, m³")
+    cost_trestle: dict[str, float] = Field({}, description="terminal → biaya trestle, Rp")
+    cost_dredge: dict[str, float] = Field({}, description="terminal → biaya keruk, Rp")
+    cost: float = Field(0.0, description="Σ biaya dasar semua terminal, Rp")
 
 
 class CandidateRow(BaseModel):
@@ -372,6 +408,199 @@ def storage_chain(case: Case, d_unit: dict[str, list[float]], chains: dict[str, 
     return out
 
 
+def _price(case: Case, key: str, warnings: list[str]) -> float:
+    up = next((u for u in case.unit_prices if u.key == key), None)
+    if up is None:
+        warnings.append(f"harga satuan '{key}' tidak ada di unit_prices; biaya dihitung 0")
+        return 0.0
+    return up.price_rp
+
+
+def waterside_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]],
+                    term_vals: dict[str, dict[str, Value]], plan: Plan | None,
+                    warnings: list[str]) -> tuple[dict[str, dict[str, Value]], list[WatersideOption],
+                                                  dict[str, dict[str, str]], dict[str, list[float]]]:
+    """§5.7 dari kapal aktif per terminal (`chains`) dan jumlah tambatan (`term_vals`). Kebutuhan per tahun (kapal
+    penentu, kedalaman, x*, alur & kolam) dan desain opsi rencana (trestle, keruk, biaya dasar) per terminal."""
+    site = case.kek_site
+    w = site.waterside
+    bathy = site.bathymetry
+    n = case.horizon.years
+    flows = {f.id: f for f in case.flows}
+    out: dict[str, dict[str, Value]] = {k: {} for k in COMPUTES["waterside"] if k != "storage.trucks"}
+    active: dict[str, list[list[Ship]]] = {t.id: [[] for _ in range(n)] for t in site.terminals}
+    for fid, (ship, ch) in chains.items():
+        freq = ch["voyage.freq"]
+        assert isinstance(freq, list)
+        tid = voyage.terminal_of(case, flows[fid]).id
+        for y, fq in enumerate(freq):
+            if fq:
+                active[tid][y].append(ship)
+    active[waterside.SITE] = [[s for t in site.terminals for s in active[t.id][y]] for y in range(n)]
+    gov_ships: dict[str, dict[str, str]] = {}
+    for key, by_year in active.items():
+        for dim, attr in GOV_DIMS:
+            out[f"waterside.gov_{dim}"][key] = waterside.governing([[getattr(s, attr) for s in ys] for ys in by_year])
+        every = [s for ys in by_year for s in ys]
+        if every:
+            gov_ships[key] = {dim: max(every, key=lambda s, a=attr: getattr(s, a)).id for dim, attr in GOV_DIMS}
+        drafts = out["waterside.gov_draft"][key]
+        assert isinstance(drafts, list)
+        out["waterside.depth_req"][key] = [waterside.depth_required(t, w.depth_factor_of_draft) for t in drafts]
+
+    def col(var: str, key: str) -> list[float]:
+        v = out[var][key]
+        assert isinstance(v, list)
+        return v
+
+    loa, beam, dep = col("waterside.gov_loa", waterside.SITE), col("waterside.gov_beam", waterside.SITE), \
+        col("waterside.depth_req", waterside.SITE)
+    site_vals = {
+        "waterside.channel_width": [waterside.channel_width(b, w) for b in beam],
+        "waterside.channel_length": [waterside.channel_length(x, w) for x in loa],
+        "waterside.entrance_width": [waterside.entrance_width(x) for x in loa],
+        "waterside.stopping_distance": [waterside.stopping_distance(x) for x in loa],
+        "waterside.turning_basin": [waterside.turning_basin(x, w.tug_assisted) for x in loa],
+        "waterside.anchorage_radius": [waterside.anchorage_radius(x, d) for x, d in zip(loa, dep, strict=True)],
+    }
+    site_vals["waterside.turning_area"] = [waterside.turning_area(d) for d in site_vals["waterside.turning_basin"]]
+    for k, v in site_vals.items():
+        out[k][waterside.SITE] = v
+    parts: dict[str, list[float]] = {}
+    for b in beam:
+        for k, v in waterside.channel_components(b, w).items():
+            parts.setdefault(k, []).append(v)
+
+    mode = plan.waterside_mode if plan else "trestle"
+    theta = plan.trestle_fraction if plan else None
+    p_tr = _price(case, site.trestle.unit_price_key, warnings)
+    p_dr = _price(case, site.trestle_dredge.unit_price_key, warnings)
+    options = {m: WatersideOption(mode=m, selected=m == mode, feasible=True) for m in waterside.OPTIONS}
+    for t in site.terminals:
+        dreq = col("waterside.depth_req", t.id)
+        nb = term_vals["terminal.n_berth"].get(t.id)
+        assert isinstance(nb, list)
+        xs = [waterside.x_star(bathy, d) for d in dreq]
+        if any(x is None for x in xs):
+            warnings.append(f"{t.id}: kedalaman perlu {max(dreq):.1f} m tidak tercapai di profil batimetri "
+                            f"(terdalam {max(b.depth_m for b in bathy):.1f} m); x* tidak dihitung")
+        else:
+            out["waterside.x_star"][t.id] = [float(x) for x in xs if x is not None]
+        used = [any(v > 0 for v in nb[: y + 1]) for y in range(n)]
+        if not any(used):
+            continue
+        d_des = dreq[-1]
+        xs_des = waterside.x_star(bathy, d_des)
+        loa_des, beam_des = col("waterside.gov_loa", t.id)[-1], col("waterside.gov_beam", t.id)[-1]
+        pl, pw = waterside.pocket_length(t, loa_des), waterside.pocket_width(beam_des)
+        chosen: tuple[float, float] | None = None
+        for m, opt in options.items():
+            ln = waterside.trestle_length(m, xs_des, site.trestle_dredge.trestle_length_m, theta)
+            if ln is None:
+                opt.feasible = False
+                opt.reasons.append(f"{t.id}: kedalaman perlu {d_des:.1f} m tidak tercapai di profil batimetri")
+                continue
+            if site.trestle.max_length_m is not None and ln > site.trestle.max_length_m + 1e-9:
+                opt.feasible = False
+                opt.reasons.append(f"{t.id}: trestle {ln:.0f} m > panjang maks {site.trestle.max_length_m:.0f} m")
+            tip = waterside.depth_at(bathy, ln)
+            area = ln * t.trestle_width_m
+            vol = waterside.dredge_volume(nb[-1], pl, pw, d_des, tip)
+            opt.trestle_len[t.id], opt.tip_depth[t.id], opt.trestle_area[t.id] = ln, tip, area
+            if xs_des:
+                opt.theta[t.id] = ln / xs_des
+            opt.dredge_vol[t.id] = vol
+            opt.cost_trestle[t.id], opt.cost_dredge[t.id] = area * p_tr, vol * p_dr
+            opt.cost += waterside.cost(area, p_tr, vol, p_dr)
+            if m == mode:
+                chosen = (ln, tip)
+        if chosen is None:
+            warnings.append(f"{t.id}: opsi perairan '{mode}' tidak bisa dihitung; desain trestle/keruk dilewati")
+            continue
+        ln, tip = chosen
+        area = ln * t.trestle_width_m
+        vol = [waterside.dredge_volume(b, pl, pw, d_des, tip) for b in nb]
+        out["waterside.trestle_len"][t.id] = [ln if u else 0.0 for u in used]
+        out["waterside.tip_depth"][t.id] = [tip if u else 0.0 for u in used]
+        out["waterside.pocket_length"][t.id] = [pl if u else 0.0 for u in used]
+        out["waterside.pocket_width"][t.id] = [pw if u else 0.0 for u in used]
+        out["waterside.dredge_vol"][t.id] = vol
+        out["waterside.cost"][t.id] = [waterside.cost(area if u else 0.0, p_tr, v, p_dr) for u, v in zip(used, vol, strict=True)]
+    return out, list(options.values()), gov_ships, parts
+
+
+def truck_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]], term_vals: dict[str, dict[str, Value]],
+                trestle_len: dict[str, Value], equip_by_term: dict[str, str],
+                warnings: list[str]) -> dict[str, Value]:
+    """`storage.trucks` per alat transport: truk per alat B/M × alat B/M aktif untuk bentuk muatannya; jarak =
+    panjang trestle desain terminal (opsi rencana)."""
+    sp = case.storage
+    p = case.params
+    n = case.horizon.years
+    teu_box = p.container.share_20ft + 2 * (1 - p.container.share_20ft)
+    flows = {f.id: f for f in case.flows}
+    out: dict[str, Value] = {}
+    for eq in sp.yard_equipment:
+        if eq.role != "transport":
+            continue
+        term = next((t for t in case.kek_site.terminals if eq.cargo_form in t.cargo_forms), None)
+        crane = next((e for e in case.equipment if e.id == equip_by_term.get(term.id, "")), None) if term else None
+        rate = crane.productivity.get(eq.cargo_form) if crane else None
+        if term is None or crane is None or rate is None:
+            warnings.append(f"{eq.id}: alat B/M terminal untuk {eq.cargo_form} tidak ditemukan; truk tidak dihitung")
+            continue
+        if eq.productivity_unit.startswith("box") != (rate.unit == "box/h"):
+            warnings.append(f"{eq.id}: satuan muatan per rit ({eq.productivity_unit}) tidak sesuai produktivitas alat "
+                            f"B/M ({rate.unit}); truk tidak dihitung")
+            continue
+        speed = eq.params.get("speed_kmh")
+        if not speed:
+            warnings.append(f"{eq.id}: params.speed_kmh kosong; truk tidak dihitung")
+            continue
+        yard_min = eq.params.get("unload_min")
+        if yard_min is None:
+            ye = next((e for e in sp.yard_equipment if e.role == "yard" and e.cargo_form == eq.cargo_form), None)
+            if ye is None:
+                warnings.append(f"{eq.id}: params.unload_min kosong dan tidak ada alat lapangan {eq.cargo_form}; "
+                                "waktu bongkar di lapangan = 0")
+                yard_min = 0.0
+            else:
+                cap_y = eq.productivity * (teu_box if eq.productivity_unit.startswith("box") and
+                                           ye.productivity_unit.upper().startswith("TEU") else 1.0)
+                yard_min = 60.0 * cap_y / ye.productivity
+        tl = trestle_len.get(term.id)
+        dist_km = max(tl) / 1000.0 if isinstance(tl, list) and tl else 0.0
+        n_eq_t = term_vals["terminal.n_equip"][term.id]
+        assert isinstance(n_eq_t, list)
+        fids = [fid for fid in chains if flows[fid].cargo_form == eq.cargo_form]
+        res: list[float] = []
+        for y in range(n):
+            act = []
+            for fid in fids:
+                freq = chains[fid][1]["voyage.freq"]
+                assert isinstance(freq, list)
+                if freq[y]:
+                    act.append(fid)
+            if not act:
+                res.append(0.0)
+                continue
+            per = 0
+            neq = 0
+            sd = 0.0
+            for fid in act:
+                ship = chains[fid][0]
+                r = rate.unload if flows[fid].direction == "inbound" else rate.load
+                per = max(per, storage.trucks_per_crane(*storage.truck_cycle(eq.productivity, r, dist_km, speed, yard_min)))
+                neq = max(neq, vessel.n_equipment(ship, case.equipment_rules, term.id))
+                sdv = term_vals["terminal.ship_days"][fid]
+                assert isinstance(sdv, list)
+                sd += sdv[y]
+            cr = storage.active_cranes(n_eq_t[y], neq, sd, p.working_days_per_year)
+            res.append(storage.trucks(per, cr))
+        out[eq.id] = terminal.never_decrease(res)
+    return out
+
+
 SHIP_KEYED = {"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
 
 
@@ -448,6 +677,15 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     if "storage" in mods:
         d_unit = {k: v for k, v in values["cargo.demand_unit"].items() if isinstance(v, list)}
         values.update(storage_chain(case, d_unit, chains, warnings))
+    w_opts: list[WatersideOption] = []
+    gov: dict[str, dict[str, str]] = {}
+    ch_parts: dict[str, list[float]] = {}
+    if "waterside" in mods:
+        plan = next((x for x in case.plans if x.id == pid), None)
+        w_vals, w_opts, gov, ch_parts = waterside_chain(case, chains, values, plan, warnings)
+        values.update(w_vals)
+        values["storage.trucks"] = truck_chain(case, chains, values, w_vals["waterside.trestle_len"], equip_by_term,
+                                               warnings)
 
     matrix: dict[str, dict[str, FeasCell]] = {}
     if "voyage" in mods:
@@ -461,7 +699,8 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     computed = [v for m in mods for v in COMPUTES[m]]
     return CalcResult(modules=mods, plan_id=pid, ship_by_flow=ships_by_flow, equipment_by_terminal=equip_by_term,
                       computed=computed, values=values, units=units, reasons=reasons, feasibility=matrix,
-                      port_breakdown=breakdown, warnings=warnings)
+                      port_breakdown=breakdown, waterside_options=w_opts, governing_ships=gov, channel_parts=ch_parts,
+                      warnings=warnings)
 
 
 def compare(case: Case, flow_id: str, plan_id: str | None = None, ship_by_flow: dict[str, str] | None = None,

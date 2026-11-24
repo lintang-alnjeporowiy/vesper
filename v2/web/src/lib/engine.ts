@@ -2,7 +2,8 @@
 // (debounce), hasil disimpan di store. Bila API mati, layar kembali ke placeholder dengan catatan.
 import { useEffect, useState } from 'react'
 import { ApiError, postCalculate, postCompare } from '../api/client'
-import type { CalcRequest, CalcResult, Case, CompareResult } from '../api/case'
+import type { CalcRequest, CalcResult, Case, CompareResult, KekSite } from '../api/case'
+import { REQUIRED_DEPTH_PH } from '../mock/placeholders'
 import { usePlanner, type CalcState } from '../store'
 import { num } from './format'
 import { VAR, type TraceCtx } from './registry'
@@ -11,7 +12,9 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal', 'storage']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal', 'storage', 'waterside']
+/** Kunci hasil untuk lingkup tapak (semua terminal): variabel `site×year` dan baris tapak variabel kapal penentu. */
+export const SITE = 'site'
 
 /** Pasang sekali di App: hitung ulang setiap kali kasus aktif atau kapal terpilih berubah. */
 export function useEngineSync() {
@@ -67,10 +70,43 @@ export function computedNumber(result: CalcResult | undefined, id: string, ctx: 
   const byKey = result?.values[id]
   if (!byKey) return undefined
   const scope = VAR[id]?.scope ?? ''
-  const key = scope === 'ship' ? ctx?.ship : scope.startsWith('terminal') ? ctx?.terminal : ctx?.flow
+  const key = scope === 'ship' ? ctx?.ship : scope.startsWith('site') ? SITE : scope.startsWith('terminal') ? ctx?.terminal : ctx?.flow
   const v = key ? byKey[key] : undefined
   if (v === undefined) return undefined
   return Array.isArray(v) ? v[(ctx?.year ?? year) - 1] : v
+}
+
+/** Nilai desain perairan = kebutuhan akhir horizon (engine: berlaku sejak tahun pertama terminal punya tambatan). */
+export function designValue(result: CalcResult | undefined, id: string, key: string): number | undefined {
+  const s = series(result, id, key)
+  return s ? s[s.length - 1] : undefined
+}
+
+/** Hasil yang memuat modul perairan (undefined bila belum dihitung / API mati). */
+export function withWaterside(result: CalcResult | undefined): CalcResult | undefined {
+  return result?.modules.includes('waterside') ? result : undefined
+}
+
+/**
+ * Garis kedalaman perlu per terminal dan tanda x* (desain akhir horizon) untuk profil batimetri.
+ * Tanpa hasil engine: satu garis placeholder.
+ */
+export function bathyLines(site: KekSite, result: CalcResult | undefined): {
+  computed: boolean
+  required: { depth: number; label: string }[]
+  marks: { at: number; label: string }[]
+} {
+  const ws = withWaterside(result)
+  if (!ws) return { computed: false, required: [{ depth: REQUIRED_DEPTH_PH, label: `kedalaman perlu ${num(REQUIRED_DEPTH_PH, 1)} m · placeholder` }], marks: [] }
+  const used = site.terminals.filter((t) => (designValue(ws, 'waterside.depth_req', t.id) ?? 0) > 0)
+  return {
+    computed: true,
+    required: used.map((t) => ({ depth: designValue(ws, 'waterside.depth_req', t.id) ?? 0, label: `${t.id} · kedalaman perlu ${num(designValue(ws, 'waterside.depth_req', t.id), 1)} m` })),
+    marks: used.flatMap((t) => {
+      const x = designValue(ws, 'waterside.x_star', t.id)
+      return x && x > 0 ? [{ at: x, label: `x* ${t.id} ${num(x)} m` }] : []
+    }),
+  }
 }
 
 /** Satuan tampilan: demand dalam satuan flow / satuan kapal, lainnya dari registry. */

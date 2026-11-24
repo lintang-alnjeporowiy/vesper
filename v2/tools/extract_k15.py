@@ -168,6 +168,45 @@ STORAGE_AFFECTED = dict(dwell_days=["A13", "A18"], cy_area_full_m2=["A12", "A13"
                         cy_area_m2=["A12", "A13", "A18"], dozers=[], forklifts=[])
 FLOW_ORDER = [f"in.{t}" for t, _ in TENANTS] + [f"out.{t}" for t, _ in TENANTS]
 
+# Fasilitas Perairan (§5.7, Tahap 8a). C6 berlabel "H" tetapi = sarat T (Model baris 29), C7 berlabel "T" = tinggi H.
+WATERSIDE_CELLS = (
+    ("governing_loa_m", "C4"), ("governing_beam_m", "C5"), ("governing_draft_m", "C6"), ("governing_depth_m", "C7"),
+    ("governing_speed_kn", "C8"), ("wm_m", "E12"), ("wa_speed_m", "G18"), ("wa_wind_m", "G22"),
+    ("wa_cross_current_m", "G32"), ("wa_long_current_m", "G42"), ("wa_wave_m", "G50"), ("wa_nav_aids_m", "G54"),
+    ("wa_bottom_m", "G58"), ("wa_depth_m", "G63"), ("wa_total_m", "G66"), ("wb_m", "G70"), ("ws_m", "G82"),
+    ("channel_width_1lane_m", "K14"), ("channel_width_2lane_m", "K16"), ("required_depth_m", "K18"),
+    ("channel_length_long_high_m", "L21"), ("channel_length_long_low_m", "L22"), ("channel_length_m", "L23"),
+    ("channel_length_short_low_m", "L24"), ("entrance_width_m", "K29"), ("stopping_distance_m", "K32"),
+    ("turning_basin_d_no_tug_m", "K34"), ("turning_basin_d_m", "K35"), ("turning_basin_d_thruster_m", "K36"),
+    ("turning_basin_area_m2", "K37"), ("berthing_area_length_m", "K40"), ("berthing_area_width_m", "K42"),
+    ("anchorage_depth_m", "K47"), ("anchorage_radius_m", "L50"), ("anchorage_radius_poor_m", "L51"),
+    ("anchorage_radius_wind20_m", "L52"), ("anchorage_radius_wind30_m", "L53"),
+)
+# Trestle: dimensi turunan (C35:C45), opsi trestle penuh (C50:C64, C92:C94) dan trestle + keruk (C69:C83, C110)
+TRESTLE_CELLS = (
+    ("required_depth_m", "C9"), ("mp_berth_length_m", "C25"), ("mp_berth_width_m", "C26"),
+    ("cc_berth_length_m", "C30"), ("cc_berth_width_m", "C31"), ("turning_basin_m", "C35"),
+    ("stopping_distance_m", "C36"), ("channel_width_m", "C37"), ("berth_area_width_m", "C38"),
+    ("channel_length_m", "C40"), ("turning_area_m2", "C41"), ("stopping_area_m2", "C42"), ("channel_area_m2", "C43"),
+    ("anchorage_m", "C44"), ("berth_area_mp_m2", "C45"),
+    ("full_length_mp_m", "C50"), ("full_width_mp_m", "C51"), ("full_area_mp_m2", "C53"), ("full_cost_mp_rp", "C55"),
+    ("full_length_jetty_m", "C59"), ("full_width_jetty_m", "C60"), ("full_area_jetty_m2", "C62"),
+    ("full_cost_jetty_rp", "C64"), ("full_cost_rp", "C92"), ("full_total_rp", "C94"),
+    ("mixed_length_mp_m", "C69"), ("mixed_width_mp_m", "C70"), ("mixed_area_mp_m2", "C72"),
+    ("mixed_existing_depth_mp_m", "C73"), ("mixed_dredge_depth_mp_m", "C74"), ("mixed_length_jetty_m", "C78"),
+    ("mixed_width_jetty_m", "C79"), ("mixed_area_jetty_m2", "C81"), ("mixed_existing_depth_jetty_m", "C82"),
+    ("mixed_dredge_depth_jetty_m", "C83"), ("mixed_total_rp", "C110"),
+)
+# Fasilitas Daratan: truk dermaga–lapangan per bentuk muatan (§5.6, Tahap 8a; A25)
+TRUCK_ROWS = {
+    "PK": dict(speed_kmh=118, distance_km=119, crane_box_h=120, t_crane_min=121, t_rtg_load_min=122,
+               t_rtg_unload_min=123, t_travel_min=124, trucks=125),
+    "CK": dict(crane_t_h=153, capacity_t=154, t_quay_min=156, speed_kmh=158, distance_km=159, t_yard_min=160,
+               t_travel_min=161, t_load_min=162, trucks=163, cycle_min=164),
+    "GC": dict(capacity_t=208, crane_t_h=209, t_quay_min=210, speed_kmh=211, distance_km=212, t_yard_min=213,
+               t_travel_min=214, t_load_min=215, cycle_min=216, trucks=217),
+}
+
 
 # Profil batimetri DUMMY (K15 tidak punya data). Disusun agar konsisten dengan K15:
 #   - kedalaman eksisting 10 m pada 250 m  (Trestle!C69, C73 — opsi trestle + keruk)
@@ -440,20 +479,19 @@ def build_case(b: Book, xlsx: Path) -> dict:
             dict(id="MP", name="Dermaga multipurpose", cargo_forms=["PK", "GC", "CK"],
                  berth_unit_length_m=r("berth_unit_length_m", "investasi", "C3"),
                  berth_width_m=r("berth_width_m", "investasi", "C5"), equipment_kind="HMC", berth_layout="quay",
-                 refs=r.take()),
+                 trestle_width_m=r("trestle_width_m", "trestle", "C51"), refs=r.take()),
             dict(id="CC", name="Jetty curah cair", cargo_forms=["CC"],
                  berth_unit_length_m=r("berth_unit_length_m", "investasi", "C4"),
                  berth_width_m=r("berth_width_m", "investasi", "C6"), equipment_kind="MLA", berth_layout="jetty",
-                 refs=r.take()),
+                 trestle_width_m=r("trestle_width_m", "trestle", "C60"), refs=r.take()),
         ],
         bathymetry=dummy_bathymetry(b),
         bathymetry_source="dummy",
-        trestle=dict(max_length_m=r("max_length_m", "trestle", "C50"), width_mp_m=r("width_mp_m", "trestle", "C51"),
-                     width_jetty_m=r("width_jetty_m", "trestle", "C60"), height_m=r("height_m", "trestle", "C52"),
-                     refs=r.take()),
-        trestle_dredge=dict(trestle_length_m=r("trestle_length_m", "trestle", "C69"),
-                            trestle_width_m=r("trestle_width_m", "trestle", "C70"),
-                            existing_depth_m=r("existing_depth_m", "trestle", "C73"), refs=r.take()),
+        # Trestle!C50 (500 m) = panjang trestle penuh K15 = x* batimetri dummy, bukan batas fisik → max_length_m kosong.
+        # Lebar trestle per terminal (C51 MP, C60 jetty) dipakai semua opsi; opsi keruk Excel memakai 50 m (C70, C79; A24).
+        trestle=dict(height_m=r("height_m", "trestle", "C52"), unit_price_key="trestle", refs=r.take()),
+        trestle_dredge=dict(trestle_length_m=r("trestle_length_m", "trestle", "C69"), unit_price_key="dredging",
+                            refs=r.take()),
         waterside=dict(
             wind_kn=r("wind_kn", "perairan", "J3"), cross_current_kn=r("cross_current_kn", "perairan", "J4"),
             longitudinal_current_kn=r("longitudinal_current_kn", "perairan", "J5"),
@@ -462,12 +500,19 @@ def build_case(b: Book, xlsx: Path) -> dict:
             maneuverability=r("maneuverability", "perairan", "J8", str).lower(),
             nav_aids=r("nav_aids", "perairan", "L3", str).lower().replace(" ", "_"),
             seabed=r("seabed", "perairan", "L4", str).lower().replace(" ", "_"),
-            channel_slope="sedang", lanes=2, long_channel=False, high_frequency=True, tug_assisted=True,
-            depth_factor_of_draft=1.5,
+            channel_slope="sedang", ship_speed_class=r("ship_speed_class", "perairan", "L6", str).lower(),
+            lanes=2, long_channel=False, high_frequency=True, tug_assisted=True, depth_factor_of_draft=1.5,
         ),
         port_charges="none",
     )
     r.note_ref("channel_slope", "Fasilitas Perairan!L5")
+    kek_site["trestle"]["refs"].update(
+        max_length_m="kosong: Trestle!C50 = 500 m adalah panjang trestle penuh (= x* batimetri dummy), bukan batas",
+        unit_price_key="Investasi!F11 (Trestle, Rp/m²)")
+    kek_site["trestle_dredge"]["refs"].update(
+        unit_price_key="Investasi!F17 (Dredging, Rp/m³)",
+        note="lebar trestle (C70, C79 = 50 m) & kedalaman eksisting (C73, C82) tidak dipakai: lebar per terminal, "
+             "kedalaman di ujung trestle dibaca dari batimetri (A24)")
     r.note_ref("lanes", "Fasilitas Perairan!K16 (2 jalur)")
     r.note_ref("long_channel", "Trestle!C40 = Fasilitas Perairan!L23 (alur relatif pendek, frekuensi tinggi)")
     r.note_ref("tug_assisted", "Fasilitas Perairan!K35/J37")
@@ -649,24 +694,30 @@ def build_case(b: Book, xlsx: Path) -> dict:
                  utilization=0.75, unit_price_key="rtg",
                  refs={"productivity": "Fasilitas Daratan!F93:F111 (5 TEU/jam, konstanta di rumus; in.fantasi 4, "
                                        "out.damai 8/12 → A19)", "utilization": "Fasilitas Daratan!F71:F113"}),
-            dict(id="truk_petikemas", name="Truk petikemas", cargo_form="PK", role="transport", productivity=35,
-                 productivity_unit="box/jam", utilization=1.0, unit_price_key="headtruck", params={"speed_kmh": 30},
-                 refs={"speed_kmh": "Fasilitas Daratan Rata2!F80", "productivity": "Fasilitas Daratan Rata2!F82",
-                       "utilization": "asumsi 100% (tidak ada di Excel)",
-                       "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"}),
+            dict(id="truk_petikemas", name="Truk petikemas", cargo_form="PK", role="transport",
+                 productivity=1, productivity_unit="box/rit", utilization=1.0, unit_price_key="headtruck",
+                 params={"speed_kmh": r("speed_kmh", "daratan", "M118")},
+                 refs={**r.take(), "productivity": "1 box per rit (Fasilitas Daratan!F121: satu kontainer per truk)",
+                       "params.unload_min": "kosong → waktu RTG per box di lapangan (Fasilitas Daratan!F123, A25)",
+                       "utilization": "tidak dipakai (truk per alat B/M, §5.6)"}),
             dict(id="dozer", name="Bull dozer", cargo_form="CK", productivity=20, productivity_unit="ton/jam",
                  utilization=0.7, unit_price_key="bull_dozer",
                  refs={"productivity": "Fasilitas Daratan!M146:Y146 (20 t/jam di tahun bermuatan curah; F146:L146 = 50 "
                                        "saat muatan 0)", "utilization": "Fasilitas Daratan!F148"}),
-            dict(id="truk_curah", name="Truk curah", cargo_form="CK", role="transport", productivity=80,
-                 productivity_unit="ton/jam", utilization=1.0,
-                 params={"capacity_t": 40, "cycles_per_hour": 10, "speed_kmh": 15, "load_min": 3, "unload_min": 3},
-                 refs={"params": "Fasilitas Daratan Rata2!F115:F124", "productivity": "Fasilitas Daratan Rata2!F116",
-                       "utilization": "asumsi 100% (tidak ada di Excel)",
-                       "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"}),
+            dict(id="truk_curah", name="Truk curah", cargo_form="CK", role="transport",
+                 productivity=r("productivity", "daratan", "M154"), productivity_unit="ton/rit", utilization=1.0,
+                 params={"speed_kmh": r("speed_kmh", "daratan", "M158"), "unload_min": r("unload_min", "daratan", "M160")},
+                 refs={**r.take(), "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
+                       "note": "F162 (3 menit muat di dermaga) tidak dipakai: waktu muat = kapasitas / produktivitas "
+                               "alat B/M (F156); Excel menghitung keduanya (A25)"}),
             dict(id="forklift", name="Forklift", cargo_form="GC", productivity=20, productivity_unit="ton/jam",
                  utilization=0.7, unit_price_key="forklift",
                  refs={"productivity": "Fasilitas Daratan!F201", "utilization": "Fasilitas Daratan!F203"}),
+            dict(id="truk_gc", name="Truk general cargo", cargo_form="GC", role="transport",
+                 productivity=r("productivity", "daratan", "F208"), productivity_unit="ton/rit", utilization=1.0,
+                 params={"speed_kmh": r("speed_kmh", "daratan", "F211"), "unload_min": r("unload_min", "daratan", "F213")},
+                 refs={**r.take(), "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
+                       "unit_price_key": "kosong: sheet Investasi tidak punya harga truk GC/curah (A25)"}),
         ],
     )
     storage["refs"] = {"dwell_time_mode": "Model!M350:AF359 (lama konsumsi); Fasilitas Daratan merata-rata 20 th "
@@ -876,11 +927,18 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
                               sfoc_me=num(b.raw("model", f"{col}35")), sfoc_ae=num(b.raw("model", f"{col}36")),
                               tch_rp_per_year=num(b.raw("model", f"{col}38")),
                               refs=f"Model!{col}26,{col}32,{col}35,{col}36,{col}38")
-    waterside = {k: dict(ref=f"Fasilitas Perairan!{c}", value=num(b.raw("perairan", c))) for k, c in (
-        ("governing_loa_m", "C4"), ("channel_width_1lane_m", "K14"), ("channel_width_2lane_m", "K16"),
-        ("required_depth_m", "K18"), ("channel_length_m", "L23"), ("entrance_width_m", "K29"),
-        ("stopping_distance_m", "K32"), ("turning_basin_d_m", "K35"), ("turning_basin_area_m2", "K37"),
-        ("berthing_area_length_m", "K40"), ("berthing_area_width_m", "K42"), ("anchorage_radius_m", "L50"))}
+    waterside = {k: dict(ref=f"Fasilitas Perairan!{c}", value=num(b.raw("perairan", c)) or 0.0) for k, c in WATERSIDE_CELLS}
+    trestle = {k: dict(ref=f"Trestle!{c}", value=num(b.raw("trestle", c))) for k, c in TRESTLE_CELLS}
+    for k, row in (("dredge_vol_mp_m3", 105), ("dredge_vol_cc_m3", 106), ("dredge_vol_total_m3", 107),
+                   ("invest_mixed_rp", 108)):  # opsi trestle + keruk: dibangun per fase di tahun −1, 5, 10
+        trestle[k] = dict(ref=f"Trestle!C{row},I{row},N{row}", years=[-1, 5, 10],
+                          values=[num(b.raw("trestle", f"{c}{row}")) for c in ("C", "I", "N")])
+    for k, row in (("berth_added_mp", 103), ("berth_added_cc", 104)):  # tahun −1 … 20 (kolom C … X)
+        cols = [get_column_letter(column_index_from_string("C") + i) for i in range(22)]
+        trestle[k] = dict(ref=f"Trestle!C{row}:X{row}", years=list(range(-1, 21)),
+                          values=[num(b.raw("trestle", f"{c}{row}")) for c in cols])
+    trucks = {form: {k: dict(ref=rng("daratan", row, YEAR_COLS_F), values=series(b, "daratan", row, YEAR_COLS_F))
+                     for k, row in rows.items()} for form, rows in TRUCK_ROWS.items()}
     derived = {
         "ton_per_teu": {
             "tepung_jagung": dict(ref="Muatan!L21", value=num(b.raw("muatan", "L21"))),
@@ -896,7 +954,8 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
              "kosong seharusnya sama dengan engine v2; selain itu selisih harus bisa dijelaskan oleh temuan "
              "audit yang disebut (SPEC §11). Indeks tahun: values[0] = tahun ke-1.",
         flow_order=FLOW_ORDER, plan=case["plans"][0], flows=flows, terminal=terminal, storage=storage,
-        investment=investment, aggregate=aggregate, waterside=waterside, derived=derived,
+        investment=investment, aggregate=aggregate, waterside=waterside, trestle=trestle, trucks=trucks,
+        derived=derived,
     )
 
 

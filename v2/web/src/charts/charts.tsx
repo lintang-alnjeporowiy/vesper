@@ -152,11 +152,11 @@ export function Tornado(props: { rows: { label: string; down: number; up: number
 
 /**
  * Profil batimetri berskala: sumbu x = jarak dari garis pantai (proporsional), kedalaman ke bawah.
- * `required` = garis kedalaman perlu (putus-putus merah); `marks` = garis tegak (mis. ujung trestle).
+ * `required` = garis kedalaman perlu (putus-putus merah, satu per terminal); `marks` = garis tegak (mis. x*, ujung trestle).
  */
 export function BathyProfile(props: {
   points: { distance_m: number; depth_m: number }[]
-  required?: { depth: number; label: string }
+  required?: { depth: number; label: string }[]
   marks?: { at: number; label: string }[]
   highlight?: number
   width?: number
@@ -171,7 +171,8 @@ export function BathyProfile(props: {
   const pts = [...props.points].filter((p) => Number.isFinite(p.distance_m) && Number.isFinite(p.depth_m)).sort((a, b) => a.distance_m - b.distance_m)
   if (pts.length < 2) return <p className="m-0 text-[13px] text-abu">Isi minimal 2 titik untuk menggambar profil.</p>
   const maxX = Math.max(...pts.map((p) => p.distance_m), ...(props.marks ?? []).map((m) => m.at))
-  const maxY = Math.max(...pts.map((p) => p.depth_m), props.required?.depth ?? 0) * 1.1 || 1
+  const req = (props.required ?? []).filter((r) => Number.isFinite(r.depth) && r.depth > 0)
+  const maxY = Math.max(...pts.map((p) => p.depth_m), ...req.map((r) => r.depth)) * 1.1 || 1
   const x = (d: number) => L + (d / (maxX || 1)) * (W - L - R)
   const y = (z: number) => T + (z / maxY) * (H - T - B)
   const line = pts.map((p, i) => `${i ? 'L' : 'M'}${x(p.distance_m).toFixed(1)},${y(p.depth_m).toFixed(1)}`).join(' ')
@@ -201,14 +202,16 @@ export function BathyProfile(props: {
           <title>{`${fmt(p.distance_m)} m dari pantai · kedalaman ${fmt(p.depth_m)} m`}</title>
         </circle>
       ))}
-      {props.required && (
-        <g>
-          <line x1={L} x2={W - R} y1={y(props.required.depth)} y2={y(props.required.depth)} stroke={C.merah} strokeDasharray="6 4" strokeWidth={1.5} />
-          <text x={L + 6} y={y(props.required.depth) - 6} fontSize={13} fill={C.merah}>{props.required.label}</text>
+      {/* label bergantian kiri / bawah-kiri agar dua garis yang berdekatan tetap terbaca */}
+      {[...req].sort((a, b) => a.depth - b.depth).map((r, i) => (
+        <g key={r.label}>
+          <line x1={L} x2={W - R} y1={y(r.depth)} y2={y(r.depth)} stroke={C.merah} strokeDasharray="6 4" strokeWidth={1.5} />
+          <text x={L + 6} y={i % 2 ? y(r.depth) + 15 : y(r.depth) - 6} fontSize={13} fill={C.merah}>{r.label}</text>
         </g>
-      )}
-      {(props.marks ?? []).map((m, i) => {
-        const right = x(m.at) > W * 0.6
+      ))}
+      {[...(props.marks ?? [])].sort((a, b) => a.at - b.at).map((m, i, all) => {
+        // label di kiri garis bila dekat tepi kanan atau bila garis berikutnya terlalu dekat
+        const right = x(m.at) > W * 0.6 || (i + 1 < all.length && x(all[i + 1].at) - x(m.at) < 110)
         return (
           <g key={m.label}>
             <line x1={x(m.at)} x2={x(m.at)} y1={T} y2={H - B} stroke={C.hitam} strokeWidth={1.5} />

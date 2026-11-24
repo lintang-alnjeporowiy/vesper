@@ -254,6 +254,8 @@ class KekTerminal(Rec):
     equipment_kind: str = F(desc="HMC, MLA, …")
     berth_layout: Literal["quay", "jetty"] = F(
         "quay", desc="quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty")
+    trestle_width_m: Pos = F(unit="m", desc="lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; "
+                                             "jetty: pipa + catwalk), sama untuk semua opsi perairan")
 
 
 class BathyPoint(Rec):
@@ -262,16 +264,16 @@ class BathyPoint(Rec):
 
 
 class TrestleSpec(Rec):
-    max_length_m: Pos = F(unit="m")
-    width_mp_m: Pos = F(unit="m")
-    width_jetty_m: Pos = F(unit="m")
+    max_length_m: float | None = F(None, gt=0, unit="m", desc="batas fisik panjang trestle; kosong = tanpa batas "
+                                                               "(trestle penuh gugur bila x* melebihi batas)")
     height_m: Pos = F(unit="m")
+    unit_price_key: str = F("trestle", desc="kunci harga satuan trestle (Rp/m²) di unit_prices")
 
 
 class TrestleDredgeSpec(Rec):
-    trestle_length_m: Pos = F(unit="m")
-    trestle_width_m: Pos = F(unit="m")
-    existing_depth_m: NonNeg = F(unit="m")
+    trestle_length_m: Pos = F(unit="m", desc="panjang trestle opsi trestle + keruk per terminal (dibatasi x*); "
+                                              "plans[].trestle_fraction θ, bila diisi, menggantikannya dengan θ · x*")
+    unit_price_key: str = F("dredging", desc="kunci harga satuan pengerukan (Rp/m³) di unit_prices")
 
 
 class WatersideConditions(Rec):
@@ -284,6 +286,8 @@ class WatersideConditions(Rec):
     nav_aids: Literal["sangat_baik", "baik", "cukup"]
     seabed: Literal["tanah_lunak", "tanah_keras"]
     channel_slope: Literal["landai", "sedang", "curam"]
+    ship_speed_class: Literal["cepat", "sedang", "lambat"] = F(
+        "sedang", desc="kelas kecepatan kapal di alur (menentukan Wa kecepatan, angin, arus, Wb, Ws)")
     lanes: Literal[1, 2] = 2
     long_channel: bool = F(False, desc="alur relatif panjang (menentukan rumus panjang alur)")
     high_frequency: bool = F(True, desc="frekuensi kapal tinggi (menentukan rumus panjang alur)")
@@ -444,9 +448,9 @@ class YardEquipment(Rec):
     cargo_form: str
     role: Literal["yard", "transport"] = F(
         "yard", desc="yard = alat penumpukan (jumlah dari arus/kapasitas, §5.6); transport = angkutan dermaga–lapangan "
-                     "(truk; dihitung bersama panjang trestle, Tahap 8)")
-    productivity: Pos
-    productivity_unit: str = F(desc="TEU/jam, ton/jam, …")
+                     "(truk per alat B/M × alat aktif, jarak = panjang trestle, §5.6; params speed_kmh, unload_min)")
+    productivity: Pos = F(desc="yard: produktivitas per jam; transport: muatan per rit (box atau ton)")
+    productivity_unit: str = F(desc="yard: TEU/jam, ton/jam, …; transport: box/rit, ton/rit")
     utilization: Rate
     unit_price_key: str | None = F(None, desc="kunci di unit_prices")
     params: dict[str, float] = {}
@@ -485,8 +489,10 @@ class Plan(Rec):
     description: str | None = None
     ship_by_flow: dict[str, str] = F(desc="flow_id -> ship_id")
     equipment_by_terminal: dict[str, str] = F(desc="terminal_id -> equipment_id")
-    waterside_mode: Literal["trestle", "dredge", "mixed"]
-    trestle_fraction: float | None = F(None, ge=0, le=1)
+    waterside_mode: Literal["trestle", "dredge", "mixed"] = F(
+        desc="trestle = trestle penuh sampai x*; mixed = trestle + keruk; dredge = tambatan di garis pantai + keruk")
+    trestle_fraction: float | None = F(None, ge=0, le=1, desc="θ opsi mixed: panjang trestle = θ · x* per terminal "
+                                                              "(kosong = kek_site.trestle_dredge.trestle_length_m)")
 
 
 class Assumption(Rec):

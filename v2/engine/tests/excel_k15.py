@@ -3,15 +3,17 @@
 Tujuannya membuktikan bahwa selisih engine v2 vs golden Excel berasal dari temuan audit yang disebut: bila tiruan
 ini (dengan kekeliruan Excel A1–A3, A5, A6, A9–A11, A13–A15 dan demand golden yang memuat A12) mereproduksi golden persis,
 maka engine — yang identik kecuali pada titik-titik itu — hanya berbeda karena temuan tersebut.
-Terminal KEK (`excel_terminal`): A16, A17 di atas rantai per flow.
-Dipakai oleh `test_calc_voyage.py`, `test_calc_shipcost.py`, `test_calc_terminal.py` dan `tools/diff_k15.py`.
+Terminal KEK (`excel_terminal`): A16, A17 di atas rantai per flow. Penyimpanan (`excel_storage`): A18–A20.
+Perairan (`excel_waterside`, sheet `Fasilitas Perairan` & `Trestle`): A21–A24; truk dermaga–lapangan (`excel_trucks`): A25.
+Dipakai oleh `test_calc_voyage.py`, `test_calc_shipcost.py`, `test_calc_terminal.py`, `test_calc_storage.py`,
+`test_calc_waterside.py` dan `tools/diff_k15.py`.
 """
 
 from __future__ import annotations
 
 import math
 
-from tpt_engine.calc import shipcost, vessel
+from tpt_engine.calc import shipcost, storage, vessel, waterside
 from tpt_engine.calc.cargo import ceil_
 from tpt_engine.domain import Case
 
@@ -409,3 +411,246 @@ def engine_series(values: dict, fid: str, key: str) -> list[float]:
     if mode == "plus_fix":
         return [a + fix if b else 0.0 for a, b in zip(s, f, strict=True)]
     return list(s)
+
+
+# ─── §5.7 perairan & trestle vs keruk, truk dermaga–lapangan (Tahap 8a) ─────────────────────────────────────────────
+#: koreksi perairan & truk, di atas koreksi flow/terminal/penyimpanan
+WATERSIDE_FIXES = ("A21", "A22", "A23", "A24")
+TRUCK_FIXES = ("A25",)
+#: baris tabel Fasilitas Perairan yang dipilih tangan di Excel (kelipatan B): G22 = D26, G32 = D36, G42 = D44,
+#: G50 = D51, G54 = D55, G58 = D60 (tanah lunak, walau h = 1,5 T), G63 kosong, G70 = D74, G82 = D83, E12 = C13
+XL_WM, XL_WB, XL_WS = 1.5, 0.5, 1.6
+XL_WA = dict(wa_wind=0.4, wa_cross_current=0.7, wa_long_current=0.1, wa_wave=0.5, wa_nav_aids=0.2, wa_bottom=0.1,
+             wa_depth=0.0)
+WATERSIDE_VARS = ("waterside.gov_loa", "waterside.gov_beam", "waterside.gov_draft", "waterside.depth_req",
+                  "waterside.channel_width", "waterside.channel_length", "waterside.entrance_width",
+                  "waterside.stopping_distance", "waterside.turning_basin", "waterside.turning_area",
+                  "waterside.anchorage_radius", "waterside.x_star", "waterside.trestle_len", "waterside.tip_depth",
+                  "waterside.pocket_length", "waterside.pocket_width", "waterside.dredge_vol", "waterside.cost")
+OPTION_KEYS = ("trestle_len", "tip_depth", "trestle_area", "dredge_vol", "cost_trestle", "cost_dredge")
+
+
+def _x_star(bathy, depth: float) -> float:
+    x = waterside.x_star(bathy, depth)
+    assert x is not None
+    return x
+
+
+def excel_waterside(case: Case, golden: dict, chains: dict[str, dict[str, list[float]]],
+                    term: dict[str, list[float]], fixes: frozenset[str] | set[str] = frozenset()) -> dict[str, dict]:
+    """Tiruan sheet `Fasilitas Perairan` & `Trestle` dari kapal rencana K15, frekuensi per flow (`chains`) dan jumlah
+    tambatan (`term` = `excel_terminal`). `cells` = bentuk golden (sel tunggal & per fase), `engine` = bentuk
+    variabel `waterside.*` (kunci terminal + `site`), `options` = tiga opsi perairan (bentuk `WatersideOption`).
+
+    Excel: satu kapal penentu = LOA terbesar atas 10 kapal rencana, B & T dari kapal itu (A21); Wa kecepatan
+    = 0,1 · Vs (knot), Wa dasar laut 0,1 B walau h = 1,5 T, alur 1 jalur satu Wb (A22); luas kolam putar dari
+    1,5 LOA (A23); opsi trestle + keruk: lebar trestle 50 m (MP & jetty), kolam jetty 40 m (A24). Panjang trestle
+    penuh = x* batimetri (dummy dikunci ke Trestle!C50 = 500 m). Nilai per tahun mengikuti pola engine: fasilitas
+    desain ada sejak tahun pertama terminal punya tambatan.
+    """
+    site = case.kek_site
+    w = site.waterside
+    bathy = site.bathymetry
+    n = len(next(iter(chains.values()))["freq_required"])
+    flows = {f.id: f for f in case.flows}
+    ships = {s.id: s for s in case.ships}
+    order = golden["flow_order"]
+    term_of = {f: ("CC" if flows[f].cargo_form == "CC" else "MP") for f in order}
+    ship_of = {f: ships[golden["flows"][f]["ship_id"]] for f in order}
+    site_key = waterside.SITE
+    keys = ("MP", "CC", site_key)
+    big = max((ship_of[f] for f in order), key=lambda s: s.loa_m)  # Fasilitas Perairan!C4 = MAX(Model!CH8:CH17)
+    gov: dict[str, dict[str, list[float]]] = {}
+    for key in keys:
+        if "A21" in fixes:
+            act = [[ship_of[f] for f in order if (key == site_key or term_of[f] == key) and chains[f]["freq_required"][y]]
+                   for y in range(n)]
+            gov[key] = {d: waterside.governing([[getattr(s, a) for s in ys] for ys in act])
+                        for d, a in (("loa", "loa_m"), ("beam", "beam_m"), ("draft", "draft_m"))}
+        else:  # C5:C6 = XLOOKUP(LOA, …) → B dan T kapal ber-LOA terbesar
+            gov[key] = {"loa": [big.loa_m] * n, "beam": [big.beam_m] * n, "draft": [big.draft_m] * n}
+    fac = w.depth_factor_of_draft  # K18 = 1,5 · T
+    depth = {k: [fac * t for t in gov[k]["draft"]] for k in keys}
+
+    def channel(b: float) -> tuple[float, float, dict[str, float]]:
+        wa = {k: v * b for k, v in XL_WA.items()}
+        wa["wa_speed"] = 0.0 if "A22" in fixes else 0.1 * big.speed_kn  # G18 = D18 · C8 (Vs, baris "cepat")
+        if "A22" in fixes:
+            wa["wa_bottom"] = 0.0  # h = 1,5 T → baris B58 (0)
+        tot = sum(wa.values())
+        wm, wb, wss = XL_WM * b, XL_WB * b, XL_WS * b
+        w1 = wm + tot + (2 if "A22" in fixes else 1) * wb  # K14 = E12 + G66 + G70
+        w2 = 2 * (wm + tot + wb) + wss  # K16 = 2 · K14(Excel) + G82
+        return w1, w2, dict(wa, wm=wm, wb=wb, ws=wss, wa_total=tot)
+
+    s_loa, s_beam, s_dep = gov[site_key]["loa"], gov[site_key]["beam"], depth[site_key]
+    eng: dict[str, dict[str, list[float]]] = {v: {} for v in WATERSIDE_VARS}
+    for d in ("loa", "beam", "draft"):
+        for k in keys:
+            eng[f"waterside.gov_{d}"][k] = list(gov[k][d])
+    for k in keys:
+        eng["waterside.depth_req"][k] = list(depth[k])
+    eng["waterside.channel_width"][site_key] = [channel(b)[0 if w.lanes == 1 else 1] if b else 0.0 for b in s_beam]
+    eng["waterside.channel_length"][site_key] = [1.5 * x for x in s_loa]  # L23 (alur pendek, frekuensi tinggi)
+    eng["waterside.entrance_width"][site_key] = [1.0 * x for x in s_loa]  # K29
+    eng["waterside.stopping_distance"][site_key] = [7.0 * x for x in s_loa]  # K32
+    eng["waterside.turning_basin"][site_key] = [2.0 * x for x in s_loa]  # K35 (dengan kapal tunda)
+    eng["waterside.turning_area"][site_key] = [math.pi * ((2.0 if "A23" in fixes else 1.5) * x / 2) ** 2
+                                              for x in s_loa]  # K37 = π (K36/2)²
+    eng["waterside.anchorage_radius"][site_key] = [x + 6 * dd if x else 0.0 for x, dd in zip(s_loa, s_dep, strict=True)]
+
+    p_tr = next(u.price_rp for u in case.unit_prices if u.key == site.trestle.unit_price_key)  # Investasi!H11
+    p_dr = next(u.price_rp for u in case.unit_prices if u.key == site.trestle_dredge.unit_price_key)  # H17
+    mixed_len = site.trestle_dredge.trestle_length_m  # Trestle!C69 = C78
+    terms = {t.id: t for t in site.terminals}
+    plan_mode = case.plans[0].waterside_mode
+    options: dict[str, dict] = {m: dict({k: {} for k in OPTION_KEYS}, cost=0.0) for m in ("trestle", "mixed", "dredge")}
+    for tid in ("MP", "CC"):
+        tm = terms[tid]
+        nb = term[f"berths_{tid.lower()}"]
+        used = [any(v > 0 for v in nb[: y + 1]) for y in range(n)]
+        eng["waterside.x_star"][tid] = [_x_star(bathy, dd) for dd in depth[tid]]
+        d_des = depth[tid][-1]
+        xs = _x_star(bathy, d_des)
+        loa_d, beam_d = gov[tid]["loa"][-1], gov[tid]["beam"][-1]
+        pl = 1.175 * loa_d if tm.berth_layout == "jetty" and "A24" in fixes else tm.berth_unit_length_m  # C25 / C30
+        pw = 1.5 * beam_d  # Trestle!C38 = Fasilitas Perairan!K42
+        chosen = None
+        for m, opt in options.items():
+            ln = xs if m == "trestle" else (0.0 if m == "dredge" else min(mixed_len, xs))
+            wd_ = tm.trestle_width_m if (m != "mixed" or "A24" in fixes) else 50.0  # C70, C79 = 50 m
+            tip = waterside.depth_at(bathy, ln)  # C73 = C82 = 10 m pada 250 m
+            area, vol = ln * wd_, nb[-1] * pl * pw * max(0.0, d_des - tip)
+            for k, val in zip(OPTION_KEYS, (ln, tip, area, vol, area * p_tr, vol * p_dr), strict=True):
+                opt[k][tid] = val
+            opt["cost"] += area * p_tr + vol * p_dr
+            if m == plan_mode:
+                chosen = (ln, tip, area)
+        assert chosen is not None
+        ln, tip, area = chosen
+        vol = [b * pl * pw * max(0.0, d_des - tip) for b in nb]
+        eng["waterside.trestle_len"][tid] = [ln if u else 0.0 for u in used]
+        eng["waterside.tip_depth"][tid] = [tip if u else 0.0 for u in used]
+        eng["waterside.pocket_length"][tid] = [pl if u else 0.0 for u in used]
+        eng["waterside.pocket_width"][tid] = [pw if u else 0.0 for u in used]
+        eng["waterside.dredge_vol"][tid] = vol
+        eng["waterside.cost"][tid] = [(area if u else 0.0) * p_tr + v * p_dr for u, v in zip(used, vol, strict=True)]
+
+    # bentuk golden: nilai akhir horizon kapal penentu site (Fasilitas Perairan) dan opsi (Trestle)
+    w1, w2, parts = channel(s_beam[-1])
+    loa_s, beam_s, dep_s = s_loa[-1], s_beam[-1], s_dep[-1]
+    cells: dict[str, object] = dict(
+        governing_loa_m=loa_s, governing_beam_m=beam_s, governing_draft_m=gov[site_key]["draft"][-1],
+        governing_speed_kn=big.speed_kn, wm_m=parts["wm"], wa_total_m=parts["wa_total"], wb_m=parts["wb"],
+        ws_m=parts["ws"], channel_width_1lane_m=w1, channel_width_2lane_m=w2, required_depth_m=dep_s,
+        channel_length_m=1.5 * loa_s, entrance_width_m=loa_s, stopping_distance_m=7 * loa_s,
+        turning_basin_d_m=2 * loa_s, turning_basin_area_m2=eng["waterside.turning_area"][site_key][-1],
+        berthing_area_length_m=1.175 * loa_s, berthing_area_width_m=1.5 * beam_s, anchorage_depth_m=dep_s,
+        anchorage_radius_m=loa_s + 6 * dep_s)
+    cells.update({f"{k}_m": parts[k] for k in ("wa_speed", "wa_wind", "wa_cross_current", "wa_long_current", "wa_wave",
+                                               "wa_nav_aids", "wa_bottom", "wa_depth")})
+    mx, tr = options["mixed"], options["trestle"]
+    berths = {t: term[f"berths_{t.lower()}"] for t in ("MP", "CC")}
+    adds = {t: [b - (s[i - 1] if i else 0.0) for i, b in enumerate(s)] for t, s in berths.items()}
+    per_berth = {t: mx["dredge_vol"][t] / berths[t][-1] if berths[t][-1] else 0.0 for t in berths}
+    phases = ((0, 5), (5, 10), (10, n))  # tahun 1–5 (keruk th −1), 6–10 (th 5), 11–20 (th 10): Trestle!C105, I105, N105
+    vol_ph = {t: [sum(adds[t][a:b]) * per_berth[t] for a, b in phases] for t in berths}
+    cells.update(
+        full_length_mp_m=tr["trestle_len"]["MP"], full_area_mp_m2=tr["trestle_area"]["MP"],
+        full_cost_mp_rp=tr["cost_trestle"]["MP"], full_length_jetty_m=tr["trestle_len"]["CC"],
+        full_area_jetty_m2=tr["trestle_area"]["CC"], full_cost_jetty_rp=tr["cost_trestle"]["CC"],
+        full_cost_rp=tr["cost"], full_total_rp=tr["cost"],
+        mixed_length_mp_m=mx["trestle_len"]["MP"], mixed_area_mp_m2=mx["trestle_area"]["MP"],
+        mixed_existing_depth_mp_m=mx["tip_depth"]["MP"], mixed_dredge_depth_mp_m=depth["MP"][-1] - mx["tip_depth"]["MP"],
+        mixed_length_jetty_m=mx["trestle_len"]["CC"], mixed_area_jetty_m2=mx["trestle_area"]["CC"],
+        mixed_existing_depth_jetty_m=mx["tip_depth"]["CC"],
+        mixed_dredge_depth_jetty_m=depth["CC"][-1] - mx["tip_depth"]["CC"], mixed_total_rp=mx["cost"],
+        dredge_vol_mp_m3=vol_ph["MP"], dredge_vol_cc_m3=vol_ph["CC"],
+        dredge_vol_total_m3=[a + b for a, b in zip(vol_ph["MP"], vol_ph["CC"], strict=True)],
+        invest_mixed_rp=[(sum(mx["trestle_area"].values()) * p_tr if i == 0 else 0.0) + (a + b) * p_dr
+                         for i, (a, b) in enumerate(zip(vol_ph["MP"], vol_ph["CC"], strict=True))],
+        selected_full=tr["cost"] <= mx["cost"],  # Model!K395 = IF(Trestle!C94 <= C110, trestle penuh, trestle + keruk)
+    )
+    return dict(cells=cells, engine=eng, options=options)
+
+
+#: penyebab selisih per variabel perairan engine (selain koreksi hulu yang mengubah tambatan, A2/A10/A16/A17)
+WATERSIDE_CAUSES = {"waterside.gov_loa": ("A21",), "waterside.gov_beam": ("A21",), "waterside.gov_draft": ("A21",),
+                    "waterside.depth_req": ("A21",), "waterside.channel_width": ("A21", "A22"),
+                    "waterside.channel_length": ("A21",), "waterside.entrance_width": ("A21",),
+                    "waterside.stopping_distance": ("A21",), "waterside.turning_basin": ("A21",),
+                    "waterside.turning_area": ("A21", "A23"), "waterside.anchorage_radius": ("A21",),
+                    "waterside.x_star": ("A21",), "waterside.trestle_len": ("A21",), "waterside.tip_depth": ("A21",),
+                    "waterside.pocket_length": ("A21", "A24"), "waterside.pocket_width": ("A21",),
+                    "waterside.dredge_vol": ("A21", "A24"), "waterside.cost": ("A21", "A24"),
+                    "storage.trucks": ("A10", "A17", "A19", "A21", "A25")}
+TRUCK_FORMS = {"truk_petikemas": "PK", "truk_curah": "CK", "truk_gc": "GC"}
+
+
+def excel_trucks(case: Case, golden: dict, chains: dict[str, dict[str, list[float]]], term: dict[str, list[float]],
+                 trestle_len_mp: float, demands: dict[str, list[float]],
+                 fixes: frozenset[str] | set[str] = frozenset()) -> dict[str, dict]:
+    """Tiruan truk `Fasilitas Daratan!F117:Y126` (PK), `F152:Y165` (CK), `F207:Y220` (GC). `golden` = bentuk sheet
+    (waktu muat, waktu jalan, jumlah truk per bentuk muatan), `engine` = `storage.trucks` per id alat (tidak turun).
+
+    Excel (A25): produktivitas alat B/M (box/jam) ÷ 60 dianggap menit per box; siklus PK = (muat + RTG muat + jalan) +
+    (RTG bongkar + jalan + muat) dengan waktu RTG = produktivitas ÷ 60 (in.fantasi 4 TEU/jam, A19); siklus GC/CK =
+    bongkar 3 + jalan sekali + muat 3 menit + waktu di dermaga; jarak = trestle opsi keruk (Trestle!C69) walau terpilih
+    trestle penuh; jumlah = ⌈siklus / waktu muat⌉ untuk SATU alat. Koreksi: satuan menit benar, jalan pergi-pulang,
+    waktu di dermaga sekali, jarak = trestle desain terminal, × alat B/M aktif (nEq × kapal sandar bersamaan).
+    """
+    prm = case.params
+    flows = {f.id: f for f in case.flows}
+    ships = {s.id: s for s in case.ships}
+    order = golden["flow_order"]
+    n = len(next(iter(chains.values()))["freq_required"])
+    eqs = {e.id: e for e in case.storage.yard_equipment}
+    crane = next(e for e in case.equipment if e.id == case.plans[0].equipment_by_terminal["MP"])
+    it_days = prm.it_hours / prm.working_hours_per_day
+    rtg_xl = golden["storage"]["excel_params"]["rtg_productivity_teu_h"]["in.fantasi"][0]  # Fasilitas Daratan!F69
+    dist_xl = case.kek_site.trestle_dredge.trestle_length_m / 1000  # Trestle!C69 / 1000
+    gold: dict[str, dict[str, list[float]]] = {}
+    eng: dict[str, list[float]] = {}
+    for eid, form in TRUCK_FORMS.items():
+        e = eqs[eid]
+        rate = crane.productivity[form]
+        fids = [f for f in order if flows[f].cargo_form == form]
+        v = e.params["speed_kmh"]
+        res: list[float] = []
+        g = {k: [0.0] * n for k in ("t_crane_min", "t_travel_min", "trucks")}
+        for y in range(n):
+            act = [f for f in fids if chains[f]["freq_required"][y]]
+            if "A25" not in fixes:
+                if not any(demands[f][y] for f in fids):
+                    res.append(0.0)
+                    continue
+                trav = dist_xl / v * 60  # F124 / F161 / F214 (sekali jalan)
+                if form == "PK":
+                    tc = rate.unload / 60  # F121 = produktivitas / 60
+                    rtg = rtg_xl / 60 if demands["in.fantasi"][y] else 0.0  # F123 = F69 / 60
+                    k = ceil_(((tc + tc / 60 + trav) + (rtg + trav + tc)) / tc)  # F125
+                else:
+                    tc = 60 * e.productivity / rate.unload  # F156 / F210
+                    k = ceil_((e.params["unload_min"] + trav + 3.0 + tc) / tc)  # F163 / F217 (muat 3 menit F162/F215)
+                g["t_crane_min"][y], g["t_travel_min"][y], g["trucks"][y] = tc, trav, float(k)
+                res.append(float(k))
+                continue
+            if not act:
+                res.append(0.0)
+                continue
+            if e.params.get("unload_min") is not None:
+                yard = e.params["unload_min"]
+            else:
+                yard = 60.0 * e.productivity / (eqs["rtg"].productivity if "A19" in fixes else rtg_xl)
+            per = max(storage.trucks_per_crane(*storage.truck_cycle(
+                e.productivity, rate.unload if flows[f].direction == "inbound" else rate.load, trestle_len_mp / 1000, v,
+                yard)) for f in act)
+            neq = max((vessel.n_equipment(ships[golden["flows"][f]["ship_id"]], case.equipment_rules, "MP")
+                       if "A10" in fixes else int(golden["flows"][f]["equipment_per_berth"])) for f in act)
+            sd = sum(chains[f]["port_days_kek_per_year"][y] + (it_days * chains[f]["freq_required"][y]
+                                                               if "A17" in fixes else 0.0) for f in act)
+            res.append(storage.trucks(per, storage.active_cranes(term["equipment_mp"][y], neq, sd,
+                                                                 prm.working_days_per_year)))
+        gold[form] = g
+        eng[eid] = _never_decrease(res)
+    return dict(golden=gold, engine=eng)

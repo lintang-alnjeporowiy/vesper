@@ -89,3 +89,31 @@ def tanks(volume_m3: float, lq: LiquidStorageParams) -> int:
 def yard_equipment(q_total: float, eq: YardEquipment, hours: float) -> int:
     """`storage.yard_equipment` — ⌈Σ arus / (produktivitas · utilisasi · jam kerja per tahun)⌉."""
     return ceil_(q_total / (eq.productivity * eq.utilization * hours)) if q_total > 0 else 0
+
+
+# ─── truk dermaga–lapangan (role transport, Tahap 8a; A25) ───────────────────────────────────────────────────────────
+def truck_cycle(capacity: float, crane_rate_h: float, distance_km: float, speed_kmh: float,
+                yard_min: float) -> tuple[float, float]:
+    """(waktu muat satu truk di alat B/M, siklus truk) [menit]: muat = 60 · muatan per rit / produktivitas alat B/M;
+    siklus = muat + 2 · jarak / kecepatan + bongkar di lapangan (Excel: produktivitas ÷ 60, jarak satu arah)."""
+    t_load = 60.0 * capacity / crane_rate_h
+    travel = 2.0 * 60.0 * distance_km / speed_kmh if distance_km > 0 else 0.0
+    return t_load, t_load + travel + yard_min
+
+
+def trucks_per_crane(t_load_min: float, cycle_min: float) -> int:
+    """⌈siklus / waktu muat⌉ — truk agar satu alat B/M tidak menunggu."""
+    return ceil_(cycle_min / t_load_min)
+
+
+def active_cranes(n_equip_terminal: float, neq_per_ship: int, ship_days: float, working_days: float) -> float:
+    """Alat B/M yang melayani satu bentuk muatan: nEq kapal × kapal bentuk itu yang sandar bersamaan
+    ⌈Σ ship-days / hari kerja⌉, dibatasi jumlah alat terminal."""
+    if ship_days <= 0:
+        return 0.0
+    return float(min(n_equip_terminal, neq_per_ship * ceil_(ship_days / working_days)))
+
+
+def trucks(per_crane: int, cranes: float) -> float:
+    """`storage.trucks` — truk per alat B/M × alat B/M aktif untuk bentuk muatan itu."""
+    return float(per_crane) * cranes

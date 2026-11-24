@@ -1,14 +1,30 @@
 import { BathyProfile } from '../charts/charts'
 import { Tv } from '../components/trace'
-import { Badge, InputMark, Note, PH, ScreenHeader, Section, Slider, Table } from '../components/ui'
-import { series, useCalc } from '../lib/engine'
+import type { WatersideOption } from '../api/case'
+import { Badge, Button, DefRow, InputMark, Note, PH, ScreenHeader, Section, Slider, Split, Table } from '../components/ui'
+import { SITE, bathyLines, designValue, series, useCalc, withWaterside } from '../lib/engine'
 import { num, pct } from '../lib/format'
 import { useField } from '../lib/useField'
-import { REQUIRED_DEPTH_PH, TERMINAL_Y13, WATERSIDE_OPTIONS } from '../mock/placeholders'
+import { TERMINAL_Y13 } from '../mock/placeholders'
 import { usePlanner } from '../store'
 
+const OPTION_LABEL: Record<WatersideOption['mode'], string> = { trestle: 'Trestle penuh', mixed: 'Trestle + keruk', dredge: 'Keruk penuh' }
+const OPTION_DESC: Record<WatersideOption['mode'], string> = {
+  trestle: 'trestle sampai x*, tanpa keruk',
+  mixed: 'trestle sebagian, kolam tambat dikeruk',
+  dredge: 'tambatan di garis pantai, kolam tambat dikeruk',
+}
+
+/** Rupiah ringkas: miliar (M) atau triliun (T). */
+const rp = (x: number | undefined) => (x === undefined ? '–' : Math.abs(x) >= 1e12 ? `Rp ${num(x / 1e12, 2)} T` : `Rp ${num(x / 1e9, 1)} M`)
+
+/** Kartu opsi kosong saat API mati (placeholder). */
+const emptyOption = (mode: WatersideOption['mode'], selected: boolean): WatersideOption => ({
+  mode, selected, feasible: true, reasons: [], trestle_len: {}, theta: {}, tip_depth: {}, trestle_area: {}, dredge_vol: {}, cost_trestle: {}, cost_dredge: {}, cost: 0,
+})
+
 export default function S08Terminal() {
-  const { caseData: c, year, setYear, shipByFlow } = usePlanner()
+  const { caseData: c, year, setYear, shipByFlow, setInput } = usePlanner()
   const calc = useCalc()
   const res = calc.ok && calc.result?.modules.includes('terminal') ? calc.result : undefined
   const bor = useField(['params', 'bor_max'], 'BOR maks')
@@ -35,17 +51,43 @@ export default function S08Terminal() {
     { id: 'liquid', name: 'Tangki timbun', forms: ['CC'], pv: 'in.storage.liquid', param: `${num(sp.liquid.tank_capacity_m3)} m³ · okupansi ${pct(sp.liquid.occupancy)}`, need: [{ vid: 'storage.tanks', unit: 'tangki' }, { vid: 'storage.liquid', unit: 'm³' }], flowNeed: { vid: 'storage.liquid', unit: 'm³' } },
   ] as Facility[]).map((x) => ({ ...x, commodities: cmdOf(x.forms) }))
   const yardEq = (forms: string[]) => (sp.yard_equipment ?? []).filter((e) => (e.role ?? 'yard') === 'yard' && forms.includes(e.cargo_form))
+  const truckEq = (forms: string[]) => (sp.yard_equipment ?? []).filter((e) => e.role === 'transport' && forms.includes(e.cargo_form))
   const TOTAL = 'total'
   const site = c.kek_site
   const plan = c.plans?.[0]
   const eqName = (id?: string) => c.equipment.find((e) => e.id === id)
   const phase = c.horizon.phases.find((p) => year >= p.start_year && year <= p.end_year)
   const td = site.trestle_dredge
-  const req = REQUIRED_DEPTH_PH
+  // perairan (Tahap 8a): desain = kebutuhan akhir horizon
+  const wres = withWaterside(calc.ok ? calc.result : undefined)
+  const wv = (vid: string, key: string) => designValue(wres, vid, key)
+  const dctx = (key: string) => ({ terminal: key, year: nYears })
+  const lines = bathyLines(site, wres)
+  const opts = wres?.waterside_options.length
+    ? wres.waterside_options
+    : (['trestle', 'mixed', 'dredge'] as const).map((m) => emptyOption(m, (plan?.waterside_mode ?? 'trestle') === m))
+  const chosen = opts.find((o) => o.selected)
+  const cheapest = wres ? [...opts].filter((o) => o.feasible).sort((a, b) => a.cost - b.cost)[0] : undefined
+  const shipName = (id?: string) => c.ships.find((s) => s.id === id)?.name ?? '–'
+  const firstYear = (t: string) => {
+    const i = termSeries('terminal.n_berth', t)?.findIndex((v) => v > 0) ?? -1
+    return i >= 0 ? i + 1 : undefined
+  }
+  const govRows: { key: string; name: string; since?: number }[] = [
+    ...site.terminals.map((t) => ({ key: t.id, name: t.name, since: firstYear(t.id) })),
+    { key: SITE, name: 'Tapak · alur & kolam putar' },
+  ]
+  const govShip = (key: string) => {
+    const g = wres?.governing_ships[key]
+    if (!g) return '–'
+    return g.loa === g.draft && g.beam === g.draft ? shipName(g.draft) : `LOA/B ${shipName(g.loa)} · T ${shipName(g.draft)}`
+  }
+  const part = (k: string) => wres?.channel_parts[k]?.[nYears - 1]
+  const w = site.waterside
 
   return (
     <>
-      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan, alat & penyimpanan dihitung · perairan & biaya placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>} />
+      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan, alat, penyimpanan & perairan dihitung · investasi placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>} />
 
       <div className="flex w-full gap-8 border-y border-garis py-4">
         <div className="flex w-[300px] shrink-0 flex-col gap-2">
@@ -149,6 +191,7 @@ export default function S08Terminal() {
                   { label: 'Tangki', vid: 'storage.tanks', k: 1 },
                 ].map((r) => ({ ...r, ctx: (y: number) => ({ flow: TOTAL, year: y }), arr: series(sres, r.vid, TOTAL) })),
                 ...yardEq(c.cargo_forms.map((f) => f.code)).map((e) => ({ label: e.name.replace(/ \(.*\)$/, ''), vid: 'storage.yard_equipment', ctx: (y: number) => ({ flow: e.id, year: y }), arr: series(sres, 'storage.yard_equipment', e.id), k: 1 })),
+                ...truckEq(c.cargo_forms.map((f) => f.code)).map((e) => ({ label: e.name, vid: 'storage.trucks', ctx: (y: number) => ({ flow: e.id, year: y }), arr: series(wres, 'storage.trucks', e.id), k: 1 })),
               ].map(({ label, vid, ctx, arr: a, k }) => ({ label, vid, ctx, k, arr: a ?? Array<number>(nYears).fill(0) })).map(({ label, arr, vid, ctx, k }) => (
                 <tr key={label} className="border-b border-garis">
                   <td className="py-2 font-sans">{label}</td>
@@ -164,7 +207,7 @@ export default function S08Terminal() {
         </div>
         <Note>
           Kotak hitam = tahun jumlahnya bertambah (tambatan, penyimpanan, dan alat yang sudah ada tidak berkurang). Ini kebutuhan per tahun; jadwal bangun dengan
-          masa konstruksi <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} th`}</Tv> dan lookahead <Tv v="in.horizon.berth_lookahead">{`${c.horizon.berth_lookahead_years} th`}</Tv> menyusul di tahap 8 (investasi).
+          masa konstruksi <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} th`}</Tv> dan lookahead <Tv v="in.horizon.berth_lookahead">{`${c.horizon.berth_lookahead_years} th`}</Tv> menyusul di tahap 8b (investasi).
           {res ? '' : ' API tidak aktif: semua angka 0.'}
         </Note>
       </Section>
@@ -182,19 +225,21 @@ export default function S08Terminal() {
                 {r.need.map((n) => <Tv key={n.vid} v={n.vid} ctx={{ flow: TOTAL, year }} className={sres ? '' : 'text-abu'}>{sres ? `${num(st(n.vid, TOTAL))} ${n.unit}` : '–'}</Tv>)}
               </span>
             ) },
-            { key: 'a', head: 'Alat lapangan', width: 130, mono: true, render: (r) => (
+            { key: 'a', head: 'Alat lapangan · truk', width: 150, mono: true, render: (r) => (
               <span className="flex flex-col">
                 {yardEq(r.forms).map((e) => <Tv key={e.id} v="storage.yard_equipment" ctx={{ flow: e.id, year }} className={sres ? '' : 'text-abu'}>{`${sres ? num(st('storage.yard_equipment', e.id)) : '–'} ${e.name.replace(/ \(.*\)$/, '')}`}</Tv>)}
-                {yardEq(r.forms).length === 0 ? '–' : null}
+                {truckEq(r.forms).map((e) => <Tv key={e.id} v="storage.trucks" ctx={{ flow: e.id, year }} className={wres ? '' : 'text-abu'}>{`${wres ? num(series(wres, 'storage.trucks', e.id)?.[y0] ?? 0) : '–'} truk`}</Tv>)}
+                {yardEq(r.forms).length + truckEq(r.forms).length === 0 ? '–' : null}
               </span>
             ) },
-            { key: 'c', head: 'Biaya', render: () => <Tv v="invest.storage" ctx={{ year }} className="no-underline"><PH>placeholder · Tahap 8</PH></Tv> },
+            { key: 'c', head: 'Biaya', render: () => <Tv v="invest.storage" ctx={{ year }} className="no-underline"><PH>placeholder · Tahap 8b</PH></Tv> },
           ]}
         />
         <Note>
           <Tv v="storage.dwell">Dwell time</Tv> = <Tv v="voyage.consumption">lama konsumsi</Tv> tahun itu (selang antar-pengapalan), sehingga stok = satu muatan per call: luas mengikuti ukuran kapal, bukan langsung demand (I1).
           Excel K15 merata-rata lama konsumsi 20 tahun termasuk tahun tanpa muatan (A18). <Tv v="storage.yard_equipment">Alat lapangan</Tv> = satu armada per bentuk muatan; Excel menghitung RTG per tenant dengan produktivitas berbeda (A19).
-          Tangki memakai densitas komoditas, Excel 0,9 tetap (A20). Kapasitas terpasang tidak pernah turun; truk dermaga–lapangan dan biaya menyusul di tahap 8.
+          Tangki memakai densitas komoditas, Excel 0,9 tetap (A20). Kapasitas terpasang tidak pernah turun.
+          {' '}<Tv v="storage.trucks">Truk dermaga–lapangan</Tv> = ⌈siklus ÷ waktu muat⌉ per alat B/M × alat B/M aktif, jarak = panjang trestle desain; Excel membagi produktivitas box/jam dengan 60 lalu memakainya sebagai menit (A25). Biaya menyusul di tahap 8b.
         </Note>
       </Section>
 
@@ -219,37 +264,122 @@ export default function S08Terminal() {
         />
       </Section>
 
+      <Section title="Kapal penentu & kedalaman perlu" aside={wres ? <Badge kind="dihitung">dihitung · desain akhir horizon (th {nYears})</Badge> : <PH>placeholder · API tidak aktif</PH>}>
+        <Table
+          rowKey={(r) => r.key}
+          rows={govRows}
+          groupStart={(r) => r.key === SITE}
+          columns={[
+            { key: 'n', head: 'Lingkup', width: 200, render: (r) => r.name },
+            { key: 's', head: 'Kapal penentu', width: 210, render: (r) => govShip(r.key) },
+            { key: 'l', head: 'LOA m', width: 75, mono: true, render: (r) => <Tv v="waterside.gov_loa" ctx={dctx(r.key)}>{num(wv('waterside.gov_loa', r.key), 2)}</Tv> },
+            { key: 'b', head: 'B m', width: 60, mono: true, render: (r) => <Tv v="waterside.gov_beam" ctx={dctx(r.key)}>{num(wv('waterside.gov_beam', r.key), 1)}</Tv> },
+            { key: 't', head: 'T m', width: 70, mono: true, render: (r) => <Tv v="waterside.gov_draft" ctx={dctx(r.key)}>{num(wv('waterside.gov_draft', r.key), 2)}</Tv> },
+            { key: 'd', head: 'Kedalaman perlu m', width: 135, mono: true, render: (r) => <Tv v="waterside.depth_req" ctx={dctx(r.key)}>{num(wv('waterside.depth_req', r.key), 2)}</Tv> },
+            { key: 'x', head: 'x* m', width: 70, mono: true, render: (r) => (r.key === SITE ? '–' : <Tv v="waterside.x_star" ctx={dctx(r.key)}>{num(wv('waterside.x_star', r.key))}</Tv>) },
+            { key: 'y', head: 'Sejak', mono: true, render: (r) => (r.since ? `th ${r.since}` : '–') },
+          ]}
+        />
+        <Note>
+          Kapal penentu per terminal = kapal rencana yang melayani terminal itu (LOA, B, dan T masing-masing maksimum kumulatif sampai tahun itu); baris tapak = semua terminal, dipakai alur
+          dan kolam putar. <Tv v="waterside.depth_req">Kedalaman perlu</Tv> = <Tv v="in.site.depth_factor">{num(w.depth_factor_of_draft, 1)}</Tv> × T per terminal. Excel memakai satu kapal
+          (ALS CERES) untuk semua terminal, padahal tanker di jetty CC lebih dalam (A21). Desain perairan = kebutuhan akhir horizon, ada sejak tahun pertama terminal punya tambatan.
+        </Note>
+      </Section>
+
+      <Section title="Alur & kolam (PIANC)" aside={wres ? <Badge kind="dihitung">dihitung · tapak · th {nYears}</Badge> : <PH>placeholder · API tidak aktif</PH>}>
+        <Split
+          left={
+            <>
+              <DefRow label={<Tv v="waterside.channel_width" ctx={dctx(SITE)}>Lebar alur</Tv>} justify><span className="font-mono">{`${num(wv('waterside.channel_width', SITE), 1)} m`}</span></DefRow>
+              <DefRow label={w.lanes === 2 ? '2 jalur = 2(Wm + Wa) + 2Wb + Ws' : '1 jalur = Wm + Wa + 2Wb'} justify>
+                <span className="font-mono text-[13px]">{`${num(part('wm'), 1)} · ${num(part('wa'), 1)} · ${num(part('wb'), 1)} · ${num(part('ws'), 1)} m`}</span>
+              </DefRow>
+              <DefRow label="Wa = angin · arus · gelombang · SBNP" justify>
+                <span className="font-mono text-[13px]">{`${num(part('wa_wind'), 1)} · ${num((part('wa_cross_current') ?? 0) + (part('wa_long_current') ?? 0), 1)} · ${num(part('wa_wave'), 1)} · ${num(part('wa_nav_aids'), 1)} m`}</span>
+              </DefRow>
+              <DefRow label={<Tv v="waterside.channel_length" ctx={dctx(SITE)}>Panjang alur</Tv>} justify last><span className="font-mono">{`${num(wv('waterside.channel_length', SITE), 1)} m`}</span></DefRow>
+            </>
+          }
+          right={
+            <>
+              <DefRow label={<Tv v="waterside.entrance_width" ctx={dctx(SITE)}>Lebar pintu masuk</Tv>} justify><span className="font-mono">{`${num(wv('waterside.entrance_width', SITE), 1)} m`}</span></DefRow>
+              <DefRow label={<Tv v="waterside.stopping_distance" ctx={dctx(SITE)}>Jarak henti</Tv>} justify><span className="font-mono">{`${num(wv('waterside.stopping_distance', SITE))} m`}</span></DefRow>
+              <DefRow label={<Tv v="waterside.turning_basin" ctx={dctx(SITE)}>Kolam putar</Tv>} justify>
+                <span className="font-mono">{`Ø ${num(wv('waterside.turning_basin', SITE))} m · `}<Tv v="waterside.turning_area" ctx={dctx(SITE)}>{`${num((wv('waterside.turning_area', SITE) ?? 0) / 1e4, 1)} ha`}</Tv></span>
+              </DefRow>
+              <DefRow label={<Tv v="waterside.anchorage_radius" ctx={dctx(SITE)}>Radius area labuh</Tv>} justify last><span className="font-mono">{`${num(wv('waterside.anchorage_radius', SITE), 1)} m`}</span></DefRow>
+            </>
+          }
+        />
+        <Note>
+          Komponen lebar dalam kelipatan B kapal penentu tapak (tabel PIANC di engine): manuver {w.maneuverability}, kecepatan {w.ship_speed_class}, angin {num(w.wind_kn)} kn, arus, gelombang
+          {' '}{num(w.wave_height_m, 2)} m, SBNP {w.nav_aids}. Excel mengambil Wa kecepatan 0,1 · Vs dari baris "cepat" dan Wa dasar laut 0,1 B walau h = 1,5 T (A22), serta menghitung luas kolam putar dari diameter 1,5 LOA walau kapal dibantu tunda (2 LOA, A23).
+          Alur dan kolam putar hanya dimensi; biayanya di luar cakupan (keruk hanya kolam tambat, sama seperti Excel).
+        </Note>
+      </Section>
+
       <Section title="Trestle atau keruk (I8)" aside={site.bathymetry_source === 'dummy' ? <Badge kind="asumsi">asumsi · batimetri dummy</Badge> : undefined}>
         <BathyProfile
           points={site.bathymetry}
-          required={{ depth: req, label: `kedalaman perlu ${num(req, 1)} m · placeholder` }}
-          marks={[{ at: td?.trestle_length_m ?? 250, label: `${num(td?.trestle_length_m ?? 250)} m` }, { at: site.trestle?.max_length_m ?? 500, label: `${num(site.trestle?.max_length_m ?? 500)} m` }]}
+          required={lines.required}
+          marks={[...lines.marks, ...(td?.trestle_length_m && !plan?.trestle_fraction ? [{ at: td.trestle_length_m, label: `trestle + keruk ${num(td.trestle_length_m)} m` }] : [])]}
           width={860}
         />
-        <div className="flex w-full justify-between font-mono text-[13px] text-abu">
-          <span>0 m</span>
-          <Tv v="in.site.trestle_dredge" className="font-medium text-hitam">{`${num(td?.trestle_length_m ?? 0)} m · ${num(td?.existing_depth_m ?? 0, 1)}`}</Tv>
-          <span className="font-medium text-hitam"><Tv v="in.site.trestle">{`${num(site.trestle?.max_length_m ?? 0)} m`}</Tv> · <Tv v="waterside.depth_req">{num(req, 1)}</Tv></span>
-          <Tv v="in.site.bathymetry">{`${num(site.bathymetry[site.bathymetry.length - 1].distance_m)} m · ${num(site.bathymetry[site.bathymetry.length - 1].depth_m, 1)}`}</Tv>
-        </div>
-        <Note>Profil diedit di layar 3. Garis hitam: ujung trestle {num(td?.trestle_length_m ?? 0)} m dan {num(site.trestle?.max_length_m ?? 0)} m. <Tv v="waterside.depth_req">Kedalaman perlu {num(req, 1)} m</Tv> = <Tv v="in.site.depth_factor">1,5</Tv> × draft <Tv v="waterside.governing">kapal penentu</Tv> (placeholder).</Note>
+        <Note>
+          Profil diedit di layar 3. Garis merah = <Tv v="waterside.depth_req">kedalaman perlu</Tv> per terminal{lines.computed ? '' : ' (placeholder)'}; titik potongnya = <Tv v="waterside.x_star">x*</Tv>, panjang trestle penuh.
+          Opsi trestle + keruk memakai trestle <Tv v="in.site.trestle_dredge">{`${num(td?.trestle_length_m ?? 0)} m`}</Tv>{plan?.trestle_fraction ? ` (diganti θ ${num(plan.trestle_fraction, 2)} × x* dari rencana)` : ''} lalu
+          mengeruk kolam tambat dari kedalaman di ujung trestle sampai kedalaman perlu. Excel memakai kedalaman ujung tetap 10 m dan lebar trestle 50 m untuk semua terminal (A24).
+        </Note>
         <div className="flex w-full border-y border-garis">
-          {WATERSIDE_OPTIONS.map((o, i) => {
-            const on = plan?.waterside_mode === o.id
+          {opts.map((o, i) => {
+            const on = o.selected
+            const delta = wres && chosen && !on && chosen.cost > 0 ? o.cost / chosen.cost - 1 : undefined
             return (
-              <div key={o.id} className={`flex grow basis-0 flex-col gap-1.5 py-4 ${i === 0 ? 'pr-4' : 'border-l border-garis pl-4'}`} style={on ? { boxShadow: 'inset 0 3px 0 var(--color-biru)' } : undefined}>
+              <div key={o.mode} className={`flex grow basis-0 flex-col gap-1.5 py-4 ${i === 0 ? 'pr-4' : 'border-l border-garis pl-4'}`} style={on ? { boxShadow: 'inset 0 3px 0 var(--color-biru)' } : undefined}>
                 <span className="flex items-center gap-2">
-                  <span className="grow text-base font-medium">{o.name}</span>
-                  {on && <span className="text-[13px] font-medium">terpilih</span>}
-                  {o.delta && <Tv v="invest.waterside" className="no-underline"><Badge kind="buruk">{o.delta}</Badge></Tv>}
+                  <span className="grow text-base font-medium">{OPTION_LABEL[o.mode]}</span>
+                  {on && <Tv v="dv.waterside" className="text-[13px] font-medium">rencana</Tv>}
+                  {o === cheapest && <Badge kind="baik">termurah</Badge>}
+                  {wres && !o.feasible && <Badge kind="gugur">tidak layak</Badge>}
+                  {delta !== undefined && <Badge kind={delta > 0 ? 'buruk' : 'baik'}>{`${delta > 0 ? '+' : '−'}${num(Math.abs(delta) * 100, 0)} %`}</Badge>}
                 </span>
-                <Tv v={o.id === 'trestle' ? 'waterside.trestle_len' : 'waterside.dredge_vol'} className="font-mono text-[13px]">{o.spec}</Tv>
-                <Tv v="invest.waterside" className="font-mono text-base text-abu">{o.cost}</Tv>
+                <span className="text-[13px] text-abu">{OPTION_DESC[o.mode]}</span>
+                {wres ? Object.keys(o.trestle_len).map((t) => {
+                  const tw = num(site.terminals.find((x) => x.id === t)?.trestle_width_m, 1)
+                  const cost = rp((o.cost_trestle[t] ?? 0) + (o.cost_dredge[t] ?? 0))
+                  // hanya opsi rencana yang bisa ditelusuri (variabel waterside.* mengikuti rencana)
+                  const T = (v: string, txt: string) => (on ? <Tv v={v} ctx={dctx(t)}>{txt}</Tv> : txt)
+                  return (
+                    <span key={t} className="flex gap-2 font-mono text-[13px]">
+                      <span className="w-6 shrink-0 font-medium">{t}</span>
+                      <span className="flex flex-col">
+                        <span>trestle {T('waterside.trestle_len', num(o.trestle_len[t]))} × {tw} m</span>
+                        <span>ujung {T('waterside.tip_depth', num(o.tip_depth[t], 1))} m · keruk {T('waterside.dredge_vol', num(o.dredge_vol[t]))} m³</span>
+                        <span>{T('waterside.cost', cost)}</span>
+                      </span>
+                    </span>
+                  )
+                }) : <span className="font-mono text-[13px] text-abu">–</span>}
+                {o.reasons.map((r) => <span key={r} className="text-[13px] text-merah">{r}</span>)}
+                <span className="flex items-center gap-2 pt-1">
+                  {wres ? <span className="font-mono text-base">{rp(o.cost)}</span> : <PH>placeholder · API tidak aktif</PH>}
+                  <span className="grow text-[13px] text-abu">biaya dasar</span>
+                  <Tv v="invest.waterside" className="no-underline"><PH>PV · Tahap 8b</PH></Tv>
+                </span>
+                {!on && (
+                  <span className="pt-1">
+                    <Button size="sm" variant="garis" disabled={!o.feasible} onClick={() => setInput(['plans', 0, 'waterside_mode'], o.mode, `Mode perairan: ${OPTION_LABEL[o.mode]}`)}>Pakai di rencana</Button>
+                  </span>
+                )}
               </div>
             )
           })}
         </div>
-        <Note>Biaya placeholder. Alur 2 jalur dan kolam putar ikut LOA kapal terbesar; ganti kapal di layar 6 dan pilihan bisa berpindah.</Note>
+        <Note>
+          Biaya dasar = luas trestle × harga trestle + volume keruk × harga keruk, harga tahun dasar tanpa eskalasi dan diskonto (jadwal bangun dan PV di tahap 8b). Persentase = selisih terhadap opsi rencana.
+          Setelah koreksi A24, trestle + keruk dan keruk penuh lebih murah daripada trestle penuh pada batimetri dummy, sedangkan Excel K15 memilih trestle penuh. Mengganti opsi rencana juga mengubah jarak truk dermaga–lapangan.
+        </Note>
       </Section>
     </>
   )

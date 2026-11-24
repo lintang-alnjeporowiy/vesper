@@ -53,12 +53,7 @@ export const TERMINAL_Y13 = {
   MP: { berthDays: 547, berths: 3, equipment: 12, bor: 0.5 },
   CC: { berthDays: 183, berths: 1, equipment: 2, bor: 0.5 },
 }
-export const WATERSIDE_OPTIONS = [
-  { id: 'trestle', name: 'Trestle penuh', spec: '500 × 40 m · tinggi 3,3 m · tanpa keruk', cost: 'Rp 1,9 T · PV Rp 1,6 T', delta: null },
-  { id: 'trestle_dredge', name: 'Trestle 250 m + keruk', spec: '250 × 50 m · keruk 10,0 → 21,3 m', cost: 'Rp 2,1 T · PV Rp 1,8 T', delta: '+12 %' },
-]
-
-/** Kedalaman perlu (m LWS) placeholder = 1,5 × draft terbesar K15; dihitung engine di Tahap 8. */
+/** Kedalaman perlu (m LWS) placeholder saat API mati = 1,5 × draft ALS CERES (K15); engine menghitungnya per terminal (Tahap 8a). */
 export const REQUIRED_DEPTH_PH = 21.3
 
 // ── Layar 9: investasi & ringkasan ──────────────────────────────────────────

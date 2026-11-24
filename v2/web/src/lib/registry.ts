@@ -103,7 +103,8 @@ export function contextLabel(c: Case, v: VarDef, ctx: TraceCtx | undefined, ship
   if (ctx?.flow && /flow|commodity|cargo_form/.test(s)) parts.push(ctx.flow)
   const shipId = ctx?.ship ?? (ctx?.flow ? shipByFlow[ctx.flow] : undefined)
   if (shipId && /ship|flow/.test(s)) parts.push(c.ships.find((x) => x.id === shipId)?.name ?? shipId)
-  if (ctx?.terminal && /terminal/.test(s)) parts.push(`terminal ${ctx.terminal}`)
+  if (/site/.test(s) || (ctx?.terminal === 'site' && /terminal/.test(s))) parts.push('tapak (semua terminal)')
+  else if (ctx?.terminal && /terminal/.test(s)) parts.push(`terminal ${ctx.terminal}`)
   if (ctx?.year && /year/.test(s)) parts.push(`tahun ${ctx.year}`)
   return parts.length ? parts.join(' · ') : `definisi · lingkup ${s}`
 }

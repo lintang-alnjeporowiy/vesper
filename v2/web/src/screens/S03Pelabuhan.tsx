@@ -2,6 +2,7 @@ import type { Case, ExternalPort } from '../api/case'
 import { BarRows, C } from '../charts/charts'
 import { BathyEditor } from '../components/BathyEditor'
 import { TariffTable } from '../components/TariffTable'
+import { Tv } from '../components/trace'
 import { Badge, DefRow, EditNum, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
 import { portOfRoute, shortPortName } from '../lib/case'
 import { num } from '../lib/format'
@@ -110,11 +111,11 @@ export default function S03Pelabuhan() {
             <h2 className="m-0 pb-4 text-xl font-normal">Tapak TERSUS</h2>
             {site.terminals.map((t) => (
               <DefRow key={t.id} label={t.name} labelWidth={150}>
-                <span className="font-mono">{num(t.berth_unit_length_m)} × {num(t.berth_width_m)} m · {t.cargo_forms.join(' ')}</span>
+                <span className="font-mono">{num(t.berth_unit_length_m)} × {num(t.berth_width_m)} m · {t.cargo_forms.join(' ')} · trestle <Tv v="in.term.trestle_width" ctx={{ terminal: t.id }}>{`lebar ${num(t.trestle_width_m, 1)} m`}</Tv></span>
               </DefRow>
             ))}
-            <DefRow label="Trestle maks" labelWidth={150}><span className="font-mono">{num(site.trestle?.max_length_m ?? 0)} m · lebar {num(site.trestle?.width_mp_m ?? 0)} m</span></DefRow>
-            <DefRow label="Opsi keruk" labelWidth={150} last><span className="font-mono">trestle {num(site.trestle_dredge?.trestle_length_m ?? 0)} m · {num(site.trestle_dredge?.existing_depth_m ?? 0, 1)} m</span></DefRow>
+            <DefRow label="Trestle" labelWidth={150}><Tv v="in.site.trestle" className="font-mono">{`tinggi ${num(site.trestle?.height_m ?? 0, 1)} m · panjang maks ${site.trestle?.max_length_m ? `${num(site.trestle.max_length_m)} m` : 'tanpa batas'}`}</Tv></DefRow>
+            <DefRow label="Trestle + keruk" labelWidth={150} last><Tv v="in.site.trestle_dredge" className="font-mono">{`trestle ${num(site.trestle_dredge?.trestle_length_m ?? 0)} m, sisanya keruk kolam tambat`}</Tv></DefRow>
           </>
         }
         right={

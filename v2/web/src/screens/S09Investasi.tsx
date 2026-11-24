@@ -9,7 +9,7 @@ export default function S09Investasi() {
   const c = usePlanner((s) => s.caseData)
   return (
     <>
-      <ScreenHeader step={9} kind="hasil" title="Investasi & ringkasan biaya" lead="Jadwal investasi terminal dan perairan, digabung dengan biaya pelayaran menjadi unit cost dan anuitas." badge={<PH>placeholder · engine tahap 8</PH>} />
+      <ScreenHeader step={9} kind="hasil" title="Investasi & ringkasan biaya" lead="Jadwal investasi terminal dan perairan, digabung dengan biaya pelayaran menjadi unit cost dan anuitas." badge={<PH>placeholder · engine tahap 8b–8c</PH>} />
 
       <KpiStrip items={KPI_SUMMARY} />
 

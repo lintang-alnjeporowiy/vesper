@@ -14,7 +14,7 @@
       "K15_Laporan Revisi.pdf",
       "K15_Presentasi Sidang Revisi.pptx"
     ],
-    "extracted_at": "2026-11-23"
+    "extracted_at": "2026-11-24"
   },
   "horizon": {
     "refs": {
@@ -1544,7 +1544,8 @@
       {
         "refs": {
           "berth_unit_length_m": "Investasi!C3",
-          "berth_width_m": "Investasi!C5"
+          "berth_width_m": "Investasi!C5",
+          "trestle_width_m": "Trestle!C51"
         },
         "id": "MP",
         "name": "Dermaga multipurpose",
@@ -1556,12 +1557,14 @@
         "berth_unit_length_m": 300.0,
         "berth_width_m": 50.0,
         "equipment_kind": "HMC",
-        "berth_layout": "quay"
+        "berth_layout": "quay",
+        "trestle_width_m": 40.0
       },
       {
         "refs": {
           "berth_unit_length_m": "Investasi!C4",
-          "berth_width_m": "Investasi!C6"
+          "berth_width_m": "Investasi!C6",
+          "trestle_width_m": "Trestle!C60"
         },
         "id": "CC",
         "name": "Jetty curah cair",
@@ -1571,7 +1574,8 @@
         "berth_unit_length_m": 40.0,
         "berth_width_m": 35.0,
         "equipment_kind": "MLA",
-        "berth_layout": "jetty"
+        "berth_layout": "jetty",
+        "trestle_width_m": 1.5
       }
     ],
     "bathymetry": [
@@ -1715,25 +1719,21 @@
     "bathymetry_source": "dummy",
     "trestle": {
       "refs": {
-        "max_length_m": "Trestle!C50",
-        "width_mp_m": "Trestle!C51",
-        "width_jetty_m": "Trestle!C60",
-        "height_m": "Trestle!C52"
+        "height_m": "Trestle!C52",
+        "max_length_m": "kosong: Trestle!C50 = 500 m adalah panjang trestle penuh (= x* batimetri dummy), bukan batas",
+        "unit_price_key": "Investasi!F11 (Trestle, Rp/m²)"
       },
-      "max_length_m": 500.0,
-      "width_mp_m": 40.0,
-      "width_jetty_m": 1.5,
-      "height_m": 3.3
+      "height_m": 3.3,
+      "unit_price_key": "trestle"
     },
     "trestle_dredge": {
       "refs": {
         "trestle_length_m": "Trestle!C69",
-        "trestle_width_m": "Trestle!C70",
-        "existing_depth_m": "Trestle!C73"
+        "unit_price_key": "Investasi!F17 (Dredging, Rp/m³)",
+        "note": "lebar trestle (C70, C79 = 50 m) & kedalaman eksisting (C73, C82) tidak dipakai: lebar per terminal, kedalaman di ujung trestle dibaca dari batimetri (A24)"
       },
       "trestle_length_m": 250.0,
-      "trestle_width_m": 50.0,
-      "existing_depth_m": 10.0
+      "unit_price_key": "dredging"
     },
     "waterside": {
       "refs": {
@@ -1745,6 +1745,7 @@
         "maneuverability": "Fasilitas Perairan!J8",
         "nav_aids": "Fasilitas Perairan!L3",
         "seabed": "Fasilitas Perairan!L4",
+        "ship_speed_class": "Fasilitas Perairan!L6",
         "channel_slope": "Fasilitas Perairan!L5",
         "lanes": "Fasilitas Perairan!K16 (2 jalur)",
         "long_channel": "Trestle!C40 = Fasilitas Perairan!L23 (alur relatif pendek, frekuensi tinggi)",
@@ -1760,6 +1761,7 @@
       "nav_aids": "baik",
       "seabed": "tanah_lunak",
       "channel_slope": "sedang",
+      "ship_speed_class": "sedang",
       "lanes": 2,
       "long_channel": false,
       "high_frequency": true,
@@ -4633,21 +4635,21 @@
       },
       {
         "refs": {
-          "speed_kmh": "Fasilitas Daratan Rata2!F80",
-          "productivity": "Fasilitas Daratan Rata2!F82",
-          "utilization": "asumsi 100% (tidak ada di Excel)",
-          "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"
+          "speed_kmh": "Fasilitas Daratan!M118",
+          "productivity": "1 box per rit (Fasilitas Daratan!F121: satu kontainer per truk)",
+          "params.unload_min": "kosong → waktu RTG per box di lapangan (Fasilitas Daratan!F123, A25)",
+          "utilization": "tidak dipakai (truk per alat B/M, §5.6)"
         },
         "id": "truk_petikemas",
         "name": "Truk petikemas",
         "cargo_form": "PK",
         "role": "transport",
-        "productivity": 35.0,
-        "productivity_unit": "box/jam",
+        "productivity": 1.0,
+        "productivity_unit": "box/rit",
         "utilization": 1.0,
         "unit_price_key": "headtruck",
         "params": {
-          "speed_kmh": 30.0
+          "speed_kmh": 15.0
         }
       },
       {
@@ -4667,23 +4669,21 @@
       },
       {
         "refs": {
-          "params": "Fasilitas Daratan Rata2!F115:F124",
-          "productivity": "Fasilitas Daratan Rata2!F116",
-          "utilization": "asumsi 100% (tidak ada di Excel)",
-          "role": "truk dihitung Tahap 8 (jarak dermaga–lapangan = panjang trestle)"
+          "productivity": "Fasilitas Daratan!M154",
+          "speed_kmh": "Fasilitas Daratan!M158",
+          "unload_min": "Fasilitas Daratan!M160",
+          "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
+          "note": "F162 (3 menit muat di dermaga) tidak dipakai: waktu muat = kapasitas / produktivitas alat B/M (F156); Excel menghitung keduanya (A25)"
         },
         "id": "truk_curah",
         "name": "Truk curah",
         "cargo_form": "CK",
         "role": "transport",
-        "productivity": 80.0,
-        "productivity_unit": "ton/jam",
+        "productivity": 25.0,
+        "productivity_unit": "ton/rit",
         "utilization": 1.0,
         "params": {
-          "capacity_t": 40.0,
-          "cycles_per_hour": 10.0,
           "speed_kmh": 15.0,
-          "load_min": 3.0,
           "unload_min": 3.0
         }
       },
@@ -4701,6 +4701,26 @@
         "utilization": 0.7,
         "unit_price_key": "forklift",
         "params": {}
+      },
+      {
+        "refs": {
+          "productivity": "Fasilitas Daratan!F208",
+          "speed_kmh": "Fasilitas Daratan!F211",
+          "unload_min": "Fasilitas Daratan!F213",
+          "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
+          "unit_price_key": "kosong: sheet Investasi tidak punya harga truk GC/curah (A25)"
+        },
+        "id": "truk_gc",
+        "name": "Truk general cargo",
+        "cargo_form": "GC",
+        "role": "transport",
+        "productivity": 25.0,
+        "productivity_unit": "ton/rit",
+        "utilization": 1.0,
+        "params": {
+          "speed_kmh": 15.0,
+          "unload_min": 3.0
+        }
       }
     ]
   },
