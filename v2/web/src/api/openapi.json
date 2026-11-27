@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "TPT Planner v2 API",
+    "title": "Vesper API",
     "description": "Engine perencanaan transportasi laut (TPT). Hasil /calculate berkunci id variabel registry.",
     "version": "0.5.0"
   },

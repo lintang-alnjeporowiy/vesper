@@ -1,6 +1,6 @@
 # tpt-engine
 
-Engine Python TPT Planner v2 (lihat `../docs/01_SPEC.md`). Saat ini (Tahap 1) berisi kontrak data `Case`.
+Engine Python Vesper (lihat `../docs/01_SPEC.md`). Saat ini (Tahap 1) berisi kontrak data `Case`.
 
 Perintah (dari folder `v2/`):
 

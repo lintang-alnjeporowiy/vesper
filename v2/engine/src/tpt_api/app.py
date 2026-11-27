@@ -1,4 +1,4 @@
-"""FastAPI TPT Planner v2 — daftar kasus, kalkulasi per modul (demand, voyage), bandingkan kandidat kapal.
+"""FastAPI Vesper (TPT Planner v2) — daftar kasus, kalkulasi per modul (demand, voyage), bandingkan kandidat kapal.
 
 Semua rute di bawah `/api` (dev: Vite mem-proxy `/api` → :8000; Tahap 13: FastAPI juga menyajikan build web).
 Skema OpenAPI → `web/src/api/openapi.ts` lewat `tools/export_openapi.py` + `npm run gen:api`.
@@ -19,7 +19,7 @@ from tpt_engine.domain import Case, load_case
 CASES_DIR = Path(os.environ.get("TPT_CASES_DIR") or Path(__file__).resolve().parents[3] / "cases")
 
 app = FastAPI(
-    title="TPT Planner v2 API",
+    title="Vesper API",
     version="0.5.0",
     description="Engine perencanaan transportasi laut (TPT). Hasil /calculate berkunci id variabel registry.",
     separate_input_output_schemas=False,

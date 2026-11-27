@@ -1,4 +1,4 @@
-# TPT Planner v2 — Roadmap & Rekomendasi Effort
+# Vesper (TPT Planner v2) — Roadmap & Rekomendasi Effort
 
 > Pendamping [01_SPEC.md](01_SPEC.md). Urutan: **UI dulu (placeholder) → engine per modul (tervalidasi Excel) → optimasi → skenario & laporan.**
 > Setiap tahap kecil, menghasilkan sesuatu yang bisa diklik, dan punya *Definition of Done* (DoD).

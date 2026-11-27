@@ -1,6 +1,6 @@
-# TPT Planner v2
+# Vesper (v2)
 
-Restart proyek modernisasi model TPT (Perencanaan Transportasi Laut) dengan pendekatan **UI-first + placeholder**.
+Kode **Vesper**: restart proyek modernisasi model TPT (Perencanaan Transportasi Laut) dengan pendekatan **UI-first + placeholder**.
 
 | File | Isi |
 |---|---|

@@ -1,4 +1,4 @@
-"""Registry variabel TPT Planner v2 (SPEC §5, §9.3).
+"""Registry variabel Vesper (SPEC §5, §9.3).
 
 Satu entri = satu variabel: input kasus (per atribut, menunjuk path di `Case`), variabel keputusan,
 turunan (satu per baris rumus SPEC §5), metrik laporan, dan objektif. Registry ini HANYA definisi:

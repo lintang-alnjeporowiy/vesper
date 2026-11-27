@@ -1,4 +1,4 @@
-# TPT Planner v2 — Spesifikasi Gambaran Besar
+# Vesper (TPT Planner v2) — Spesifikasi Gambaran Besar
 
 > Status: **DRAF 2** (2026-11-21) — hasil studi file TPT (laporan, PPT, 4 workbook Excel) dan review `apps/` (v1). Semua pertanyaan terbuka & temuan audit sudah diputuskan (§11, §13).
 > Dokumen ini adalah *satu-satunya* sumber kebenaran v2. Sengaja dibuat ringkas: kalau ada yang kurang, tambahkan di sini, jangan bikin dokumen baru.
@@ -7,6 +7,8 @@
 ---
 
 ## 1. Apa yang dibangun
+
+**Nama: Vesper** (2026-11-27, keputusan pengguna; terinspirasi Vesper Lynd, akuntan Treasury di *Casino Royale* yang mengawasi setiap rupiah taruhan). Logo wordmark di `logo/` (Bodoni Moda SemiBold Italic); di UI dipakai versi datar tanpa bayangan `web/src/assets/vesper.svg` (sesuai gaya §8), favicon huruf V `web/public/favicon.svg`. Nama kode internal tetap (`tpt_engine`, `tpt_api`, `TPT Planner v2` di riwayat).
 
 **Aplikasi perencanaan transportasi laut untuk Kawasan Ekonomi/Industri (KEK/KI):** dari data soal (tenant, muatan, pelabuhan asal/tujuan, kandidat kapal, alat bongkar muat, kondisi perairan) aplikasi menghitung — dan bisa mengoptimasi — **armada kapal per rute** dan **kebutuhan terminal khusus (TERSUS/TUKS) di KEK** selama periode tinjauan (default 20 tahun), dengan biaya yang bisa dilacak sampai ke rumus dan input asalnya.
 

@@ -1,3 +1,4 @@
+import vesperLogo from '../assets/vesper.svg'
 import { MAP_SCREEN, usePlanner, type Settings } from '../store'
 import { AUDIT, KIND_LABEL, VAR, contextLabel, sameCtx, downstream, getVar, inputValue, upstream, type VarDef } from '../lib/registry'
 import { PH_SAMPLE, PH_SAMPLE_CTX } from '../mock/placeholders'
@@ -31,9 +32,8 @@ export function Sidebar() {
   return (
     <nav aria-label="Langkah pengerjaan" className="sticky top-14 flex h-[calc(100vh-56px)] w-60 shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-garis bg-white px-4 py-5">
       <div className="flex items-center gap-2.5 px-2 pb-6">
-        <span className="flex h-7 w-7 items-center justify-center rounded-badge bg-hitam font-mono text-[13px] font-medium text-white">TP</span>
-        <span className="flex flex-col">
-          <span className="text-base font-medium">TPT Planner</span>
+        <span className="flex flex-col gap-1.5">
+          <img src={vesperLogo} alt="Vesper" className="h-6 w-auto self-start" />
           <span className="text-[13px] text-abu">{meta.name.replace('—', '·')}</span>
         </span>
       </div>

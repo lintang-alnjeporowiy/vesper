@@ -1,4 +1,4 @@
-# Jalankan TPT Planner v2 secara lokal: API FastAPI (uvicorn) di latar belakang + web Vite di jendela ini.
+# Jalankan Vesper secara lokal: API FastAPI (uvicorn) di latar belakang + web Vite di jendela ini.
 # Pemakaian (dari mana saja):
 #   powershell -File v2\tools\dev.ps1                 # API :8000 + web :5173, buka browser
 #   powershell -File v2\tools\dev.ps1 -WebPort 5174   # port web lain

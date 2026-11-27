@@ -1,0 +1,3 @@
+Font: Bodoni Moda
+Style: SemiBold Italic
+Addons: Drop Shadow

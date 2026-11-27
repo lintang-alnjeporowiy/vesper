@@ -1,4 +1,4 @@
-# Cek satu pintu untuk TPT Planner v2: engine (ruff + pytest) dan web (tsc + oxlint + build).
+# Cek satu pintu untuk Vesper: engine (ruff + pytest) dan web (tsc + oxlint + build).
 # Jalankan dari mana saja:  powershell -File v2\tools\check.ps1   (tambah -Install untuk instalasi bersih)
 param([switch]$Install)
 

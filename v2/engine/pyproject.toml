@@ -1,7 +1,7 @@
 [project]
 name = "tpt-engine"
 version = "0.1.0"
-description = "Engine perhitungan & kontrak data TPT Planner v2"
+description = "Engine perhitungan & kontrak data Vesper (TPT Planner v2)"
 readme = "README.md"
 authors = [
     { name = "lintang-alnjeporowiy", email = "qonquerorhilal@gmail.com" }
