@@ -294,7 +294,8 @@
                 "shipcost",
                 "terminal",
                 "storage",
-                "waterside"
+                "waterside",
+                "invest"
               ]
             },
             "type": "array",
@@ -306,7 +307,8 @@
               "shipcost",
               "terminal",
               "storage",
-              "waterside"
+              "waterside",
+              "invest"
             ]
           },
           "plan_id": {
@@ -509,6 +511,12 @@
             "title": "Channel Parts",
             "description": "modul waterside: komponen lebar alur site (wm, wa_*, wa, wb, ws), seri tahunan m",
             "default": {}
+          },
+          "invest_start_year": {
+            "type": "integer",
+            "title": "Invest Start Year",
+            "description": "modul invest: tahun bangun indeks 0 seri invest.* (= 1 − masa konstruksi; K15: 0); seri lain mulai tahun ke-1",
+            "default": 1
           },
           "warnings": {
             "items": {
@@ -1368,6 +1376,18 @@
             "minimum": 0.0,
             "title": "Empty Share",
             "description": "porsi petikemas kosong terhadap isi"
+          },
+          "unit_price_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Key",
+            "description": "kunci harga lapangan penumpukan (Rp/m²) di unit_prices"
           }
         },
         "additionalProperties": false,
@@ -1453,18 +1473,17 @@
             "title": "Silo Fill Ratio",
             "default": 0.8
           },
-          "silo_price_usd": {
+          "unit_price_key": {
             "anyOf": [
               {
-                "type": "number",
-                "exclusiveMinimum": 0.0
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Silo Price Usd",
-            "unit": "USD/unit"
+            "title": "Unit Price Key",
+            "description": "kunci harga silo (Rp/unit) di unit_prices"
           }
         },
         "additionalProperties": false,
@@ -1881,6 +1900,18 @@
             "maximum": 1.0,
             "minimum": 0.0,
             "title": "Sor Max"
+          },
+          "unit_price_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Key",
+            "description": "kunci harga gudang/lapangan GC (Rp/m²) di unit_prices"
           }
         },
         "additionalProperties": false,
@@ -2058,6 +2089,12 @@
             "title": "Escalation Equipment",
             "description": "kenaikan harga alat",
             "unit": "/th"
+          },
+          "apply_escalation": {
+            "type": "boolean",
+            "title": "Apply Escalation",
+            "description": "terapkan eskalasi: harga tahun bangun t = harga dasar × (1 + e)^t, t = tahun bangun (th 0 = tahun harga satuan); Excel K15 tidak menerapkan (A27)",
+            "default": false
           },
           "ballast_speed_ratio": {
             "type": "number",
@@ -2476,6 +2513,18 @@
             "title": "Trestle Width M",
             "description": "lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; jetty: pipa + catwalk), sama untuk semua opsi perairan",
             "unit": "m"
+          },
+          "berth_price_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Berth Price Key",
+            "description": "kunci harga satuan tambatan di unit_prices: dermaga menerus = Rp/m panjang dermaga, jetty = Rp/unit jetty (kosong = tidak diinvestasikan)"
           }
         },
         "additionalProperties": false,
@@ -2577,6 +2626,30 @@
             "exclusiveMinimum": 0.0,
             "title": "Tank Capacity M3",
             "unit": "m³"
+          },
+          "unit_price_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Price Key",
+            "description": "kunci harga tangki (Rp/unit) di unit_prices"
+          },
+          "pipe_price_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipe Price Key",
+            "description": "kunci harga pipa dermaga–tangki (Rp/m) di unit_prices"
           }
         },
         "additionalProperties": false,
@@ -2843,6 +2916,16 @@
             ],
             "title": "Trestle Fraction",
             "description": "θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)"
+          },
+          "staging": {
+            "type": "string",
+            "enum": [
+              "phase",
+              "incremental"
+            ],
+            "title": "Staging",
+            "description": "pola bangun investasi: phase = per tahap horizon.phases (dibangun awal tahap − masa konstruksi untuk kebutuhan maks tahap); incremental = saat kebutuhan melampaui kapasitas, untuk kebutuhan N tahun ke depan (lookahead), dibangun tahun itu − masa konstruksi",
+            "default": "phase"
           }
         },
         "additionalProperties": false,
@@ -4278,6 +4361,20 @@
             "exclusiveMinimum": 0.0,
             "title": "Depth Factor Of Draft",
             "description": "kedalaman perlu = faktor × T kapal penentu (K15: 1,5)"
+          },
+          "max_depth_m": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Depth M",
+            "description": "batas kedalaman rencana KEK (kolam & alur); kapal dengan faktor × T > batas gugur kelayakan (kosong = tanpa batas)",
+            "unit": "m LWS"
           }
         },
         "additionalProperties": false,
@@ -4392,6 +4489,27 @@
             "type": "number",
             "title": "Cost",
             "description": "Σ biaya dasar semua terminal, Rp",
+            "default": 0.0
+          },
+          "build_year": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Build Year",
+            "description": "modul invest: terminal → tahun bangun trestle (tambatan pertama)",
+            "default": {}
+          },
+          "invest_total": {
+            "type": "number",
+            "title": "Invest Total",
+            "description": "modul invest: Σ investasi terjadwal (trestle + keruk bertahap, eskalasi bila diterapkan), Rp",
+            "default": 0.0
+          },
+          "pv": {
+            "type": "number",
+            "title": "Pv",
+            "description": "modul invest: PV investasi terjadwal ke th 0 dengan discount rate, Rp",
             "default": 0.0
           }
         },

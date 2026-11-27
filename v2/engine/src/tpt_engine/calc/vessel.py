@@ -63,7 +63,8 @@ class Feasibility:
 
 def feasibility(case: Case, flow: CargoFlow, ship: Ship) -> Feasibility:
     """`vessel.feasible` — compatible ∧ T_k ≤ draft maks ∧ dermaga terpanjang ≥ rasio·LOA_k ∧ LOA_k ≤ LOA maks,
-    untuk setiap pelabuhan eksternal di rute. Kedalaman KEK tidak membatasi: dirancang mengikuti kapal (Tahap 8)."""
+    untuk setiap pelabuhan eksternal di rute ∧ faktor · T_k ≤ batas kedalaman rencana KEK (bila diisi, Tahap 8b);
+    tanpa batas, perairan KEK dirancang mengikuti kapal (Tahap 8a)."""
     r: list[str] = []
     notes: list[str] = []
     if not compatible(case, flow, ship):
@@ -79,6 +80,10 @@ def feasibility(case: Case, flow: CargoFlow, ship: Ship) -> Feasibility:
             notes.append(f"panjang dermaga {p.name} belum ada datanya (LOA tidak dicek)")
         if p.max_loa_m is not None and ship.loa_m > p.max_loa_m + 1e-9:
             r.append(f"LOA {_n(ship.loa_m)} m > batas {_n(p.max_loa_m)} m di {p.name}")
+    w = case.kek_site.waterside
+    if w.max_depth_m is not None and w.depth_factor_of_draft * ship.draft_m > w.max_depth_m + 1e-9:
+        r.append(f"kedalaman perlu {_n(round(w.depth_factor_of_draft * ship.draft_m, 2))} m > batas KEK "
+                 f"{_n(w.max_depth_m)} m")
     return Feasibility(ok=not r, reasons=r, notes=notes)
 
 

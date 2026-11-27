@@ -14,7 +14,7 @@
       "K15_Laporan Revisi.pdf",
       "K15_Presentasi Sidang Revisi.pptx"
     ],
-    "extracted_at": "2026-11-24"
+    "extracted_at": "2026-11-27"
   },
   "horizon": {
     "refs": {
@@ -83,6 +83,7 @@
       "ae_fuel": "Keputusan A6 (K15: AE=MFO)",
       "ae_me_power_ratio": "Data Kapal!Q4 = 50%*P4",
       "ballast_speed_ratio": "Keputusan A5 (K15: Data Kapal!L4 = 130%*K4)",
+      "apply_escalation": "Investasi!C15/C21 tidak dirujuk sel mana pun (A27); keputusan 2026-11-27: opsi, default mati",
       "teu_weight_dwt_ratio": "Muatan!AD5 = 90%*AC5",
       "berth_loa_min_ratio": "Keputusan data K15 (2026-11-21): dermaga ≥ 85% LOA",
       "cargo_per_call_mode": "Model!N41 = D/F"
@@ -252,6 +253,7 @@
     "discount_rate": 0.1,
     "escalation_infra": 0.01,
     "escalation_equipment": 0.01,
+    "apply_escalation": false,
     "ballast_speed_ratio": 1.0,
     "payload_dwt_ratio": 0.85,
     "teu_weight_dwt_ratio": 0.9,
@@ -1545,7 +1547,8 @@
         "refs": {
           "berth_unit_length_m": "Investasi!C3",
           "berth_width_m": "Investasi!C5",
-          "trestle_width_m": "Trestle!C51"
+          "trestle_width_m": "Trestle!C51",
+          "berth_price_key": "Investasi!L10 = panjang dermaga × H4 (Rp/m)"
         },
         "id": "MP",
         "name": "Dermaga multipurpose",
@@ -1558,13 +1561,15 @@
         "berth_width_m": 50.0,
         "equipment_kind": "HMC",
         "berth_layout": "quay",
-        "trestle_width_m": 40.0
+        "trestle_width_m": 40.0,
+        "berth_price_key": "dermaga_multipurpose"
       },
       {
         "refs": {
           "berth_unit_length_m": "Investasi!C4",
           "berth_width_m": "Investasi!C6",
-          "trestle_width_m": "Trestle!C60"
+          "trestle_width_m": "Trestle!C60",
+          "berth_price_key": "Investasi!L14 = jumlah jetty × H3 (Rp/unit)"
         },
         "id": "CC",
         "name": "Jetty curah cair",
@@ -1575,7 +1580,8 @@
         "berth_width_m": 35.0,
         "equipment_kind": "MLA",
         "berth_layout": "jetty",
-        "trestle_width_m": 1.5
+        "trestle_width_m": 1.5,
+        "berth_price_key": "jetty_curah_cair"
       }
     ],
     "bathymetry": [
@@ -4569,25 +4575,29 @@
         "height_ratio": "Fasilitas Daratan!F23",
         "yor_max": "Fasilitas Daratan!F24",
         "max_tiers": "Fasilitas Daratan!F46",
-        "empty_share": "Fasilitas Daratan!F37"
+        "empty_share": "Fasilitas Daratan!F37",
+        "unit_price_key": "Investasi!M70 = luas × H27"
       },
       "area_per_teu_m2": 15.0,
       "height_ratio": 0.9,
       "yor_max": 0.7,
       "max_tiers": 6,
-      "empty_share": 1.0
+      "empty_share": 1.0,
+      "unit_price_key": "lapangan_penumpukan_petikemas"
     },
     "general_cargo": {
       "refs": {
         "f_area": "Fasilitas Daratan!F171",
         "f_bulk": "Fasilitas Daratan!F172",
         "stack_height_m": "Fasilitas Daratan!F177",
-        "sor_max": "Fasilitas Daratan!F176"
+        "sor_max": "Fasilitas Daratan!F176",
+        "unit_price_key": "Investasi!M81 = luas × H26 (Lapangan Penumpukan GC, bukan Gudang H23)"
       },
       "f_area": 1.5,
       "f_bulk": 1.2,
       "stack_height_m": 5.0,
-      "sor_max": 0.7
+      "sor_max": 0.7,
+      "unit_price_key": "lapangan_penumpukan_general_cargo"
     },
     "dry_bulk": {
       "refs": {
@@ -4596,7 +4606,7 @@
         "stack_height_m": "Fasilitas Daratan!F135",
         "sor_max": "Fasilitas Daratan!F134",
         "silo_capacity_m3": "Fasilitas Daratan!AC140",
-        "silo_price_usd": "Fasilitas Daratan!AC143",
+        "unit_price_key": "Investasi!M76 = silo × H39 (Tanki Curah Cair); harga silo Fasilitas Daratan!AC144 tersedia sebagai unit_prices 'silo'",
         "gross_volume_factor": "Fasilitas Daratan!F138→F139: volume netto langsung dibagi kapasitas silo (faktor bruto 1,3 hanya di sheet Rata2 yang tidak dipakai)",
         "silo_fill_ratio": "Fasilitas Daratan!F139 (×80%)"
       },
@@ -4607,15 +4617,19 @@
       "gross_volume_factor": 1.0,
       "silo_capacity_m3": 23379.0,
       "silo_fill_ratio": 0.8,
-      "silo_price_usd": 31950.0
+      "unit_price_key": "tanki_curah_cair"
     },
     "liquid": {
       "refs": {
         "occupancy": "Fasilitas Daratan!F228",
-        "tank_capacity_m3": "Fasilitas Daratan!F231"
+        "tank_capacity_m3": "Fasilitas Daratan!F231",
+        "unit_price_key": "Investasi!M90 = tangki × H39",
+        "pipe_price_key": "Investasi!M62 = panjang pipa × H70 (Rp/m)"
       },
       "occupancy": 0.65,
-      "tank_capacity_m3": 20000.0
+      "tank_capacity_m3": 20000.0,
+      "unit_price_key": "tanki_curah_cair",
+      "pipe_price_key": "pipa"
     },
     "yard_equipment": [
       {
@@ -4682,6 +4696,7 @@
         "productivity": 25.0,
         "productivity_unit": "ton/rit",
         "utilization": 1.0,
+        "unit_price_key": "headtruck",
         "params": {
           "speed_kmh": 15.0,
           "unload_min": 3.0
@@ -4708,7 +4723,7 @@
           "speed_kmh": "Fasilitas Daratan!F211",
           "unload_min": "Fasilitas Daratan!F213",
           "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
-          "unit_price_key": "kosong: sheet Investasi tidak punya harga truk GC/curah (A25)"
+          "unit_price_key": "asumsi: sheet Investasi tidak punya harga truk GC/curah → Headtruck (A25)"
         },
         "id": "truk_gc",
         "name": "Truk general cargo",
@@ -4717,6 +4732,7 @@
         "productivity": 25.0,
         "productivity_unit": "ton/rit",
         "utilization": 1.0,
+        "unit_price_key": "headtruck",
         "params": {
           "speed_kmh": 15.0,
           "unload_min": 3.0
@@ -5540,6 +5556,19 @@
       "price_rp": 5000000.0,
       "category": "alat",
       "year": 2024
+    },
+    {
+      "refs": {
+        "price_rp": "Fasilitas Daratan!AC144",
+        "year": "Investasi!H2",
+        "note": "AC143 = 31.950 USD × kurs (Alat BM!Q4); tidak dirujuk sheet Investasi"
+      },
+      "key": "silo",
+      "label": "Silo baja (spesifikasi Fasilitas Daratan)",
+      "unit": "unit",
+      "price_rp": 495908730.0,
+      "category": "suprastuktur",
+      "year": 2024
     }
   ],
   "plans": [
@@ -5548,7 +5577,8 @@
         "ship_by_flow": "Model!CG8:CG17",
         "MP": "Model!DB9",
         "CC": "Model!DB8",
-        "waterside_mode": "Model!K395 = 415,000,000,000 (cabang trestle penuh)"
+        "waterside_mode": "Model!K395 = 415,000,000,000 (cabang trestle penuh)",
+        "staging": "Investasi!L9:W90 (pengadaan per fase di kolom th 0/5/10; A26)"
       },
       "id": "k15-excel",
       "name": "Hasil optimasi K15 (Evolver)",
@@ -5569,7 +5599,8 @@
         "MP": "eq.liebherr_lhm_280",
         "CC": "eq.emco_wheaton_b0300_10"
       },
-      "waterside_mode": "trestle"
+      "waterside_mode": "trestle",
+      "staging": "phase"
     }
   ],
   "assumptions": [
@@ -5642,6 +5673,20 @@
       "topic": "LCT/tongkang",
       "text": "Tipe kapal LCT ditambahkan dan boleh membawa GC, tapi belum ada kandidat kapal & tarif charter.",
       "status": "asumsi"
+    },
+    {
+      "refs": {},
+      "id": "truck_price",
+      "topic": "Harga truk curah & GC",
+      "text": "Sheet Investasi tidak punya harga truk curah/GC (truk tidak diinvestasikan, A25); dipakai harga Headtruck (Investasi!H64) sampai ada data.",
+      "status": "asumsi"
+    },
+    {
+      "refs": {},
+      "id": "silo_price",
+      "topic": "Harga silo",
+      "text": "Investasi!M76 menghargai silo dengan harga Tanki Curah Cair (Rp 7 M/unit). Spesifikasi silo di Fasilitas Daratan!AC143 (31.950 USD ≈ Rp 496 jt) tersedia sebagai unit_prices 'silo'; ganti storage.dry_bulk.unit_price_key untuk memakainya.",
+      "status": "dari_excel"
     },
     {
       "refs": {},

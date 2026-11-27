@@ -153,10 +153,11 @@ export interface components {
              *       "shipcost",
              *       "terminal",
              *       "storage",
-             *       "waterside"
+             *       "waterside",
+             *       "invest"
              *     ]
              */
-            modules: ("demand" | "voyage" | "shipcost" | "terminal" | "storage" | "waterside")[];
+            modules: ("demand" | "voyage" | "shipcost" | "terminal" | "storage" | "waterside" | "invest")[];
             /**
              * Plan Id
              * @description rencana kapal & alat; default plan pertama kasus
@@ -275,6 +276,12 @@ export interface components {
             channel_parts: {
                 [key: string]: number[];
             };
+            /**
+             * Invest Start Year
+             * @description modul invest: tahun bangun indeks 0 seri invest.* (= 1 − masa konstruksi; K15: 0); seri lain mulai tahun ke-1
+             * @default 1
+             */
+            invest_start_year: number;
             /**
              * Warnings
              * @default []
@@ -614,6 +621,11 @@ export interface components {
              * @description porsi petikemas kosong terhadap isi
              */
             empty_share: number;
+            /**
+             * Unit Price Key
+             * @description kunci harga lapangan penumpukan (Rp/m²) di unit_prices
+             */
+            unit_price_key?: string | null;
         };
         /** DryBulkStorageParams */
         DryBulkStorageParams: {
@@ -651,8 +663,11 @@ export interface components {
              * @default 0.8
              */
             silo_fill_ratio: number;
-            /** Silo Price Usd */
-            silo_price_usd?: number | null;
+            /**
+             * Unit Price Key
+             * @description kunci harga silo (Rp/unit) di unit_prices
+             */
+            unit_price_key?: string | null;
         };
         /** Equipment */
         Equipment: {
@@ -832,6 +847,11 @@ export interface components {
             stack_height_m: number;
             /** Sor Max */
             sor_max: number;
+            /**
+             * Unit Price Key
+             * @description kunci harga gudang/lapangan GC (Rp/m²) di unit_prices
+             */
+            unit_price_key?: string | null;
         };
         /** GlobalParams */
         GlobalParams: {
@@ -926,6 +946,12 @@ export interface components {
              * @description kenaikan harga alat
              */
             escalation_equipment: number;
+            /**
+             * Apply Escalation
+             * @description terapkan eskalasi: harga tahun bangun t = harga dasar × (1 + e)^t, t = tahun bangun (th 0 = tahun harga satuan); Excel K15 tidak menerapkan (A27)
+             * @default false
+             */
+            apply_escalation: boolean;
             /**
              * Ballast Speed Ratio
              * @description V_ballast / Vs default (A5)
@@ -1120,6 +1146,11 @@ export interface components {
              * @description lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; jetty: pipa + catwalk), sama untuk semua opsi perairan
              */
             trestle_width_m: number;
+            /**
+             * Berth Price Key
+             * @description kunci harga satuan tambatan di unit_prices: dermaga menerus = Rp/m panjang dermaga, jetty = Rp/unit jetty (kosong = tidak diinvestasikan)
+             */
+            berth_price_key?: string | null;
         };
         /** Leg */
         Leg: {
@@ -1164,6 +1195,16 @@ export interface components {
             occupancy: number;
             /** Tank Capacity M3 */
             tank_capacity_m3: number;
+            /**
+             * Unit Price Key
+             * @description kunci harga tangki (Rp/unit) di unit_prices
+             */
+            unit_price_key?: string | null;
+            /**
+             * Pipe Price Key
+             * @description kunci harga pipa dermaga–tangki (Rp/m) di unit_prices
+             */
+            pipe_price_key?: string | null;
         };
         /** LoaBand */
         LoaBand: {
@@ -1277,6 +1318,13 @@ export interface components {
              * @description θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)
              */
             trestle_fraction?: number | null;
+            /**
+             * Staging
+             * @description pola bangun investasi: phase = per tahap horizon.phases (dibangun awal tahap − masa konstruksi untuk kebutuhan maks tahap); incremental = saat kebutuhan melampaui kapasitas, untuk kebutuhan N tahun ke depan (lookahead), dibangun tahun itu − masa konstruksi
+             * @default phase
+             * @enum {string}
+             */
+            staging: "phase" | "incremental";
         };
         /** PortProductivity */
         PortProductivity: {
@@ -1881,6 +1929,11 @@ export interface components {
              * @description kedalaman perlu = faktor × T kapal penentu (K15: 1,5)
              */
             depth_factor_of_draft: number;
+            /**
+             * Max Depth M
+             * @description batas kedalaman rencana KEK (kolam & alur); kapal dengan faktor × T > batas gugur kelayakan (kosong = tanpa batas)
+             */
+            max_depth_m?: number | null;
         };
         /**
          * WatersideOption
@@ -1967,6 +2020,26 @@ export interface components {
              * @default 0
              */
             cost: number;
+            /**
+             * Build Year
+             * @description modul invest: terminal → tahun bangun trestle (tambatan pertama)
+             * @default {}
+             */
+            build_year: {
+                [key: string]: number;
+            };
+            /**
+             * Invest Total
+             * @description modul invest: Σ investasi terjadwal (trestle + keruk bertahap, eskalasi bila diterapkan), Rp
+             * @default 0
+             */
+            invest_total: number;
+            /**
+             * Pv
+             * @description modul invest: PV investasi terjadwal ke th 0 dengan discount rate, Rp
+             * @default 0
+             */
+            pv: number;
         };
         /** YardEquipment */
         YardEquipment: {

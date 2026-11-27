@@ -140,6 +140,7 @@ MLA = [6, 14, 22, 30, 38]  # baris nama di kolom J
 YEAR_COLS_M = [get_column_letter(column_index_from_string("M") + i) for i in range(20)]  # M..AF
 YEAR_COLS_N = [get_column_letter(column_index_from_string("N") + i) for i in range(20)]  # N..AG
 YEAR_COLS_K = [get_column_letter(column_index_from_string("K") + i) for i in range(20)]  # K..AD
+YEAR_COLS_INV = [get_column_letter(column_index_from_string("K") + i) for i in range(22)]  # K..AF = th −1..20
 YEAR_COLS_F = [get_column_letter(column_index_from_string("F") + i) for i in range(20)]  # F..Y (Fasilitas Daratan)
 
 # Fasilitas Daratan: baris per flow (seri → baris) dan total; dwell dari Model!M350:AF359 (A13, A18)
@@ -328,6 +329,9 @@ def build_case(b: Book, xlsx: Path) -> dict:
     r.note_ref("ae_fuel", "Keputusan A6 (K15: AE=MFO)")
     r.note_ref("ae_me_power_ratio", "Data Kapal!Q4 = 50%*P4")
     r.note_ref("ballast_speed_ratio", "Keputusan A5 (K15: Data Kapal!L4 = 130%*K4)")
+    params["apply_escalation"] = False
+    r.note_ref("apply_escalation", "Investasi!C15/C21 tidak dirujuk sel mana pun (A27); keputusan 2026-11-27: opsi, "
+                                   "default mati")
     r.note_ref("teu_weight_dwt_ratio", "Muatan!AD5 = 90%*AC5")
     r.note_ref("berth_loa_min_ratio", "Keputusan data K15 (2026-11-21): dermaga ≥ 85% LOA")
     r.note_ref("cargo_per_call_mode", "Model!N41 = D/F")
@@ -479,11 +483,13 @@ def build_case(b: Book, xlsx: Path) -> dict:
             dict(id="MP", name="Dermaga multipurpose", cargo_forms=["PK", "GC", "CK"],
                  berth_unit_length_m=r("berth_unit_length_m", "investasi", "C3"),
                  berth_width_m=r("berth_width_m", "investasi", "C5"), equipment_kind="HMC", berth_layout="quay",
-                 trestle_width_m=r("trestle_width_m", "trestle", "C51"), refs=r.take()),
+                 trestle_width_m=r("trestle_width_m", "trestle", "C51"), berth_price_key="dermaga_multipurpose",
+                 refs={**r.take(), "berth_price_key": "Investasi!L10 = panjang dermaga × H4 (Rp/m)"}),
             dict(id="CC", name="Jetty curah cair", cargo_forms=["CC"],
                  berth_unit_length_m=r("berth_unit_length_m", "investasi", "C4"),
                  berth_width_m=r("berth_width_m", "investasi", "C6"), equipment_kind="MLA", berth_layout="jetty",
-                 trestle_width_m=r("trestle_width_m", "trestle", "C60"), refs=r.take()),
+                 trestle_width_m=r("trestle_width_m", "trestle", "C60"), berth_price_key="jetty_curah_cair",
+                 refs={**r.take(), "berth_price_key": "Investasi!L14 = jumlah jetty × H3 (Rp/unit)"}),
         ],
         bathymetry=dummy_bathymetry(b),
         bathymetry_source="dummy",
@@ -671,7 +677,9 @@ def build_case(b: Book, xlsx: Path) -> dict:
                     stack_height_m=r("stack_height_m", "daratan", "F135"),
                     sor_max=r("sor_max", "daratan", "F134"), gross_volume_factor=1.0,
                     silo_capacity_m3=r("silo_capacity_m3", "daratan", "AC140"), silo_fill_ratio=0.8,
-                    silo_price_usd=r("silo_price_usd", "daratan", "AC143"))
+                    unit_price_key="tanki_curah_cair")
+    r.note_ref("unit_price_key", "Investasi!M76 = silo × H39 (Tanki Curah Cair); harga silo Fasilitas Daratan!AC144 "
+                                 "tersedia sebagai unit_prices 'silo'")
     r.note_ref("gross_volume_factor", "Fasilitas Daratan!F138→F139: volume netto langsung dibagi kapasitas silo "
                                       "(faktor bruto 1,3 hanya di sheet Rata2 yang tidak dipakai)")
     r.note_ref("silo_fill_ratio", "Fasilitas Daratan!F139 (×80%)")
@@ -682,13 +690,19 @@ def build_case(b: Book, xlsx: Path) -> dict:
                             height_ratio=r("height_ratio", "daratan", "F23"),
                             yor_max=r("yor_max", "daratan", "F24"),
                             max_tiers=r("max_tiers", "daratan", "F46", int),
-                            empty_share=r("empty_share", "daratan", "F37"), refs=r.take()),
+                            empty_share=r("empty_share", "daratan", "F37"), unit_price_key="lapangan_penumpukan_petikemas",
+                            refs={**r.take(), "unit_price_key": "Investasi!M70 = luas × H27"}),
         general_cargo=dict(f_area=r("f_area", "daratan", "F171"), f_bulk=r("f_bulk", "daratan", "F172"),
                            stack_height_m=r("stack_height_m", "daratan", "F177"),
-                           sor_max=r("sor_max", "daratan", "F176"), refs=r.take()),
+                           sor_max=r("sor_max", "daratan", "F176"), unit_price_key="lapangan_penumpukan_general_cargo",
+                           refs={**r.take(), "unit_price_key": "Investasi!M81 = luas × H26 (Lapangan Penumpukan GC, "
+                                                               "bukan Gudang H23)"}),
         dry_bulk=dry_bulk,
         liquid=dict(occupancy=r("occupancy", "daratan", "F228"),
-                    tank_capacity_m3=r("tank_capacity_m3", "daratan", "F231"), refs=r.take()),
+                    tank_capacity_m3=r("tank_capacity_m3", "daratan", "F231"), unit_price_key="tanki_curah_cair",
+                    pipe_price_key="pipa",
+                    refs={**r.take(), "unit_price_key": "Investasi!M90 = tangki × H39",
+                          "pipe_price_key": "Investasi!M62 = panjang pipa × H70 (Rp/m)"}),
         yard_equipment=[
             dict(id="rtg", name="Rubber tyred gantry (RTG)", cargo_form="PK", productivity=5, productivity_unit="TEU/jam",
                  utilization=0.75, unit_price_key="rtg",
@@ -706,6 +720,7 @@ def build_case(b: Book, xlsx: Path) -> dict:
                                        "saat muatan 0)", "utilization": "Fasilitas Daratan!F148"}),
             dict(id="truk_curah", name="Truk curah", cargo_form="CK", role="transport",
                  productivity=r("productivity", "daratan", "M154"), productivity_unit="ton/rit", utilization=1.0,
+                 unit_price_key="headtruck",
                  params={"speed_kmh": r("speed_kmh", "daratan", "M158"), "unload_min": r("unload_min", "daratan", "M160")},
                  refs={**r.take(), "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
                        "note": "F162 (3 menit muat di dermaga) tidak dipakai: waktu muat = kapasitas / produktivitas "
@@ -715,9 +730,10 @@ def build_case(b: Book, xlsx: Path) -> dict:
                  refs={"productivity": "Fasilitas Daratan!F201", "utilization": "Fasilitas Daratan!F203"}),
             dict(id="truk_gc", name="Truk general cargo", cargo_form="GC", role="transport",
                  productivity=r("productivity", "daratan", "F208"), productivity_unit="ton/rit", utilization=1.0,
+                 unit_price_key="headtruck",
                  params={"speed_kmh": r("speed_kmh", "daratan", "F211"), "unload_min": r("unload_min", "daratan", "F213")},
                  refs={**r.take(), "utilization": "tidak dipakai (truk per alat B/M, §5.6)",
-                       "unit_price_key": "kosong: sheet Investasi tidak punya harga truk GC/curah (A25)"}),
+                       "unit_price_key": "asumsi: sheet Investasi tidak punya harga truk GC/curah → Headtruck (A25)"}),
         ],
     )
     storage["refs"] = {"dwell_time_mode": "Model!M350:AF359 (lama konsumsi); Fasilitas Daratan merata-rata 20 th "
@@ -741,6 +757,11 @@ def build_case(b: Book, xlsx: Path) -> dict:
         unit_prices.append(dict(key=key, label=label.strip(), unit=str(b.raw("investasi", f"G{row}")).strip(),
                                 price_rp=float(price), category=str(cat).strip().lower() if cat else None, year=year,
                                 refs={"price_rp": Book.ref("investasi", f"H{row}"), "year": Book.ref("investasi", "H2")}))
+    # harga silo dari spesifikasi Fasilitas Daratan (AB137:AD144, USD × kurs); Investasi memakai harga tangki (H39)
+    unit_prices.append(dict(key="silo", label="Silo baja (spesifikasi Fasilitas Daratan)", unit="unit",
+                            price_rp=r("price_rp", "daratan", "AC144"), category="suprastuktur", year=year,
+                            refs={**r.take(), "year": Book.ref("investasi", "H2"),
+                                  "note": "AC143 = 31.950 USD × kurs (Alat BM!Q4); tidak dirujuk sheet Investasi"}))
 
     # --- rencana hasil Evolver K15
     ship_by_flow = {}
@@ -755,9 +776,10 @@ def build_case(b: Book, xlsx: Path) -> dict:
         ship_by_flow=ship_by_flow,
         equipment_by_terminal={"MP": equip_by_alat[str(b.raw("model", "DB9")).strip()],
                                "CC": equip_by_alat[str(b.raw("model", "DB8")).strip()]},
-        waterside_mode="trestle",
+        waterside_mode="trestle", staging="phase",
         refs={"ship_by_flow": "Model!CG8:CG17", "MP": "Model!DB9", "CC": "Model!DB8",
-              "waterside_mode": f"Model!K395 = {trestle_cost:,.0f} (cabang trestle penuh)"},
+              "waterside_mode": f"Model!K395 = {trestle_cost:,.0f} (cabang trestle penuh)",
+              "staging": "Investasi!L9:W90 (pengadaan per fase di kolom th 0/5/10; A26)"},
     )]
 
     assumptions = [
@@ -793,6 +815,13 @@ def build_case(b: Book, xlsx: Path) -> dict:
                   "Data Kapal (0,135) tidak dipakai."),
         dict(id="lct", topic="LCT/tongkang", status="asumsi",
              text="Tipe kapal LCT ditambahkan dan boleh membawa GC, tapi belum ada kandidat kapal & tarif charter."),
+        dict(id="truck_price", topic="Harga truk curah & GC", status="asumsi",
+             text="Sheet Investasi tidak punya harga truk curah/GC (truk tidak diinvestasikan, A25); dipakai harga "
+                  "Headtruck (Investasi!H64) sampai ada data."),
+        dict(id="silo_price", topic="Harga silo", status="dari_excel",
+             text="Investasi!M76 menghargai silo dengan harga Tanki Curah Cair (Rp 7 M/unit). Spesifikasi silo di "
+                  "Fasilitas Daratan!AC143 (31.950 USD ≈ Rp 496 jt) tersedia sebagai unit_prices 'silo'; "
+                  "ganti storage.dry_bulk.unit_price_key untuk memakainya."),
         dict(id="lhm800", topic="Liebherr LHM 800", status="asumsi",
              text="Ada di sheet Alat BM tapi tidak dipakai Model; tetap dimasukkan sebagai kandidat alat."),
     ]
@@ -880,12 +909,26 @@ def build_golden(b: Book, xlsx: Path, case: dict) -> dict:
         "bor_cc": ks(144, ["A2", "A10"]), "bor_mp": ks(145, ["A2", "A10"]),
         "equipment_cc": ks(362, ["A2", "A10"]), "equipment_mp": ks(363, ["A2", "A10"]),
     }
+    def ki(row, aff=()):  # baris investasi Model: kolom K..AF = tahun −1..20 (nilai teks "Rp -" → 0)
+        vals = [num(b.raw("model", f"{c}{row}")) or 0.0 for c in YEAR_COLS_INV]
+        return dict(ref=f"Model!K{row}:AF{row}", affected_by=list(aff), years=list(range(-1, 21)), values=vals)
+
+    def inv_row(row, aff=()):  # baris kebutuhan sheet Investasi: kolom N..AG = tahun 1..20
+        cols = [get_column_letter(column_index_from_string("N") + i) for i in range(20)]
+        return dict(ref=f"Investasi!N{row}:AG{row}", affected_by=list(aff), values=series(b, "investasi", row, cols))
+
     investment = {
-        "yard_equipment_pk_rp": ks(370), "yard_equipment_ck_rp": ks(371), "yard_equipment_gc_rp": ks(372),
-        "yard_equipment_cc_rp": ks(373),
-        "handling_equipment_cc_rp": ks(376, ["A2", "A10"]), "handling_equipment_mp_rp": ks(377, ["A2", "A10"]),
-        "storage_pk_rp": ks(381), "storage_ck_rp": ks(382), "storage_gc_rp": ks(383), "storage_cc_rp": ks(384),
-        "berth_mp_rp": ks(387, ["A2", "A10"]), "jetty_cc_rp": ks(391, ["A2", "A10"]), "trestle_rp": ks(395),
+        "yard_equipment_pk_rp": ki(370, ["A19", "A26"]), "yard_equipment_ck_rp": ki(371, ["A26"]),
+        "yard_equipment_gc_rp": ki(372, ["A26"]), "pipeline_cc_rp": ki(373, ["A26", "A30"]),
+        "handling_equipment_cc_rp": ki(376, ["A2", "A10", "A26"]),
+        "handling_equipment_mp_rp": ki(377, ["A2", "A10", "A26"]),
+        "storage_pk_rp": ki(381, ["A26"]), "storage_ck_rp": ki(382, ["A26"]), "storage_gc_rp": ki(383, ["A26", "A28"]),
+        "storage_cc_rp": ki(384, ["A26"]),
+        "berth_mp_rp": ki(387, ["A2", "A10", "A26"]), "jetty_cc_rp": ki(391, ["A2", "A10", "A26"]),
+        "trestle_rp": ki(395, ["A29"]),
+        "gc_area_row78_m2": inv_row(78, ["A28"]), "pipe_length_m": inv_row(59, ["A30"]),
+        "note": "Baris Model 369–395 (tahun −1..20). Baris 373 berlabel 'Curah Cair' di alat penumpukan = investasi "
+                "pipa CC (Investasi!L62); baris 371 = dozer (Investasi!K46 berlabel 'Truck', harga Bull Dozer H69).",
     }
     aggregate = {
         "total_cost_rp": ks(399, ["semua"]), "total_cost_with_demand_rp": ks(403, ["semua"]),

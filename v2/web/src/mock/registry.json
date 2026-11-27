@@ -55,7 +55,12 @@
     "A22": "Excel: Wa kecepatan = 0,1 · Vs (knot) dari baris 'cepat', Wa dasar laut 0,1 B walau h = 1,5 T, alur 1 jalur satu Wb. v2: baris tabel dari kondisi perairan (sedang → 0; h ≥ 1,5 T → 0), 1 jalur 2 Wb (2 jalur 402 m, bukan 416 m).",
     "A23": "Excel: luas kolam putar dari diameter 1,5 LOA walau asumsinya kapal dibantu tunda (2 LOA). v2: π (D/2)² dengan D = diameter kolam putar (204.282 m², bukan 114.909 m²).",
     "A24": "Excel (opsi trestle + keruk): lebar trestle MP & jetty 50 m (trestle penuh 40 m & 1,5 m), kolam keruk jetty = 40 m × 1,5 B kapal MP. v2: lebar trestle per terminal untuk semua opsi, kolam jetty 1,175 LOA × 1,5 B kapal CC.",
-    "A25": "Excel (truk): produktivitas box/jam ÷ 60 dianggap menit, jarak sekali jalan, waktu dermaga dihitung dua kali, jarak = trestle opsi keruk 250 m, 6 truk untuk satu alat selama 20 th, tidak masuk investasi. v2: siklus menit benar pergi-pulang, jarak = trestle desain, truk per alat × alat B/M aktif."
+    "A25": "Excel (truk): produktivitas box/jam ÷ 60 dianggap menit, jarak sekali jalan, waktu dermaga dihitung dua kali, jarak = trestle opsi keruk 250 m, 6 truk untuk satu alat selama 20 th, tidak masuk investasi. v2: siklus menit benar pergi-pulang, jarak = trestle desain, truk per alat × alat B/M aktif.",
+    "A26": "Excel (Investasi): pengadaan per fase di kolom th 0/5/10 dengan jendela SUM tak seragam — dermaga MP di th −1 untuk penambahan th 0–6, 7–11, 11–21 (th 11 dua kali), jetty & kolom batas silo/pipa terhitung dua kali; masa konstruksi Investasi!C13 tidak dirujuk. v2: tiap tahap dibangun di (awal tahap − masa konstruksi) untuk kebutuhan maks tahap; K15: dermaga MP th 0, bukan th −1.",
+    "A27": "Excel: eskalasi harga (Investasi!C15 infra, C21 alat, 1 %/th) tidak dirujuk sel mana pun. v2: opsi params.apply_escalation (default mati) → harga tahun bangun = harga dasar × (1 + e)^t.",
+    "A28": "Excel (Investasi!N78): luas GC = baris penambahan Fasilitas Daratan!F193:F195, lalu diselisihkan lagi (penambahan negatif) → investasi GC Rp 4,5 M. v2: luas GC terpasang × harga.",
+    "A29": "Excel (Trestle, Model!K395): trestle penuh kedua terminal seluruhnya di th −1 (jetty CC baru dipakai th-13); K395 hanya mengambil bagian th −1 opsi terpilih (fase keruk th 5 & 10 hilang); PV dan Total PV tidak didiskon. v2: trestle per terminal bersama tambatan pertama, keruk per tambatan yang ditambahkan, PV opsi didiskon ke th 0.",
+    "A30": "Excel (Fasilitas Daratan!F239:F240): panjang pipa CC = trestle opsi keruk 250 m + LOA × jetty walau rencana trestle penuh; kedua pipa ada bila CPO > 0. v2: trestle desain terminal CC (opsi rencana) + LOA × jetty, per flow sejak aktif."
   },
   "interactions": [
     {
@@ -128,7 +133,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 23,
+      "topo": 24,
       "group": "horizon"
     },
     {
@@ -147,11 +152,16 @@
       "desc": "Pembagian periode menjadi tahap pendek, menengah, dan panjang; dipakai bila fasilitas dibangun per tahap.",
       "deps": [],
       "dependents": [
-        "invest.berth"
+        "invest.berth",
+        "invest.handling",
+        "invest.waterside",
+        "invest.storage",
+        "invest.pipeline",
+        "invest.yard_equipment"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 21,
+      "topo": 22,
       "group": "horizon"
     },
     {
@@ -161,21 +171,28 @@
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
+      "excel_ref": "Investasi!C13 (tidak dirujuk)",
       "section": "4.1",
       "case_path": "horizon.construction_lead_years",
       "screens": [
         1,
-        8
+        8,
+        9
       ],
+      "symbol": "lead",
       "desc": "Berapa tahun sebelum dipakai sebuah fasilitas (dermaga, alat, penyimpanan) harus mulai dibangun.",
       "deps": [],
       "dependents": [
         "invest.berth",
-        "invest.waterside"
+        "invest.handling",
+        "invest.waterside",
+        "invest.storage",
+        "invest.pipeline",
+        "invest.yard_equipment"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 20,
+      "topo": 21,
       "group": "horizon"
     },
     {
@@ -194,11 +211,13 @@
       "desc": "Dermaga dibangun sekaligus untuk kebutuhan terbesar N tahun ke depan, agar tidak membangun sedikit-sedikit tiap tahun.",
       "deps": [],
       "dependents": [
-        "invest.berth"
+        "invest.berth",
+        "invest.handling",
+        "invest.waterside"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 19,
+      "topo": 20,
       "group": "horizon"
     },
     {
@@ -211,16 +230,19 @@
       "section": "4.1",
       "case_path": "horizon.storage_lookahead_years",
       "screens": [
-        1
+        1,
+        9
       ],
       "desc": "Sama seperti lookahead dermaga, tetapi untuk lapangan, gudang, silo, dan tangki.",
       "deps": [],
       "dependents": [
-        "invest.storage"
+        "invest.storage",
+        "invest.pipeline",
+        "invest.yard_equipment"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 22,
+      "topo": 23,
       "group": "horizon"
     },
     {
@@ -244,7 +266,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 25,
+      "topo": 27,
       "group": "param"
     },
     {
@@ -268,7 +290,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 49,
+      "topo": 51,
       "group": "param"
     },
     {
@@ -293,7 +315,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 39,
+      "topo": 41,
       "group": "param"
     },
     {
@@ -320,7 +342,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 47,
+      "topo": 49,
       "group": "param"
     },
     {
@@ -342,7 +364,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 48,
+      "topo": 50,
       "group": "param"
     },
     {
@@ -366,7 +388,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 30,
+      "topo": 32,
       "group": "param"
     },
     {
@@ -390,7 +412,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 28,
+      "topo": 30,
       "group": "param"
     },
     {
@@ -414,7 +436,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 40,
+      "topo": 42,
       "group": "param"
     },
     {
@@ -436,7 +458,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 38,
+      "topo": 40,
       "group": "param"
     },
     {
@@ -458,7 +480,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 37,
+      "topo": 39,
       "group": "param"
     },
     {
@@ -483,7 +505,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 36,
+      "topo": 38,
       "group": "param"
     },
     {
@@ -509,7 +531,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 34,
+      "topo": 36,
       "group": "param"
     },
     {
@@ -533,7 +555,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 35,
+      "topo": 37,
       "group": "param"
     },
     {
@@ -556,7 +578,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 42,
+      "topo": 44,
       "group": "param"
     },
     {
@@ -578,7 +600,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 24,
+      "topo": 25,
       "group": "param"
     },
     {
@@ -604,7 +626,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 46,
+      "topo": 48,
       "group": "param"
     },
     {
@@ -631,7 +653,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 31,
+      "topo": 33,
       "group": "param"
     },
     {
@@ -641,22 +663,25 @@
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
+      "excel_ref": "Investasi!C15",
       "section": "4.1",
       "case_path": "params.escalation_infra",
       "screens": [
         1,
         9
       ],
+      "symbol": "e_infra",
       "desc": "Kenaikan harga satuan infrastruktur per tahun (dermaga, trestle, penyimpanan).",
       "deps": [],
       "dependents": [
         "invest.berth",
+        "invest.waterside",
         "invest.storage",
-        "invest.waterside"
+        "invest.pipeline"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 33,
+      "topo": 35,
       "group": "param"
     },
     {
@@ -666,11 +691,14 @@
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
+      "excel_ref": "Investasi!C21",
       "section": "4.1",
       "case_path": "params.escalation_equipment",
       "screens": [
-        1
+        1,
+        9
       ],
+      "symbol": "e_alat",
       "desc": "Kenaikan harga alat bongkar muat dan alat lapangan per tahun.",
       "deps": [],
       "dependents": [
@@ -679,7 +707,37 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 32,
+      "topo": 34,
+      "group": "param"
+    },
+    {
+      "id": "in.param.apply_escalation",
+      "label": "Terapkan eskalasi harga",
+      "unit": "ya | tidak",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi!C15 · C21 (tidak dirujuk)",
+      "section": "4.1",
+      "case_path": "params.apply_escalation",
+      "screens": [
+        1,
+        9
+      ],
+      "note": "A27: opsi, default mati seperti Excel",
+      "desc": "Saklar eskalasi: bila dinyalakan, harga di tahun bangun t = harga dasar × (1 + e)^t (th 0 = tahun harga satuan). Excel K15 tidak menerapkan (default mati).",
+      "deps": [],
+      "dependents": [
+        "invest.berth",
+        "invest.handling",
+        "invest.waterside",
+        "invest.storage",
+        "invest.pipeline",
+        "invest.yard_equipment"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 26,
       "group": "param"
     },
     {
@@ -702,7 +760,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 26,
+      "topo": 28,
       "group": "param"
     },
     {
@@ -725,7 +783,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 41,
+      "topo": 43,
       "group": "param"
     },
     {
@@ -747,7 +805,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 45,
+      "topo": 47,
       "group": "param"
     },
     {
@@ -769,7 +827,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 43,
+      "topo": 45,
       "group": "param"
     },
     {
@@ -791,7 +849,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 44,
+      "topo": 46,
       "group": "param"
     },
     {
@@ -815,7 +873,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 27,
+      "topo": 29,
       "group": "param"
     },
     {
@@ -837,7 +895,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 29,
+      "topo": 31,
       "group": "param"
     },
     {
@@ -861,7 +919,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 5,
+      "topo": 6,
       "group": "container"
     },
     {
@@ -883,7 +941,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 7,
+      "topo": 8,
       "group": "container"
     },
     {
@@ -905,7 +963,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 6,
+      "topo": 7,
       "group": "container"
     },
     {
@@ -930,7 +988,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 2,
+      "topo": 3,
       "group": "cmdty"
     },
     {
@@ -953,7 +1011,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 3,
+      "topo": 4,
       "group": "cmdty"
     },
     {
@@ -979,7 +1037,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 1,
+      "topo": 2,
       "group": "cmdty"
     },
     {
@@ -1003,7 +1061,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 17,
+      "topo": 18,
       "group": "flow"
     },
     {
@@ -1027,7 +1085,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 13,
+      "topo": 14,
       "group": "flow"
     },
     {
@@ -1051,7 +1109,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 14,
+      "topo": 15,
       "group": "flow"
     },
     {
@@ -1075,7 +1133,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 12,
+      "topo": 13,
       "group": "flow"
     },
     {
@@ -1099,7 +1157,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 15,
+      "topo": 16,
       "group": "flow"
     },
     {
@@ -1122,7 +1180,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 18,
+      "topo": 19,
       "group": "flow"
     },
     {
@@ -1147,7 +1205,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 11,
+      "topo": 12,
       "group": "flow"
     },
     {
@@ -1172,7 +1230,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 16,
+      "topo": 17,
       "group": "flow"
     },
     {
@@ -1194,7 +1252,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 4,
+      "topo": 5,
       "group": "compat"
     },
     {
@@ -1218,7 +1276,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 53,
+      "topo": 55,
       "group": "port"
     },
     {
@@ -1240,7 +1298,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 54,
+      "topo": 56,
       "group": "port"
     },
     {
@@ -1263,7 +1321,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 52,
+      "topo": 54,
       "group": "port"
     },
     {
@@ -1287,7 +1345,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 55,
+      "topo": 57,
       "group": "port"
     },
     {
@@ -1309,7 +1367,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 56,
+      "topo": 58,
       "group": "port"
     },
     {
@@ -1331,7 +1389,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 51,
+      "topo": 53,
       "group": "port"
     },
     {
@@ -1353,7 +1411,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 50,
+      "topo": 52,
       "group": "port"
     },
     {
@@ -1377,7 +1435,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 62,
+      "topo": 64,
       "group": "route"
     },
     {
@@ -1399,7 +1457,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 63,
+      "topo": 65,
       "group": "route"
     },
     {
@@ -1425,7 +1483,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 102,
+      "topo": 107,
       "group": "term"
     },
     {
@@ -1446,11 +1504,12 @@
       "dependents": [
         "terminal.berth_days",
         "terminal.berth_length",
-        "waterside.pocket_length"
+        "waterside.pocket_length",
+        "invest.berth"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 100,
+      "topo": 104,
       "group": "term"
     },
     {
@@ -1472,7 +1531,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 101,
+      "topo": 106,
       "group": "term"
     },
     {
@@ -1491,11 +1550,35 @@
       "deps": [],
       "dependents": [
         "terminal.berth_days",
-        "waterside.pocket_length"
+        "waterside.pocket_length",
+        "invest.berth"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 103,
+      "topo": 108,
+      "group": "term"
+    },
+    {
+      "id": "in.term.berth_price",
+      "label": "Kunci harga tambatan terminal",
+      "unit": "Rp/m | Rp/unit",
+      "scope": "terminal",
+      "kind": "input",
+      "formula": "input kasus",
+      "excel_ref": "Investasi!L10 · L14",
+      "section": "4.5",
+      "case_path": "kek_site.terminals[terminal].berth_price_key",
+      "screens": [
+        9
+      ],
+      "desc": "Harga satuan mana yang dipakai untuk tambatan terminal ini (dermaga menerus per m, jetty per unit).",
+      "deps": [],
+      "dependents": [
+        "invest.berth"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 105,
       "group": "term"
     },
     {
@@ -1516,11 +1599,12 @@
       "desc": "Lebar trestle dari pantai ke terminal ini (MP: jalan truk; jetty: pipa dan catwalk), sama untuk semua opsi perairan.",
       "deps": [],
       "dependents": [
-        "waterside.cost"
+        "waterside.cost",
+        "invest.waterside"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 104,
+      "topo": 109,
       "group": "term"
     },
     {
@@ -1545,7 +1629,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 79,
+      "topo": 81,
       "group": "site"
     },
     {
@@ -1570,7 +1654,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 84,
+      "topo": 87,
       "group": "site"
     },
     {
@@ -1589,11 +1673,37 @@
       "desc": "Kedalaman perairan yang dibutuhkan = faktor ini × sarat kapal penentu (K15: 1,5; ruang bebas lunas).",
       "deps": [],
       "dependents": [
+        "vessel.feasible",
         "waterside.depth_req"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 80,
+      "topo": 82,
+      "group": "site"
+    },
+    {
+      "id": "in.site.max_depth",
+      "label": "Batas kedalaman rencana KEK",
+      "unit": "m LWS",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.5",
+      "case_path": "kek_site.waterside.max_depth_m",
+      "screens": [
+        3,
+        4,
+        6
+      ],
+      "note": "opsional; kosong = tanpa batas (K15)",
+      "desc": "Kedalaman maksimum yang direncanakan di KEK (opsional). Kapal yang butuh faktor × sarat lebih dalam dari ini dianggap tidak layak.",
+      "deps": [],
+      "dependents": [
+        "vessel.feasible"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 83,
       "group": "site"
     },
     {
@@ -1617,7 +1727,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 82,
+      "topo": 85,
       "group": "site"
     },
     {
@@ -1641,7 +1751,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 83,
+      "topo": 86,
       "group": "site"
     },
     {
@@ -1663,7 +1773,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 81,
+      "topo": 84,
       "group": "site"
     },
     {
@@ -1688,7 +1798,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 78,
+      "topo": 80,
       "group": "ship"
     },
     {
@@ -1716,7 +1826,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 70,
+      "topo": 72,
       "group": "ship"
     },
     {
@@ -1738,7 +1848,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 74,
+      "topo": 76,
       "group": "ship"
     },
     {
@@ -1761,7 +1871,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 77,
+      "topo": 79,
       "group": "ship"
     },
     {
@@ -1784,11 +1894,12 @@
         "vessel.feasible",
         "vessel.neq",
         "terminal.berth_days",
+        "storage.pipeline",
         "waterside.gov_loa"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 72,
+      "topo": 74,
       "group": "ship"
     },
     {
@@ -1812,7 +1923,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 68,
+      "topo": 70,
       "group": "ship"
     },
     {
@@ -1837,7 +1948,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 69,
+      "topo": 71,
       "group": "ship"
     },
     {
@@ -1862,7 +1973,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 76,
+      "topo": 78,
       "group": "ship"
     },
     {
@@ -1884,7 +1995,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 67,
+      "topo": 69,
       "group": "ship"
     },
     {
@@ -1906,7 +2017,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 71,
+      "topo": 73,
       "group": "ship"
     },
     {
@@ -1932,7 +2043,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 73,
+      "topo": 75,
       "group": "ship"
     },
     {
@@ -1955,7 +2066,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 66,
+      "topo": 68,
       "group": "ship"
     },
     {
@@ -1978,7 +2089,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 75,
+      "topo": 77,
       "group": "ship"
     },
     {
@@ -2001,7 +2112,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 93,
+      "topo": 97,
       "group": "stype"
     },
     {
@@ -2027,7 +2138,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 9,
+      "topo": 10,
       "group": "equip"
     },
     {
@@ -2051,7 +2162,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 8,
+      "topo": 9,
       "group": "equip"
     },
     {
@@ -2073,7 +2184,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 10,
+      "topo": 11,
       "group": "equip"
     },
     {
@@ -2097,7 +2208,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 64,
+      "topo": 66,
       "group": "rule"
     },
     {
@@ -2120,7 +2231,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 65,
+      "topo": 67,
       "group": "rule"
     },
     {
@@ -2144,7 +2255,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 96,
+      "topo": 100,
       "group": "tariff"
     },
     {
@@ -2168,7 +2279,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 97,
+      "topo": 101,
       "group": "tariff"
     },
     {
@@ -2192,7 +2303,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 98,
+      "topo": 102,
       "group": "tariff"
     },
     {
@@ -2216,7 +2327,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 99,
+      "topo": 103,
       "group": "tariff"
     },
     {
@@ -2240,7 +2351,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 94,
+      "topo": 98,
       "group": "tariff"
     },
     {
@@ -2263,7 +2374,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 95,
+      "topo": 99,
       "group": "tariff"
     },
     {
@@ -2286,7 +2397,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 87,
+      "topo": 90,
       "group": "storage"
     },
     {
@@ -2308,7 +2419,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 90,
+      "topo": 94,
       "group": "storage"
     },
     {
@@ -2333,7 +2444,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 86,
+      "topo": 89,
       "group": "storage"
     },
     {
@@ -2356,7 +2467,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 88,
+      "topo": 91,
       "group": "storage"
     },
     {
@@ -2377,12 +2488,11 @@
       "dependents": [
         "storage.bulk",
         "storage.bulk_area",
-        "storage.silos",
-        "invest.storage"
+        "storage.silos"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 85,
+      "topo": 88,
       "group": "storage"
     },
     {
@@ -2406,7 +2516,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 89,
+      "topo": 92,
       "group": "storage"
     },
     {
@@ -2430,7 +2540,7 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 91,
+      "topo": 95,
       "group": "storage"
     },
     {
@@ -2453,30 +2563,30 @@
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 92,
+      "topo": 96,
       "group": "storage"
     },
     {
       "id": "in.price.berth",
       "label": "Harga satuan dermaga & jetty",
-      "unit": "Rp/m²",
+      "unit": "Rp/m | Rp/unit",
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
-      "excel_ref": "Investasi!B2:F34",
+      "excel_ref": "Investasi!H3:H4",
       "section": "5.8",
       "case_path": "unit_prices",
       "screens": [
         9
       ],
-      "desc": "Harga konstruksi dermaga/jetty per m² (sheet Investasi).",
+      "desc": "Harga konstruksi dermaga per meter panjang dan jetty per unit (sheet Investasi).",
       "deps": [],
       "dependents": [
         "invest.berth"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 57,
+      "topo": 59,
       "group": "price"
     },
     {
@@ -2495,11 +2605,12 @@
       "desc": "Harga konstruksi trestle per m².",
       "deps": [],
       "dependents": [
-        "waterside.cost"
+        "waterside.cost",
+        "invest.waterside"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 60,
+      "topo": 62,
       "group": "price"
     },
     {
@@ -2518,57 +2629,84 @@
       "desc": "Harga pengerukan per m³.",
       "deps": [],
       "dependents": [
-        "waterside.cost"
+        "waterside.cost",
+        "invest.waterside"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 58,
+      "topo": 60,
       "group": "price"
     },
     {
       "id": "in.price.storage",
-      "label": "Harga satuan lapangan, gudang, tangki",
-      "unit": "Rp/m² | Rp/unit",
+      "label": "Harga satuan lapangan, gudang, silo, tangki, pipa",
+      "unit": "Rp/m² | Rp/unit | Rp/m",
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
-      "excel_ref": "Investasi",
+      "excel_ref": "Investasi!H26 · H27 · H39 · H70",
       "section": "5.8",
       "case_path": "unit_prices",
       "screens": [
+        8,
         9
       ],
-      "desc": "Harga satuan lapangan penumpukan, gudang, silo, dan tangki.",
+      "desc": "Harga satuan lapangan penumpukan, gudang, silo, tangki, dan pipa.",
       "deps": [],
       "dependents": [
-        "invest.storage"
+        "invest.storage",
+        "invest.pipeline"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 59,
+      "topo": 61,
       "group": "price"
     },
     {
+      "id": "in.storage.price_keys",
+      "label": "Kunci harga per fasilitas penyimpanan",
+      "unit": "kunci",
+      "scope": "global",
+      "kind": "input",
+      "formula": "input kasus",
+      "section": "4.9",
+      "case_path": "storage.container_yard.unit_price_key",
+      "screens": [
+        9
+      ],
+      "note": "CY, GC, silo, tangki, pipa (storage.*.unit_price_key, liquid.pipe_price_key)",
+      "desc": "Harga satuan mana yang dipakai tiap fasilitas penyimpanan (lapangan CY, lapangan/gudang GC, silo, tangki, pipa); bisa diganti per kasus.",
+      "deps": [],
+      "dependents": [
+        "invest.storage",
+        "invest.pipeline"
+      ],
+      "lane": 0,
+      "depth": 0,
+      "topo": 93,
+      "group": "storage"
+    },
+    {
       "id": "in.price.yard_equipment",
-      "label": "Harga alat lapangan",
+      "label": "Harga alat lapangan & truk",
       "unit": "Rp/unit",
       "scope": "global",
       "kind": "input",
       "formula": "input kasus",
-      "excel_ref": "Investasi",
+      "excel_ref": "Investasi!H64 · H65 · H67 · H69",
       "section": "5.8",
       "case_path": "unit_prices",
       "screens": [
         9
       ],
-      "desc": "Harga satuan alat lapangan.",
+      "desc": "Harga satuan alat lapangan dan truk dermaga–lapangan.",
       "deps": [],
       "dependents": [
         "invest.yard_equipment"
       ],
       "lane": 0,
       "depth": 0,
-      "topo": 61,
+      "topo": 63,
       "group": "price"
     },
     {
@@ -2595,13 +2733,14 @@
         "voyage.t_sea",
         "terminal.berth_days",
         "terminal.n_equip",
+        "storage.pipeline",
         "waterside.gov_loa",
         "waterside.gov_beam",
         "waterside.gov_draft"
       ],
       "lane": 1,
       "depth": 3,
-      "topo": 122
+      "topo": 127
     },
     {
       "id": "dv.equip",
@@ -2629,7 +2768,7 @@
       ],
       "lane": 1,
       "depth": 2,
-      "topo": 115
+      "topo": 120
     },
     {
       "id": "dv.waterside",
@@ -2648,7 +2787,35 @@
       "desc": "Cara mencapai kedalaman di KEK: trestle panjang, trestle pendek + keruk, atau campuran (I8).",
       "deps": [],
       "dependents": [
-        "waterside.trestle_len"
+        "waterside.trestle_len",
+        "invest.waterside"
+      ],
+      "lane": 1,
+      "depth": 1,
+      "topo": 1
+    },
+    {
+      "id": "dv.staging",
+      "label": "Pola bangun investasi",
+      "unit": "phase | incremental",
+      "scope": "global",
+      "kind": "decision",
+      "formula": "per tahap (awal tahap − masa konstruksi) atau saat dibutuhkan (lookahead N th)",
+      "excel_ref": "Investasi!L9:W90 (per fase)",
+      "section": "5.8",
+      "screens": [
+        9
+      ],
+      "symbol": "staging",
+      "desc": "Cara membangun fasilitas: per tahap (pendek/menengah/panjang) atau sedikit demi sedikit saat kebutuhan melampaui kapasitas.",
+      "deps": [],
+      "dependents": [
+        "invest.berth",
+        "invest.handling",
+        "invest.waterside",
+        "invest.storage",
+        "invest.pipeline",
+        "invest.yard_equipment"
       ],
       "lane": 1,
       "depth": 1,
@@ -2677,7 +2844,7 @@
       ],
       "lane": 1,
       "depth": 1,
-      "topo": 111
+      "topo": 116
     },
     {
       "id": "demand.base",
@@ -2712,7 +2879,7 @@
       ],
       "lane": 2,
       "depth": 1,
-      "topo": 105
+      "topo": 110
     },
     {
       "id": "demand.ratio",
@@ -2740,7 +2907,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 114
+      "topo": 119
     },
     {
       "id": "cargo.netmax",
@@ -2773,7 +2940,7 @@
       ],
       "lane": 2,
       "depth": 2,
-      "topo": 118
+      "topo": 123
     },
     {
       "id": "cargo.box_per_teu",
@@ -2800,7 +2967,7 @@
       ],
       "lane": 2,
       "depth": 3,
-      "topo": 121
+      "topo": 126
     },
     {
       "id": "cargo.ton_per_teu",
@@ -2830,7 +2997,7 @@
       ],
       "lane": 2,
       "depth": 4,
-      "topo": 123
+      "topo": 128
     },
     {
       "id": "cargo.demand_unit",
@@ -2869,7 +3036,7 @@
       ],
       "lane": 2,
       "depth": 5,
-      "topo": 125
+      "topo": 130
     },
     {
       "id": "vessel.teu_cap",
@@ -2897,7 +3064,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 112
+      "topo": 117
     },
     {
       "id": "vessel.payload",
@@ -2932,7 +3099,7 @@
       ],
       "lane": 3,
       "depth": 5,
-      "topo": 126
+      "topo": 131
     },
     {
       "id": "vessel.compatible",
@@ -2958,7 +3125,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 113
+      "topo": 118
     },
     {
       "id": "vessel.feasible",
@@ -2966,7 +3133,7 @@
       "unit": "boolean",
       "scope": "flow×ship",
       "kind": "derived",
-      "formula": "compatible ∧ T_k ≤ draft pelabuhan ∧ dermaga terpanjang ≥ rasio·LOA_k ∧ LOA_k ≤ LOA maks",
+      "formula": "compatible ∧ T_k ≤ draft pelabuhan ∧ dermaga terpanjang ≥ rasio·LOA_k ∧ LOA_k ≤ LOA maks ∧ faktor·T_k ≤ batas KEK",
       "deps": [
         "vessel.compatible",
         "in.ship.draft",
@@ -2975,7 +3142,9 @@
         "in.port.longest_berth",
         "in.port.max_loa",
         "in.param.berth_loa_ratio",
-        "in.flow.route"
+        "in.flow.route",
+        "in.site.max_depth",
+        "in.site.depth_factor"
       ],
       "excel_ref": "Model!CH24:CJ32",
       "section": "5.2",
@@ -2991,7 +3160,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 120
+      "topo": 125
     },
     {
       "id": "vessel.neq",
@@ -3025,7 +3194,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 108
+      "topo": 113
     },
     {
       "id": "vessel.reach_ok",
@@ -3049,7 +3218,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 107
+      "topo": 112
     },
     {
       "id": "vessel.ballast_speed",
@@ -3077,7 +3246,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 117
+      "topo": 122
     },
     {
       "id": "vessel.ae_kw",
@@ -3103,7 +3272,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 109
+      "topo": 114
     },
     {
       "id": "vessel.sfoc_me",
@@ -3129,7 +3298,7 @@
       ],
       "lane": 3,
       "depth": 1,
-      "topo": 110
+      "topo": 115
     },
     {
       "id": "vessel.sfoc_ae",
@@ -3155,7 +3324,7 @@
       ],
       "lane": 3,
       "depth": 2,
-      "topo": 116
+      "topo": 121
     },
     {
       "id": "voyage.freq",
@@ -3186,13 +3355,14 @@
         "shipcost.fuel_ae_l",
         "shipcost.port",
         "terminal.ship_days",
+        "storage.pipeline",
         "waterside.gov_loa",
         "waterside.gov_beam",
         "waterside.gov_draft"
       ],
       "lane": 4,
       "depth": 6,
-      "topo": 128
+      "topo": 133
     },
     {
       "id": "voyage.q",
@@ -3223,7 +3393,7 @@
       ],
       "lane": 4,
       "depth": 7,
-      "topo": 130
+      "topo": 135
     },
     {
       "id": "voyage.t_port_kek",
@@ -3258,7 +3428,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 134
+      "topo": 139
     },
     {
       "id": "voyage.t_port_ext",
@@ -3289,7 +3459,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 135
+      "topo": 140
     },
     {
       "id": "voyage.t_port",
@@ -3316,7 +3486,7 @@
       ],
       "lane": 4,
       "depth": 9,
-      "topo": 146
+      "topo": 151
     },
     {
       "id": "voyage.t_fix",
@@ -3344,7 +3514,7 @@
       ],
       "lane": 4,
       "depth": 1,
-      "topo": 106
+      "topo": 111
     },
     {
       "id": "voyage.t_sea",
@@ -3380,7 +3550,7 @@
       ],
       "lane": 4,
       "depth": 4,
-      "topo": 124
+      "topo": 129
     },
     {
       "id": "voyage.rtd",
@@ -3407,7 +3577,7 @@
       ],
       "lane": 4,
       "depth": 10,
-      "topo": 153
+      "topo": 158
     },
     {
       "id": "voyage.f_max",
@@ -3437,7 +3607,7 @@
       ],
       "lane": 4,
       "depth": 11,
-      "topo": 164
+      "topo": 169
     },
     {
       "id": "voyage.n_ship",
@@ -3465,7 +3635,7 @@
       ],
       "lane": 4,
       "depth": 12,
-      "topo": 173
+      "topo": 178
     },
     {
       "id": "voyage.utilization",
@@ -3488,7 +3658,7 @@
       "dependents": [],
       "lane": 4,
       "depth": 13,
-      "topo": 180
+      "topo": 186
     },
     {
       "id": "voyage.consumption",
@@ -3517,7 +3687,7 @@
       ],
       "lane": 4,
       "depth": 8,
-      "topo": 136
+      "topo": 141
     },
     {
       "id": "shipcost.fuel_me_l",
@@ -3553,7 +3723,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 154
+      "topo": 159
     },
     {
       "id": "shipcost.fuel_ae_l",
@@ -3590,7 +3760,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 155
+      "topo": 160
     },
     {
       "id": "shipcost.fuel_me",
@@ -3619,7 +3789,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 165
+      "topo": 170
     },
     {
       "id": "shipcost.fuel_ae",
@@ -3648,7 +3818,7 @@
       ],
       "lane": 5,
       "depth": 11,
-      "topo": 166
+      "topo": 171
     },
     {
       "id": "shipcost.voyage",
@@ -3673,7 +3843,7 @@
       ],
       "lane": 5,
       "depth": 12,
-      "topo": 174
+      "topo": 179
     },
     {
       "id": "shipcost.tch_rate",
@@ -3701,7 +3871,7 @@
       ],
       "lane": 5,
       "depth": 2,
-      "topo": 119
+      "topo": 124
     },
     {
       "id": "shipcost.tch",
@@ -3728,7 +3898,7 @@
       ],
       "lane": 5,
       "depth": 13,
-      "topo": 181
+      "topo": 187
     },
     {
       "id": "shipcost.port_call",
@@ -3770,7 +3940,7 @@
       ],
       "lane": 5,
       "depth": 9,
-      "topo": 147
+      "topo": 152
     },
     {
       "id": "shipcost.port",
@@ -3798,7 +3968,7 @@
       ],
       "lane": 5,
       "depth": 10,
-      "topo": 156
+      "topo": 161
     },
     {
       "id": "shipcost.total",
@@ -3827,7 +3997,7 @@
       ],
       "lane": 5,
       "depth": 14,
-      "topo": 184
+      "topo": 191
     },
     {
       "id": "shipcost.unit",
@@ -3853,7 +4023,7 @@
       "dependents": [],
       "lane": 5,
       "depth": 15,
-      "topo": 186
+      "topo": 193
     },
     {
       "id": "terminal.ship_days",
@@ -3885,7 +4055,7 @@
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 145
+      "topo": 150
     },
     {
       "id": "terminal.berth_days",
@@ -3919,7 +4089,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 152
+      "topo": 157
     },
     {
       "id": "terminal.n_berth",
@@ -3946,12 +4116,15 @@
         "terminal.bor",
         "terminal.berth_length",
         "terminal.n_equip",
+        "storage.pipeline",
         "waterside.trestle_len",
-        "waterside.dredge_vol"
+        "waterside.dredge_vol",
+        "invest.berth",
+        "invest.waterside"
       ],
       "lane": 6,
       "depth": 11,
-      "topo": 163
+      "topo": 168
     },
     {
       "id": "terminal.bor",
@@ -3976,7 +4149,7 @@
       "dependents": [],
       "lane": 6,
       "depth": 12,
-      "topo": 169
+      "topo": 174
     },
     {
       "id": "terminal.berth_length",
@@ -4002,7 +4175,7 @@
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 170
+      "topo": 175
     },
     {
       "id": "terminal.n_equip",
@@ -4035,7 +4208,7 @@
       ],
       "lane": 6,
       "depth": 12,
-      "topo": 171
+      "topo": 176
     },
     {
       "id": "storage.dwell",
@@ -4070,7 +4243,7 @@
       ],
       "lane": 6,
       "depth": 9,
-      "topo": 148
+      "topo": 153
     },
     {
       "id": "storage.throughput",
@@ -4102,7 +4275,7 @@
       ],
       "lane": 6,
       "depth": 6,
-      "topo": 127
+      "topo": 132
     },
     {
       "id": "storage.cy",
@@ -4132,14 +4305,14 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 157
+      "topo": 162
     },
     {
       "id": "storage.cy_slots",
       "label": "Ground slot petikemas",
       "unit": "slot",
       "scope": "flow×year",
-      "kind": "derived",
+      "kind": "metric",
       "formula": "(1 + porsi kosong) · Q_TEU · Tdw / (365 · H_ratio · YOR · tier maks)",
       "deps": [
         "storage.throughput",
@@ -4156,12 +4329,10 @@
       ],
       "desc": "Jumlah ground slot petikemas (isi + kosong) dengan tinggi tumpukan maksimum.",
       "impl": "storage:ground_slots",
-      "dependents": [
-        "invest.storage"
-      ],
+      "dependents": [],
       "lane": 6,
       "depth": 10,
-      "topo": 158
+      "topo": 163
     },
     {
       "id": "storage.gc",
@@ -4192,7 +4363,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 159
+      "topo": 164
     },
     {
       "id": "storage.bulk",
@@ -4223,14 +4394,14 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 160
+      "topo": 165
     },
     {
       "id": "storage.bulk_area",
       "label": "Lapangan curah kering (alternatif silo)",
       "unit": "m²",
       "scope": "flow×year",
-      "kind": "derived",
+      "kind": "metric",
       "formula": "f_area · V_netto / H",
       "deps": [
         "storage.throughput",
@@ -4248,12 +4419,10 @@
       ],
       "desc": "Luas lapangan curah kering bila disimpan terbuka, sebagai alternatif silo.",
       "impl": "storage:bulk_area",
-      "dependents": [
-        "invest.storage"
-      ],
+      "dependents": [],
       "lane": 6,
       "depth": 10,
-      "topo": 161
+      "topo": 166
     },
     {
       "id": "storage.silos",
@@ -4279,7 +4448,7 @@
       ],
       "lane": 6,
       "depth": 11,
-      "topo": 167
+      "topo": 172
     },
     {
       "id": "storage.liquid",
@@ -4311,7 +4480,7 @@
       ],
       "lane": 6,
       "depth": 10,
-      "topo": 162
+      "topo": 167
     },
     {
       "id": "storage.tanks",
@@ -4337,7 +4506,7 @@
       ],
       "lane": 6,
       "depth": 11,
-      "topo": 168
+      "topo": 173
     },
     {
       "id": "storage.yard_equipment",
@@ -4369,7 +4538,7 @@
       ],
       "lane": 6,
       "depth": 7,
-      "topo": 129
+      "topo": 134
     },
     {
       "id": "storage.trucks",
@@ -4404,7 +4573,39 @@
       ],
       "lane": 6,
       "depth": 13,
-      "topo": 178
+      "topo": 183
+    },
+    {
+      "id": "storage.pipeline",
+      "label": "Panjang pipa dermaga–tangki",
+      "unit": "m",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "per produk curah cair: panjang trestle terminal + LOA kapal × jumlah jetty, sejak flow aktif; tidak pernah turun",
+      "deps": [
+        "waterside.trestle_len",
+        "in.ship.loa",
+        "dv.ship",
+        "terminal.n_berth",
+        "voyage.freq"
+      ],
+      "excel_ref": "Fasilitas Daratan!F239:Y240",
+      "section": "5.6",
+      "audit": [
+        "A30"
+      ],
+      "screens": [
+        8
+      ],
+      "symbol": "L_pipa",
+      "desc": "Panjang pipa dari jetty ke tangki per produk curah cair: sepanjang trestle ditambah sepanjang kapal per jetty.",
+      "impl": "invest:pipe_length",
+      "dependents": [
+        "invest.pipeline"
+      ],
+      "lane": 6,
+      "depth": 13,
+      "topo": 184
     },
     {
       "id": "waterside.gov_loa",
@@ -4440,7 +4641,7 @@
       ],
       "lane": 7,
       "depth": 7,
-      "topo": 131
+      "topo": 136
     },
     {
       "id": "waterside.gov_beam",
@@ -4472,7 +4673,7 @@
       ],
       "lane": 7,
       "depth": 7,
-      "topo": 132
+      "topo": 137
     },
     {
       "id": "waterside.gov_draft",
@@ -4503,7 +4704,7 @@
       ],
       "lane": 7,
       "depth": 7,
-      "topo": 133
+      "topo": 138
     },
     {
       "id": "waterside.depth_req",
@@ -4535,7 +4736,7 @@
       ],
       "lane": 7,
       "depth": 8,
-      "topo": 144
+      "topo": 149
     },
     {
       "id": "waterside.channel_width",
@@ -4562,7 +4763,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 8,
-      "topo": 142
+      "topo": 147
     },
     {
       "id": "waterside.channel_length",
@@ -4585,7 +4786,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 8,
-      "topo": 137
+      "topo": 142
     },
     {
       "id": "waterside.entrance_width",
@@ -4607,7 +4808,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 8,
-      "topo": 138
+      "topo": 143
     },
     {
       "id": "waterside.stopping_distance",
@@ -4629,7 +4830,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 8,
-      "topo": 139
+      "topo": 144
     },
     {
       "id": "waterside.turning_basin",
@@ -4654,7 +4855,7 @@
       ],
       "lane": 7,
       "depth": 8,
-      "topo": 140
+      "topo": 145
     },
     {
       "id": "waterside.turning_area",
@@ -4679,7 +4880,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 9,
-      "topo": 149
+      "topo": 154
     },
     {
       "id": "waterside.anchorage_radius",
@@ -4702,7 +4903,7 @@
       "dependents": [],
       "lane": 7,
       "depth": 9,
-      "topo": 150
+      "topo": 155
     },
     {
       "id": "waterside.x_star",
@@ -4732,7 +4933,7 @@
       ],
       "lane": 7,
       "depth": 9,
-      "topo": 151
+      "topo": 156
     },
     {
       "id": "waterside.trestle_len",
@@ -4760,12 +4961,14 @@
       "impl": "waterside:trestle_length",
       "dependents": [
         "storage.trucks",
+        "storage.pipeline",
         "waterside.tip_depth",
-        "waterside.cost"
+        "waterside.cost",
+        "invest.waterside"
       ],
       "lane": 7,
       "depth": 12,
-      "topo": 172
+      "topo": 177
     },
     {
       "id": "waterside.tip_depth",
@@ -4790,7 +4993,7 @@
       ],
       "lane": 7,
       "depth": 13,
-      "topo": 179
+      "topo": 185
     },
     {
       "id": "waterside.pocket_length",
@@ -4819,7 +5022,7 @@
       ],
       "lane": 7,
       "depth": 8,
-      "topo": 141
+      "topo": 146
     },
     {
       "id": "waterside.pocket_width",
@@ -4846,7 +5049,7 @@
       ],
       "lane": 7,
       "depth": 8,
-      "topo": 143
+      "topo": 148
     },
     {
       "id": "waterside.dredge_vol",
@@ -4873,11 +5076,12 @@
       "desc": "Volume pengerukan kolam tambat sampai kedalaman perlu, bertambah mengikuti jumlah tambatan.",
       "impl": "waterside:dredge_volume",
       "dependents": [
-        "waterside.cost"
+        "waterside.cost",
+        "invest.waterside"
       ],
       "lane": 7,
       "depth": 14,
-      "topo": 183
+      "topo": 190
     },
     {
       "id": "waterside.cost",
@@ -4908,7 +5112,7 @@
       ],
       "lane": 7,
       "depth": 15,
-      "topo": 185
+      "topo": 192
     },
     {
       "id": "invest.berth",
@@ -4916,28 +5120,40 @@
       "unit": "Rp/th",
       "scope": "terminal×year",
       "kind": "derived",
-      "formula": "Δ panjang dermaga · lebar · harga satuan · eskalasi, saat dibangun",
+      "formula": "Δ tambatan terjadwal × kuantitas menurut satuan harga (Rp/m: panjang unit; Rp/m²: panjang · lebar; Rp/unit: jumlah) × eskalasi infra, di tahun bangun",
       "deps": [
+        "terminal.n_berth",
         "terminal.berth_length",
+        "in.term.berth_length",
         "in.term.berth_width",
+        "in.term.layout",
+        "in.term.berth_price",
         "in.price.berth",
-        "in.param.escalation_infra",
+        "dv.staging",
         "in.horizon.phases",
         "in.horizon.lead",
-        "in.horizon.berth_lookahead"
+        "in.horizon.berth_lookahead",
+        "in.param.escalation_infra",
+        "in.param.apply_escalation"
       ],
-      "excel_ref": "Model!K387:AD387 · K391:AD391",
+      "excel_ref": "Model!K387:AF387 · K391:AF391",
       "section": "5.8",
+      "audit": [
+        "A26"
+      ],
       "screens": [
+        8,
         9
       ],
-      "desc": "Biaya membangun dermaga MP dan jetty CC, dicatat di tahun pembangunan.",
+      "symbol": "I_berth",
+      "desc": "Biaya membangun dermaga MP dan jetty CC, dicatat di tahun pembangunan (tahun dipakai − masa konstruksi).",
+      "impl": "invest:berth_quantity",
       "dependents": [
         "invest.total"
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 176
+      "topo": 181
     },
     {
       "id": "invest.handling",
@@ -4945,111 +5161,196 @@
       "unit": "Rp/th",
       "scope": "terminal×year",
       "kind": "derived",
-      "formula": "Δ jumlah alat · harga · kurs · eskalasi",
+      "formula": "Δ alat B/M terjadwal × harga alat · kurs × eskalasi alat",
       "deps": [
         "terminal.n_equip",
         "in.equip.price",
         "dv.equip",
         "in.param.usd_rate",
-        "in.param.escalation_equipment"
+        "dv.staging",
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.berth_lookahead",
+        "in.param.escalation_equipment",
+        "in.param.apply_escalation"
       ],
-      "excel_ref": "Model!K376:AD377",
+      "excel_ref": "Model!K376:AF377",
       "section": "5.8",
+      "audit": [
+        "A10",
+        "A26"
+      ],
       "screens": [
         9
       ],
+      "symbol": "I_alat",
       "desc": "Biaya membeli alat bongkar muat KEK, dicatat di tahun pengadaan.",
+      "impl": "invest:costed",
       "dependents": [
         "invest.total"
       ],
       "lane": 8,
       "depth": 13,
-      "topo": 177
-    },
-    {
-      "id": "invest.storage",
-      "label": "Investasi penyimpanan",
-      "unit": "Rp/th",
-      "scope": "year",
-      "kind": "derived",
-      "formula": "Δ luas / volume / unit · harga satuan, dibangun untuk N th ke depan",
-      "deps": [
-        "storage.cy",
-        "storage.gc",
-        "storage.silos",
-        "storage.tanks",
-        "storage.bulk_area",
-        "storage.cy_slots",
-        "in.price.storage",
-        "in.storage.bulk",
-        "in.param.escalation_infra",
-        "in.horizon.storage_lookahead"
-      ],
-      "excel_ref": "Model!K381:AD384",
-      "section": "5.8",
-      "screens": [
-        8,
-        9
-      ],
-      "desc": "Biaya membangun lapangan, gudang, silo, dan tangki.",
-      "dependents": [
-        "invest.total"
-      ],
-      "lane": 8,
-      "depth": 12,
-      "topo": 175
-    },
-    {
-      "id": "invest.yard_equipment",
-      "label": "Investasi alat lapangan",
-      "unit": "Rp/th",
-      "scope": "year",
-      "kind": "derived",
-      "formula": "Δ alat lapangan · harga · eskalasi",
-      "deps": [
-        "storage.yard_equipment",
-        "storage.trucks",
-        "in.price.yard_equipment",
-        "in.param.escalation_equipment"
-      ],
-      "excel_ref": "Model!K370:AD373",
-      "section": "5.8",
-      "screens": [
-        9
-      ],
-      "desc": "Biaya membeli alat lapangan.",
-      "dependents": [
-        "invest.total"
-      ],
-      "lane": 8,
-      "depth": 14,
       "topo": 182
     },
     {
       "id": "invest.waterside",
       "label": "Investasi trestle / keruk",
-      "unit": "Rp",
-      "scope": "year",
+      "unit": "Rp/th",
+      "scope": "terminal×year",
       "kind": "derived",
-      "formula": "biaya dasar perairan, dijadwalkan & dieskalasi",
+      "formula": "trestle (luas desain · Rp/m²) bersama tambatan pertama terminal + Δ tambatan × volume keruk per tambatan · Rp/m³, × eskalasi infra",
       "deps": [
         "waterside.cost",
+        "waterside.trestle_len",
+        "in.term.trestle_width",
+        "waterside.dredge_vol",
+        "terminal.n_berth",
+        "in.price.trestle",
+        "in.price.dredge",
+        "dv.waterside",
+        "dv.staging",
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.berth_lookahead",
         "in.param.escalation_infra",
-        "in.horizon.lead"
+        "in.param.apply_escalation"
       ],
-      "excel_ref": "Model!K395:AD395",
+      "excel_ref": "Model!K395:AF395 · Trestle!C92:N110",
       "section": "5.8",
+      "audit": [
+        "A24",
+        "A29"
+      ],
       "screens": [
         8,
         9
       ],
-      "desc": "Biaya trestle dan/atau pengerukan.",
+      "symbol": "I_perairan",
+      "desc": "Biaya trestle (sekali, bersama tambatan pertama) dan pengerukan kolam tambat (bertahap mengikuti tambatan).",
+      "impl": "invest:present_value",
       "dependents": [
         "invest.total"
       ],
       "lane": 8,
       "depth": 16,
-      "topo": 187
+      "topo": 194
+    },
+    {
+      "id": "invest.storage",
+      "label": "Investasi penyimpanan",
+      "unit": "Rp/th",
+      "scope": "facility×year",
+      "kind": "derived",
+      "formula": "Δ kapasitas terpasang terjadwal (CY & GC m², silo & tangki unit) × harga satuan fasilitas × eskalasi infra",
+      "deps": [
+        "storage.cy",
+        "storage.gc",
+        "storage.silos",
+        "storage.tanks",
+        "in.price.storage",
+        "in.storage.price_keys",
+        "dv.staging",
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.storage_lookahead",
+        "in.param.escalation_infra",
+        "in.param.apply_escalation"
+      ],
+      "excel_ref": "Model!K381:AF384",
+      "section": "5.8",
+      "audit": [
+        "A26",
+        "A28"
+      ],
+      "screens": [
+        8,
+        9
+      ],
+      "symbol": "I_simpan",
+      "desc": "Biaya membangun lapangan petikemas, lapangan GC, silo, dan tangki, menurut jadwal bangun.",
+      "impl": "invest:costed",
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 12,
+      "topo": 180
+    },
+    {
+      "id": "invest.pipeline",
+      "label": "Investasi pipa curah cair",
+      "unit": "Rp/th",
+      "scope": "flow×year",
+      "kind": "derived",
+      "formula": "Δ panjang pipa terjadwal × Rp/m × eskalasi infra",
+      "deps": [
+        "storage.pipeline",
+        "in.price.storage",
+        "in.storage.price_keys",
+        "dv.staging",
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.storage_lookahead",
+        "in.param.escalation_infra",
+        "in.param.apply_escalation"
+      ],
+      "excel_ref": "Model!K373:AF373 (berlabel Curah Cair)",
+      "section": "5.8",
+      "audit": [
+        "A26",
+        "A30"
+      ],
+      "screens": [
+        8,
+        9
+      ],
+      "desc": "Biaya pipa jetty–tangki curah cair.",
+      "impl": "invest:costed",
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 14,
+      "topo": 189
+    },
+    {
+      "id": "invest.yard_equipment",
+      "label": "Investasi alat lapangan & truk",
+      "unit": "Rp/th",
+      "scope": "equipment×year",
+      "kind": "derived",
+      "formula": "Δ alat lapangan / truk terjadwal × harga satuan × eskalasi alat",
+      "deps": [
+        "storage.yard_equipment",
+        "storage.trucks",
+        "in.price.yard_equipment",
+        "dv.staging",
+        "in.horizon.phases",
+        "in.horizon.lead",
+        "in.horizon.storage_lookahead",
+        "in.param.escalation_equipment",
+        "in.param.apply_escalation"
+      ],
+      "excel_ref": "Model!K370:AF372",
+      "section": "5.8",
+      "audit": [
+        "A19",
+        "A25",
+        "A26"
+      ],
+      "screens": [
+        8,
+        9
+      ],
+      "desc": "Biaya membeli alat lapangan (RTG, forklift, dozer) dan truk dermaga–lapangan.",
+      "impl": "invest:costed",
+      "dependents": [
+        "invest.total"
+      ],
+      "lane": 8,
+      "depth": 14,
+      "topo": 188
     },
     {
       "id": "invest.total",
@@ -5062,6 +5363,7 @@
         "invest.berth",
         "invest.handling",
         "invest.storage",
+        "invest.pipeline",
         "invest.yard_equipment",
         "invest.waterside"
       ],
@@ -5069,13 +5371,15 @@
       "screens": [
         9
       ],
+      "symbol": "I[t]",
       "desc": "Total belanja investasi di tahun tersebut.",
+      "impl": "invest:series",
       "dependents": [
         "agg.tc"
       ],
       "lane": 8,
       "depth": 17,
-      "topo": 188
+      "topo": 195
     },
     {
       "id": "agg.tc",
@@ -5102,7 +5406,7 @@
       ],
       "lane": 8,
       "depth": 18,
-      "topo": 189
+      "topo": 196
     },
     {
       "id": "agg.uc",
@@ -5131,7 +5435,7 @@
       ],
       "lane": 8,
       "depth": 19,
-      "topo": 190
+      "topo": 197
     },
     {
       "id": "agg.pv_uc",
@@ -5155,7 +5459,7 @@
       ],
       "lane": 8,
       "depth": 20,
-      "topo": 192
+      "topo": 199
     },
     {
       "id": "agg.annuity",
@@ -5179,7 +5483,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 21,
-      "topo": 193
+      "topo": 200
     },
     {
       "id": "obj.npv",
@@ -5204,7 +5508,7 @@
       "dependents": [],
       "lane": 8,
       "depth": 19,
-      "topo": 191
+      "topo": 198
     }
   ]
 }

@@ -654,3 +654,181 @@ def excel_trucks(case: Case, golden: dict, chains: dict[str, dict[str, list[floa
         gold[form] = g
         eng[eid] = _never_decrease(res)
     return dict(golden=gold, engine=eng)
+
+
+# ─── §5.8 investasi & staging (Tahap 8b) ────────────────────────────────────────────────────────────────────────────
+#: koreksi investasi (di atas koreksi hulu); A27 (eskalasi) = opsi yang mati di K15, dites terpisah
+INVEST_FIXES = ("A26", "A28", "A29", "A30")
+#: jendela pengadaan Excel per jenis baris: (tahun bangun, tahun penambahan pertama, terakhir) — Investasi!L9:W90
+XL_WINDOWS = {
+    "std": ((0, -1, 5), (5, 6, 10), (10, 11, 20)),  # alat B/M, RTG, dozer, forklift, CY, GC, tangki
+    "dbl": ((0, -1, 5), (5, 5, 10), (10, 11, 20)),  # silo (R75), pipa (R61): kolom th 5 terhitung dua kali
+    "jetty": ((-1, -1, 5), (5, 5, 10), (10, 10, 20)),  # L14/R14/W14: kolom th 5 & 10 dua kali
+    "berth": ((-1, 0, 6), (5, 7, 11), (10, 11, 21)),  # L9/R9/W9 (baris 8 tergeser satu kolom): th 11 dua kali
+}
+#: kunci golden investasi (Model baris 370–395) → (id variabel engine, kunci) yang dijumlahkan
+INVEST_GOLDEN = {
+    "yard_equipment_pk_rp": ("invest.yard_equipment", ("rtg",)),
+    "yard_equipment_ck_rp": ("invest.yard_equipment", ("dozer",)),
+    "yard_equipment_gc_rp": ("invest.yard_equipment", ("forklift",)),
+    "pipeline_cc_rp": ("invest.pipeline", ("in.adi", "out.adi")),
+    "handling_equipment_cc_rp": ("invest.handling", ("CC",)),
+    "handling_equipment_mp_rp": ("invest.handling", ("MP",)),
+    "storage_pk_rp": ("invest.storage", ("cy",)), "storage_ck_rp": ("invest.storage", ("bulk",)),
+    "storage_gc_rp": ("invest.storage", ("gc",)), "storage_cc_rp": ("invest.storage", ("liquid",)),
+    "berth_mp_rp": ("invest.berth", ("MP",)), "jetty_cc_rp": ("invest.berth", ("CC",)),
+    "trestle_rp": ("invest.waterside", ("MP", "CC")),
+}
+#: penyebab selisih per variabel investasi engine (koreksi hulu + koreksi investasi)
+INVEST_CAUSES = {"invest.berth": ("A2", "A10", "A16", "A17", "A26"),
+                 "invest.handling": ("A2", "A10", "A16", "A17", "A26"),
+                 "invest.waterside": ("A21", "A24", "A26", "A29"),
+                 "invest.storage": ("A12", "A13", "A18", "A20", "A26", "A28"),
+                 "invest.pipeline": ("A16", "A21", "A26", "A30"),
+                 "invest.yard_equipment": ("A12", "A19", "A25", "A26"), "invest.total": ("semua",)}
+
+
+def _price(case: Case, key: str | None) -> float:
+    assert key is not None
+    return next(u.price_rp for u in case.unit_prices if u.key == key)
+
+
+def excel_invest(case: Case, golden: dict, term: dict[str, list[float]], store: dict, water: dict,
+                 trucks: dict[str, list[float]] | None, chains: dict[str, dict[str, list[float]]],
+                 demands: dict[str, list[float]], fixes: frozenset[str] | set[str] = frozenset()) -> dict[str, dict]:
+    """Tiruan sheet `Investasi` & `Model!K369:AF395` dari tambatan/alat (`term` = `excel_terminal`), penyimpanan
+    (`store` = `excel_storage`), perairan (`water` = `excel_waterside`) dan truk (`trucks` = `excel_trucks()["engine"]`,
+    hanya dengan koreksi). `engine` = bentuk variabel `invest.*` (seri mulai `start_year`, kunci engine), `golden` =
+    baris Model tahun −1..20, `rows` = baris antara (Investasi!N78 GC, N59 pipa), `options` = investasi & PV per opsi.
+
+    Excel: pengadaan per fase di kolom th 0/5/10 dengan jendela SUM tak seragam (dermaga th −1 untuk penambahan th 0–6,
+    7–11, 11–21; jetty th −1; kolom batas silo, pipa & jetty terhitung dua kali) dan masa konstruksi `C13` tak dirujuk
+    (A26); GC memakai baris penambahan `F193:F195` sebagai luas lalu diselisihkan lagi (A28); trestle penuh (kedua
+    terminal) seluruhnya di th −1, `Model!K395` hanya mengambil bagian th −1 opsi terpilih, perbandingan opsi dengan
+    "Total PV" tak didiskon (A29); pipa = trestle opsi keruk 250 m + LOA × jetty, ada bila CPO > 0 (A30). Koreksi:
+    jendela tahap `horizon.phases` dibangun (awal tahap − masa konstruksi), luas GC terpasang, trestle per terminal
+    bersama tambatan pertama + keruk per tambatan, pipa dengan trestle desain CC per flow aktif.
+    """
+    n = len(next(iter(term.values())))
+    h = case.horizon
+    lead = h.construction_lead_years
+    start = 1 - lead if "A26" in fixes else -1
+    length = n + 1 - start
+    flows = {f.id: f for f in case.flows}
+    ships = {s.id: s for s in case.ships}
+    terms = {t.id: t for t in case.kek_site.terminals}
+    sp = case.storage
+    eng = store["engine"]
+    corrected = tuple((ph.start_year - lead, ph.start_year, ph.end_year) for ph in h.phases)
+
+    def adds(need: list[float], kind: str) -> dict[int, float]:
+        def at(y: int) -> float:
+            return need[min(y, n) - 1] if y >= 1 else 0.0
+        wins = corrected if "A26" in fixes else XL_WINDOWS[kind]
+        out: dict[int, float] = {}
+        for b, a, z in wins:
+            v = sum(at(y) - at(y - 1) for y in range(a, z + 1))
+            if abs(v) > 1e-12:
+                out[b] = out.get(b, 0.0) + v
+        return out
+
+    def ser(by: dict[int, float]) -> list[float]:
+        s = [0.0] * length
+        for y, v in by.items():
+            s[y - start] += v
+        return s
+
+    def cost(need: list[float], kind: str, price: float) -> list[float]:
+        return ser({y: a * price for y, a in adds(need, kind).items()})
+
+    res: dict[str, dict[str, list[float]]] = {v: {} for v in INVEST_CAUSES}
+    rows: dict[str, list[float]] = {}
+    rate = case.params.usd_rate
+    crane = {t: next(e for e in case.equipment if e.id == case.plans[0].equipment_by_terminal[t]) for t in ("MP", "CC")}
+    for tid in ("MP", "CC"):
+        nb, ne = term[f"berths_{tid.lower()}"], term[f"equipment_{tid.lower()}"]
+        t = terms[tid]
+        qty = t.berth_unit_length_m if t.berth_layout == "quay" else 1.0  # C3 = 300 m × H4 (Rp/m); jetty × H3
+        res["invest.berth"][tid] = cost([b * qty for b in nb], "berth" if tid == "MP" else "jetty",
+                                        _price(case, t.berth_price_key))
+        res["invest.handling"][tid] = cost(ne, "std", crane[tid].price_usd * rate)  # Investasi!M23, M28
+    # penyimpanan
+    cy, sl, tk = (eng[v]["total"] for v in ("storage.cy", "storage.silos", "storage.tanks"))
+    res["invest.storage"]["cy"] = cost(cy, "std", _price(case, sp.container_yard.unit_price_key))  # F33 × H27
+    res["invest.storage"]["bulk"] = cost(sl, "dbl", _price(case, sp.dry_bulk.unit_price_key))  # F139 × H39
+    res["invest.storage"]["liquid"] = cost(tk, "std", _price(case, sp.liquid.unit_price_key))  # F233:F234 × H39
+    if "A28" in fixes:
+        gc = eng["storage.gc"]["total"]
+    else:  # Investasi!N78 = Σ F193:F195 (penambahan per komoditas, th-1 = luas) dipakai sebagai luas
+        gc = [0.0] * n
+        for fid, by in golden["storage"]["flows"].items():
+            if "gc_area_m2" in by:
+                a = store["flows"][fid]["gc_area_m2"]
+                gc = [g + v - (a[i - 1] if i else 0.0) for i, (g, v) in enumerate(zip(gc, a, strict=True))]
+        rows["gc_area_row78_m2"] = gc
+    res["invest.storage"]["gc"] = cost(gc, "std", _price(case, sp.general_cargo.unit_price_key))
+    # alat lapangan (RTG, dozer, forklift) & truk
+    ye = eng["storage.yard_equipment"]
+    eqs = {e.id: e for e in sp.yard_equipment}
+    for eid in ("rtg", "dozer", "forklift"):
+        res["invest.yard_equipment"][eid] = cost(ye[eid], "std", _price(case, eqs[eid].unit_price_key))
+    for eid, s in (trucks or {}).items():  # Excel tidak menginvestasikan truk (A25)
+        res["invest.yard_equipment"][eid] = cost(s, "std", _price(case, eqs[eid].unit_price_key))
+    # pipa CC per produk (Fasilitas Daratan!F239:F240)
+    w_opts = water["options"]
+    sel = case.plans[0].waterside_mode
+    cc = [f for f in golden["flow_order"] if flows[f].cargo_form == "CC"]
+    pipe_tot = [0.0] * n
+    p_pipe = _price(case, sp.liquid.pipe_price_key)
+    for fid in cc:
+        loa = ships[golden["flows"][fid]["ship_id"]].loa_m  # Model!CH12 / CH17
+        nb = term["berths_cc"]
+        if "A30" in fixes:
+            tr = w_opts[sel]["trestle_len"]["CC"]
+            used = [any(chains[fid]["freq_required"][: y + 1]) for y in range(n)]
+            ln = _never_decrease([tr + loa * b if u and b else 0.0 for u, b in zip(used, nb, strict=True)])
+        else:
+            tr = case.kek_site.trestle_dredge.trestle_length_m  # Trestle!C69
+            ln = [tr + loa * b if demands["in.adi"][y] else 0.0 for y, b in enumerate(nb)]  # IF(F222 = 0, 0, …)
+        pipe_tot = [a + b for a, b in zip(pipe_tot, ln, strict=True)]
+        res["invest.pipeline"][fid] = cost(ln, "dbl", p_pipe)
+    rows["pipe_length_m"] = pipe_tot
+    # perairan: trestle bersama tambatan pertama terminal + keruk per tambatan yang ditambahkan (koreksi A29)
+    p_tr = _price(case, case.kek_site.trestle.unit_price_key)
+    p_dr = _price(case, case.kek_site.trestle_dredge.unit_price_key)
+    opt_sched: dict[str, dict[str, float]] = {}
+    for m, opt in w_opts.items():
+        tot, pv = 0.0, 0.0
+        for tid in ("MP", "CC"):
+            nb = term[f"berths_{tid.lower()}"]
+            ad = adds(nb, "std")
+            if not ad or tid not in opt["trestle_area"]:
+                continue
+            y0 = min(ad)
+            per = opt["dredge_vol"][tid] / nb[-1]
+            by = {y0: opt["trestle_area"][tid] * p_tr}
+            for y, a in ad.items():
+                by[y] = by.get(y, 0.0) + a * per * p_dr
+            tot += sum(by.values())
+            pv += sum(v / (1 + case.params.discount_rate) ** y for y, v in by.items())
+            if m == sel and "A29" in fixes:
+                res["invest.waterside"][tid] = ser(by)
+        opt_sched[m] = dict(invest_total=tot, pv=pv)
+    if "A29" not in fixes:  # Model!K395 di th −1 (A26: tahun bangun pertama terkoreksi); Trestle!C92 = kedua terminal
+        c = water["cells"]
+        res["invest.waterside"]["MP"] = ser({start: c["full_cost_rp"] if c["selected_full"] else c["invest_mixed_rp"][0]})
+    by_year = [0.0] * length
+    for var, by in res.items():
+        if var == "invest.total":
+            continue
+        for s in by.values():
+            by_year = [a + b for a, b in zip(by_year, s, strict=True)]
+    res["invest.total"]["total"] = by_year
+    gold = {}
+    for gk, (var, keys) in INVEST_GOLDEN.items():
+        s = [0.0] * 22
+        for k in keys:
+            for i, v in enumerate(res[var].get(k, [])):
+                s[i + start + 1] += v
+        gold[gk] = s
+    return dict(engine=res, golden=gold, rows=rows, options=opt_sched, start_year=start)

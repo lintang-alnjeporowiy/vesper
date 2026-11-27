@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Badge, DefRow, EditNum, InputMark, Note, ScreenHeader, Section, Split, Table } from '../components/ui'
+import { Badge, DefRow, EditNum, InputMark, Note, ScreenHeader, Section, Split, Table, Tabs } from '../components/ui'
 import { useField } from '../lib/useField'
 import { usePlanner } from '../store'
 
@@ -34,6 +34,7 @@ export default function S01Soal() {
   const nDirty = Object.keys(dirty).length
   const showDev = usePlanner((s) => s.settings.showDevNotes)
   const setDrawerTab = usePlanner((s) => s.setDrawerTab)
+  const setInput = usePlanner((s) => s.setInput)
 
   return (
     <>
@@ -93,6 +94,9 @@ export default function S01Soal() {
               <Param path={['params', 'discount_rate']} label="Discount rate (I9)" unit="%" scale={100} digits={1} />
               <Param path={['params', 'escalation_infra']} label="Eskalasi infrastruktur" unit="%" scale={100} digits={1} />
               <Param path={['params', 'escalation_equipment']} label="Eskalasi alat" unit="%" scale={100} digits={1} />
+              <DefRow label={<span className="text-sm text-hitam">Terapkan eskalasi ke investasi</span>} justify>
+                <span className="w-[160px]"><Tabs items={[{ id: 'off', label: 'Mati' }, { id: 'on', label: 'Hidup' }]} value={c.params.apply_escalation ? 'on' : 'off'} onChange={(v) => setInput(['params', 'apply_escalation'], v === 'on', 'Terapkan eskalasi')} /></span>
+              </DefRow>
               {fuelIdx('HSD') >= 0 && <Param path={['params', 'fuels', fuelIdx('HSD'), 'price_rp_per_l']} label="Harga HSD (ME, AE)" unit="Rp/l" />}
               {fuelIdx('MFO') >= 0 && <Param path={['params', 'fuels', fuelIdx('MFO'), 'price_rp_per_l']} label="Harga MFO" unit="Rp/l" last />}
             </Group>

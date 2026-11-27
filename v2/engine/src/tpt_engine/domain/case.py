@@ -117,6 +117,8 @@ class GlobalParams(Rec):
     discount_rate: Rate = F(desc="WACC")
     escalation_infra: NonNeg = F(unit="/th", desc="kenaikan harga satuan infrastruktur")
     escalation_equipment: NonNeg = F(unit="/th", desc="kenaikan harga alat")
+    apply_escalation: bool = F(False, desc="terapkan eskalasi: harga tahun bangun t = harga dasar × (1 + e)^t, "
+                                           "t = tahun bangun (th 0 = tahun harga satuan); Excel K15 tidak menerapkan (A27)")
     ballast_speed_ratio: Pos = F(1.0, desc="V_ballast / Vs default (A5)")
     payload_dwt_ratio: Rate = F(desc="α payload: payload = α·DWT (A8)")
     teu_weight_dwt_ratio: Rate = F(desc="α batas berat per TEU: NetMax = α·DWT/TEU − tare (A8)")
@@ -256,6 +258,8 @@ class KekTerminal(Rec):
         "quay", desc="quay = dermaga menerus (berth-days ∝ LOA / panjang unit); jetty = satu kapal satu jetty")
     trestle_width_m: Pos = F(unit="m", desc="lebar trestle dari pantai ke tambatan terminal ini (MP: jalan truk; "
                                              "jetty: pipa + catwalk), sama untuk semua opsi perairan")
+    berth_price_key: str | None = F(None, desc="kunci harga satuan tambatan di unit_prices: dermaga menerus = Rp/m "
+                                               "panjang dermaga, jetty = Rp/unit jetty (kosong = tidak diinvestasikan)")
 
 
 class BathyPoint(Rec):
@@ -293,6 +297,8 @@ class WatersideConditions(Rec):
     high_frequency: bool = F(True, desc="frekuensi kapal tinggi (menentukan rumus panjang alur)")
     tug_assisted: bool = True
     depth_factor_of_draft: Pos = F(desc="kedalaman perlu = faktor × T kapal penentu (K15: 1,5)")
+    max_depth_m: float | None = F(None, gt=0, unit="m LWS", desc="batas kedalaman rencana KEK (kolam & alur); kapal "
+                                                               "dengan faktor × T > batas gugur kelayakan (kosong = tanpa batas)")
 
 
 class KekSite(Rec):
@@ -417,6 +423,7 @@ class ContainerYardParams(Rec):
     yor_max: Rate
     max_tiers: int = F(ge=1)
     empty_share: NonNeg = F(desc="porsi petikemas kosong terhadap isi")
+    unit_price_key: str | None = F(None, desc="kunci harga lapangan penumpukan (Rp/m²) di unit_prices")
 
 
 class GeneralCargoStorageParams(Rec):
@@ -424,6 +431,7 @@ class GeneralCargoStorageParams(Rec):
     f_bulk: Pos
     stack_height_m: Pos = F(unit="m")
     sor_max: Rate
+    unit_price_key: str | None = F(None, desc="kunci harga gudang/lapangan GC (Rp/m²) di unit_prices")
 
 
 class DryBulkStorageParams(Rec):
@@ -434,12 +442,14 @@ class DryBulkStorageParams(Rec):
     gross_volume_factor: Pos = F(1.0, desc="volume bruto = faktor × netto")
     silo_capacity_m3: float | None = F(None, gt=0, unit="m³")
     silo_fill_ratio: Rate = 0.8
-    silo_price_usd: float | None = F(None, gt=0, unit="USD/unit")
+    unit_price_key: str | None = F(None, desc="kunci harga silo (Rp/unit) di unit_prices")
 
 
 class LiquidStorageParams(Rec):
     occupancy: Rate
     tank_capacity_m3: Pos = F(unit="m³")
+    unit_price_key: str | None = F(None, desc="kunci harga tangki (Rp/unit) di unit_prices")
+    pipe_price_key: str | None = F(None, desc="kunci harga pipa dermaga–tangki (Rp/m) di unit_prices")
 
 
 class YardEquipment(Rec):
@@ -493,6 +503,10 @@ class Plan(Rec):
         desc="trestle = trestle penuh sampai x*; mixed = trestle + keruk; dredge = tambatan di garis pantai + keruk")
     trestle_fraction: float | None = F(None, ge=0, le=1, desc="θ opsi mixed: panjang trestle = θ · x* per terminal "
                                                               "(kosong = kek_site.trestle_dredge.trestle_length_m)")
+    staging: Literal["phase", "incremental"] = F(
+        "phase", desc="pola bangun investasi: phase = per tahap horizon.phases (dibangun awal tahap − masa konstruksi "
+                      "untuk kebutuhan maks tahap); incremental = saat kebutuhan melampaui kapasitas, untuk kebutuhan "
+                      "N tahun ke depan (lookahead), dibangun tahun itu − masa konstruksi")
 
 
 class Assumption(Rec):

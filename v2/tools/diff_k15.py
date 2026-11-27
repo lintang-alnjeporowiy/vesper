@@ -5,7 +5,8 @@ beroperasi, selisih maksimum 20 tahun, dan efek koreksi audit satu per satu (tir
 `engine/tests/excel_k15.py`, diterapkan berurutan A12 → A3 → A10 → A2 → A5 → A1 → A13 → A9 → A6 → A11 → A14 → A15; hasil akhirnya = engine).
 Bagian akhir: terminal KEK (tambatan, BOR, alat) per tahun, dengan koreksi tambahan A16 → A17; penyimpanan
 (sheet `Fasilitas Daratan`) dengan koreksi tambahan A18 → A19 → A20; perairan (`Fasilitas Perairan`, `Trestle`) dan
-truk dermaga–lapangan dengan koreksi tambahan A21 → A22 → A23 → A24 → A25.
+truk dermaga–lapangan dengan koreksi tambahan A21 → A22 → A23 → A24 → A25; investasi (`Investasi`, `Model!K369:AF395`)
+per komponen dengan koreksi hulu sekaligus lalu A26 → A28 → A29 → A30 (A27 eskalasi = opsi, mati di K15).
 
 Jalankan dari folder v2:  uv run --project engine python tools/diff_k15.py [--flow in.damai] [--year 10]
 """
@@ -24,6 +25,9 @@ from excel_k15 import (  # noqa: E402
     CAUSES,
     EXCEL_SERIES,
     FIXES,
+    INVEST_CAUSES,
+    INVEST_FIXES,
+    INVEST_GOLDEN,
     STORAGE_CAUSES,
     STORAGE_FIXES,
     TERMINAL_CAUSES,
@@ -35,6 +39,7 @@ from excel_k15 import (  # noqa: E402
     engine_series,
     engine_terminal,
     excel_chain,
+    excel_invest,
     excel_storage,
     excel_terminal,
     excel_trucks,
@@ -66,7 +71,7 @@ def main() -> None:
     args = ap.parse_args()
     case = load_case(V2 / "cases" / "k15-batam.json")
     golden = json.loads((V2 / "engine" / "tests" / "golden" / "k15_excel.json").read_text(encoding="utf-8"))
-    res = calculate(case, ["shipcost", "terminal", "storage", "waterside"], plan_id="k15-excel")
+    res = calculate(case, ["shipcost", "terminal", "storage", "waterside", "invest"], plan_id="k15-excel")
     v = res.values
     steps = ["A12", *FIXES]
 
@@ -109,6 +114,7 @@ def main() -> None:
         terminal_report(case, golden, v, args.year)
         storage_report(case, golden, v, args.year)
         waterside_report(case, golden, res, args.year)
+        invest_report(case, golden, res)
 
 
 TLABEL = {"ship_days_kek": "Ship-days KEK", "berth_days": "Berth-days", "berths": "Tambatan", "bor": "BOR",
@@ -240,6 +246,72 @@ def waterside_report(case, golden: dict, res, year: int | None) -> None:
         ex = trail[0][1][o.mode]["cost"]
         print(f"  {o.mode:<12}{fmt(ex):>22}{fmt(o.cost):>22}  "
               + ("  ".join(f"{t}: trestle {fmt(o.trestle_len[t])} m, keruk {fmt(o.dredge_vol[t])} m³" for t in o.trestle_len)))
+
+
+ILABEL = {"yard_equipment_pk_rp": "RTG (PK)", "yard_equipment_ck_rp": "Dozer (CK)", "yard_equipment_gc_rp": "Forklift (GC)",
+          "pipeline_cc_rp": "Pipa CC", "handling_equipment_cc_rp": "Alat B/M CC", "handling_equipment_mp_rp": "Alat B/M MP",
+          "storage_pk_rp": "Lapangan CY", "storage_ck_rp": "Silo", "storage_gc_rp": "Lapangan GC",
+          "storage_cc_rp": "Tangki", "berth_mp_rp": "Dermaga MP", "jetty_cc_rp": "Jetty CC", "trestle_rp": "Trestle/keruk"}
+
+
+def invest_report(case, golden: dict, res) -> None:
+    """Investasi per komponen: Excel (Model!K369:AF395) → koreksi hulu sekaligus → A26 → A28 → A29 → A30 = engine.
+    Ditampilkan Σ nominal (Rp M) dan tahun bangun; truk (A25) tidak ada di Excel."""
+    v = res.values
+    fids = golden["flow_order"]
+    dem_xl = {f: golden["flows"][f]["series"]["demand"]["values"] for f in fids}
+    dem_v2 = v["cargo.demand_unit"]
+    up = {"A12", *FIXES, *TERMINAL_FIXES, *STORAGE_FIXES, *WATERSIDE_FIXES, *TRUCK_FIXES}
+
+    def snap(applied: set[str], dem: dict) -> dict:
+        chains = {f: excel_chain(case, golden, f, applied, None if dem is dem_xl else dem[f]) for f in fids}
+        term = excel_terminal(case, golden, chains, applied)
+        store = excel_storage(case, golden, chains, dem, applied)
+        ws = excel_waterside(case, golden, chains, term, applied)
+        tr = None
+        if "A25" in applied:
+            tr = excel_trucks(case, golden, chains, term, max(ws["engine"]["waterside.trestle_len"]["MP"]), dem,
+                              applied)["engine"]
+        return excel_invest(case, golden, term, store, ws, tr, chains, dem, applied)
+
+    steps = ["hulu", *INVEST_FIXES]
+    trail = [snap(set(), dem_xl), snap(set(up), dem_v2)]
+    applied = set(up)
+    for st in INVEST_FIXES:
+        applied.add(st)
+        trail.append(snap(set(applied), dem_v2))
+
+    def years_of(s: list[float], y0: int) -> str:
+        return ",".join(str(i + y0) for i, x in enumerate(s) if abs(x) > 1e-6) or "–"
+
+    y0 = res.invest_start_year
+    print()
+    print("== investasi (Investasi, Model!K369:AF395)  ·  Σ nominal Rp M  ·  tahun bangun  ·  staging "
+          f"{case.plans[0].staging}, masa konstruksi {case.horizon.construction_lead_years} th, eskalasi "
+          f"{'hidup' if case.params.apply_escalation else 'mati'}")
+    print(f"  {'komponen':<16}{'Excel':>10}{'th Excel':>12}{'v2':>10}{'th v2':>12}  penyebab  ·  " + " → ".join(steps))
+    for gk, (var, keys) in INVEST_GOLDEN.items():
+        ex = golden["investment"][gk]["values"]
+        en = [sum(x) for x in zip(*(v[var].get(k, [0.0] * 21) for k in keys), strict=True)]
+        sums = [sum(t["golden"][gk]) for t in trail]
+        hit = [st for st, a, b, ta, tb in zip(steps, sums[:-1], sums[1:], trail[:-1], trail[1:], strict=True)
+               if abs(b - a) > 1e-6 * max(1, abs(a)) or ta["golden"][gk] != tb["golden"][gk]]
+        cause = ",".join(hit) if hit else "–"
+        print(f"  {ILABEL[gk]:<16}{sum(ex) / 1e9:>10,.1f}{years_of(ex, -1):>12}{sum(en) / 1e9:>10,.1f}"
+              f"{years_of(en, y0):>12}  {cause:<16} ·  " + " → ".join(f"{x / 1e9:,.1f}" for x in sums))
+        if not set(hit) - {"hulu"} <= set(INVEST_CAUSES[var]):
+            print(f"    ! penyebab {hit} tidak terdaftar di INVEST_CAUSES[{var}]")
+    trucks = {k: s for k, s in v["invest.yard_equipment"].items() if k.startswith("truk")}
+    for k, s in trucks.items():
+        print(f"  {k:<16}{'–':>10}{'–':>12}{sum(s) / 1e9:>10,.1f}{years_of(s, y0):>12}  A25 (Excel tanpa investasi truk)")
+    tot_x = sum(sum(golden["investment"][gk]["values"]) for gk in INVEST_GOLDEN)
+    print(f"  {'Σ investasi':<16}{tot_x / 1e9:>10,.1f}{'':>12}{sum(v['invest.total']['total']) / 1e9:>10,.1f}")
+    print()
+    print("  opsi perairan (Rp M)        biaya dasar   terjadwal          PV th 0   tahun bangun trestle")
+    for o in res.waterside_options:
+        print(f"  {o.mode + (' (rencana)' if o.selected else ''):<26}{o.cost / 1e9:>12,.1f}{o.invest_total / 1e9:>12,.1f}"
+              f"{o.pv / 1e9:>17,.1f}   " + ", ".join(f"{t} th {y}" for t, y in o.build_year.items()))
+    print("  Excel: Trestle!C94 'Total PV' = 415,0 (trestle penuh) vs C110 = 602,3 (trestle + keruk), tanpa diskon (A29)")
 
 
 if __name__ == "__main__":

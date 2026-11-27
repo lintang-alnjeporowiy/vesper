@@ -12,7 +12,7 @@ const DEBOUNCE_MS = 300
 /** Selang coba lagi selama API tidak terjangkau. */
 const RETRY_MS = 5000
 /** Modul engine yang sudah tersedia. */
-export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal', 'storage', 'waterside']
+export const ENGINE_MODULES: NonNullable<CalcRequest['modules']> = ['demand', 'voyage', 'shipcost', 'terminal', 'storage', 'waterside', 'invest']
 /** Kunci hasil untuk lingkup tapak (semua terminal): variabel `site×year` dan baris tapak variabel kapal penentu. */
 export const SITE = 'site'
 
@@ -65,16 +65,43 @@ export function series(result: CalcResult | undefined, id: string, key: string):
   return Array.isArray(v) ? v : undefined
 }
 
+/** Variabel investasi: seri per tahun bangun, indeks 0 = `invest_start_year` (K15: th 0). */
+export const isInvest = (id: string) => id.startsWith('invest.')
+/** Kunci variabel investasi lingkup tahun (Σ semua komponen). */
+export const TOTAL = 'total'
+
+/** Indeks seri untuk tahun `y` (tahun operasi; investasi: tahun bangun). */
+export function yearIndex(result: CalcResult | undefined, id: string, y: number): number {
+  return isInvest(id) ? y - (result?.invest_start_year ?? 1) : y - 1
+}
+
 /** Nilai skalar (atau seri pada tahun `year`) untuk konteks jejak. */
 export function computedNumber(result: CalcResult | undefined, id: string, ctx: TraceCtx | undefined, year: number): number | undefined {
   const byKey = result?.values[id]
   if (!byKey) return undefined
   const scope = VAR[id]?.scope ?? ''
-  const key = scope === 'ship' ? ctx?.ship : scope.startsWith('site') ? SITE : scope.startsWith('terminal') ? ctx?.terminal : ctx?.flow
+  const key = scope === 'ship' ? ctx?.ship : scope.startsWith('site') ? SITE : scope.startsWith('terminal') ? ctx?.terminal : scope === 'year' ? (ctx?.flow ?? TOTAL) : ctx?.flow
   const v = key ? byKey[key] : undefined
   if (v === undefined) return undefined
-  return Array.isArray(v) ? v[(ctx?.year ?? year) - 1] : v
+  return Array.isArray(v) ? v[yearIndex(result, id, ctx?.year ?? year)] : v
 }
+
+/** Hasil yang memuat modul investasi (undefined bila belum dihitung / API mati). */
+export function withInvest(result: CalcResult | undefined): CalcResult | undefined {
+  return result?.modules.includes('invest') ? result : undefined
+}
+
+/** Tahun bangun (label) seri investasi yang bernilai ≠ 0. */
+export function buildYears(result: CalcResult | undefined, s: number[] | undefined): number[] {
+  const y0 = result?.invest_start_year ?? 1
+  return (s ?? []).flatMap((v, i) => (Math.abs(v) > 1e-6 ? [i + y0] : []))
+}
+
+/** Σ seri (undefined bila seri tidak ada). */
+export const sum = (s: number[] | undefined) => (s ? s.reduce((a, b) => a + b, 0) : undefined)
+
+/** Rupiah ringkas: miliar (M) atau triliun (T). */
+export const rp = (x: number | undefined) => (x === undefined ? '–' : Math.abs(x) >= 1e12 ? `Rp ${num(x / 1e12, 2)} T` : `Rp ${num(x / 1e9, 1)} M`)
 
 /** Nilai desain perairan = kebutuhan akhir horizon (engine: berlaku sejak tahun pertama terminal punya tambatan). */
 export function designValue(result: CalcResult | undefined, id: string, key: string): number | undefined {

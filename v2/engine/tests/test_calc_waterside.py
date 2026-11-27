@@ -94,7 +94,7 @@ def test_corrected_replica_equals_engine(case, res):
     chains = {f: excel_chain(case, GOLDEN, f, ALL_FIXES, dem[f]) for f in FLOWS}
     term = excel_terminal(case, GOLDEN, chains, ALL_FIXES)
     ex = excel_waterside(case, GOLDEN, chains, term, ALL_FIXES)
-    assert set(ex["engine"]) | {"storage.trucks"} == set(COMPUTES["waterside"])
+    assert set(ex["engine"]) | {"storage.trucks", "storage.pipeline"} == set(COMPUTES["waterside"])
     for var, by in ex["engine"].items():
         assert set(by) == set(res.values[var]), var
         for key, s in by.items():

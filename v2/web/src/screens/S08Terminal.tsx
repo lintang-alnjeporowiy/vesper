@@ -2,7 +2,7 @@ import { BathyProfile } from '../charts/charts'
 import { Tv } from '../components/trace'
 import type { WatersideOption } from '../api/case'
 import { Badge, Button, DefRow, InputMark, Note, PH, ScreenHeader, Section, Slider, Split, Table } from '../components/ui'
-import { SITE, bathyLines, designValue, series, useCalc, withWaterside } from '../lib/engine'
+import { SITE, bathyLines, buildYears, designValue, rp, series, sum, useCalc, withInvest, withWaterside } from '../lib/engine'
 import { num, pct } from '../lib/format'
 import { useField } from '../lib/useField'
 import { TERMINAL_Y13 } from '../mock/placeholders'
@@ -15,12 +15,10 @@ const OPTION_DESC: Record<WatersideOption['mode'], string> = {
   dredge: 'tambatan di garis pantai, kolam tambat dikeruk',
 }
 
-/** Rupiah ringkas: miliar (M) atau triliun (T). */
-const rp = (x: number | undefined) => (x === undefined ? '–' : Math.abs(x) >= 1e12 ? `Rp ${num(x / 1e12, 2)} T` : `Rp ${num(x / 1e9, 1)} M`)
-
 /** Kartu opsi kosong saat API mati (placeholder). */
 const emptyOption = (mode: WatersideOption['mode'], selected: boolean): WatersideOption => ({
   mode, selected, feasible: true, reasons: [], trestle_len: {}, theta: {}, tip_depth: {}, trestle_area: {}, dredge_vol: {}, cost_trestle: {}, cost_dredge: {}, cost: 0,
+  build_year: {}, invest_total: 0, pv: 0,
 })
 
 export default function S08Terminal() {
@@ -67,7 +65,12 @@ export default function S08Terminal() {
     ? wres.waterside_options
     : (['trestle', 'mixed', 'dredge'] as const).map((m) => emptyOption(m, (plan?.waterside_mode ?? 'trestle') === m))
   const chosen = opts.find((o) => o.selected)
-  const cheapest = wres ? [...opts].filter((o) => o.feasible).sort((a, b) => a.cost - b.cost)[0] : undefined
+  // investasi (Tahap 8b): seri per tahun bangun, PV opsi perairan ke th 0
+  const ires = withInvest(calc.ok ? calc.result : undefined)
+  const inv = (vid: string, key: string) => series(ires, vid, key)
+  const yrs = (ys: number[]) => (ys.length ? `th ${ys.join(', ')}` : '–')
+  const pvOf = (o: WatersideOption) => (ires ? o.pv : o.cost)
+  const cheapest = wres ? [...opts].filter((o) => o.feasible).sort((a, b) => pvOf(a) - pvOf(b))[0] : undefined
   const shipName = (id?: string) => c.ships.find((s) => s.id === id)?.name ?? '–'
   const firstYear = (t: string) => {
     const i = termSeries('terminal.n_berth', t)?.findIndex((v) => v > 0) ?? -1
@@ -87,7 +90,7 @@ export default function S08Terminal() {
 
   return (
     <>
-      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan, alat, penyimpanan & perairan dihitung · investasi placeholder</Badge> : <PH>placeholder · API tidak aktif</PH>} />
+      <ScreenHeader step={8} kind="hasil" title="Terminal KEK · Batu Ampar" lead="Tambatan, alat, penyimpanan, dan perairan yang dibutuhkan armada terpilih." badge={res ? <Badge kind="dihitung">tambatan, alat, penyimpanan, perairan & investasi dihitung</Badge> : <PH>placeholder · API tidak aktif</PH>} />
 
       <div className="flex w-full gap-8 border-y border-garis py-4">
         <div className="flex w-[300px] shrink-0 flex-col gap-2">
@@ -192,6 +195,7 @@ export default function S08Terminal() {
                 ].map((r) => ({ ...r, ctx: (y: number) => ({ flow: TOTAL, year: y }), arr: series(sres, r.vid, TOTAL) })),
                 ...yardEq(c.cargo_forms.map((f) => f.code)).map((e) => ({ label: e.name.replace(/ \(.*\)$/, ''), vid: 'storage.yard_equipment', ctx: (y: number) => ({ flow: e.id, year: y }), arr: series(sres, 'storage.yard_equipment', e.id), k: 1 })),
                 ...truckEq(c.cargo_forms.map((f) => f.code)).map((e) => ({ label: e.name, vid: 'storage.trucks', ctx: (y: number) => ({ flow: e.id, year: y }), arr: series(wres, 'storage.trucks', e.id), k: 1 })),
+                ...Object.keys(wres?.values['storage.pipeline'] ?? {}).map((fid) => ({ label: `Pipa ${fid} (m)`, vid: 'storage.pipeline', ctx: (y: number) => ({ flow: fid, year: y }), arr: series(wres, 'storage.pipeline', fid), k: 1 })),
               ].map(({ label, vid, ctx, arr: a, k }) => ({ label, vid, ctx, k, arr: a ?? Array<number>(nYears).fill(0) })).map(({ label, arr, vid, ctx, k }) => (
                 <tr key={label} className="border-b border-garis">
                   <td className="py-2 font-sans">{label}</td>
@@ -206,8 +210,8 @@ export default function S08Terminal() {
           </table>
         </div>
         <Note>
-          Kotak hitam = tahun jumlahnya bertambah (tambatan, penyimpanan, dan alat yang sudah ada tidak berkurang). Ini kebutuhan per tahun; jadwal bangun dengan
-          masa konstruksi <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} th`}</Tv> dan lookahead <Tv v="in.horizon.berth_lookahead">{`${c.horizon.berth_lookahead_years} th`}</Tv> menyusul di tahap 8b (investasi).
+          Kotak hitam = tahun jumlahnya bertambah (tambatan, penyimpanan, dan alat yang sudah ada tidak berkurang). Ini kebutuhan per tahun; jadwal bangun
+          (<Tv v="dv.staging">{plan?.staging === 'incremental' ? 'saat dibutuhkan' : 'per tahap'}</Tv>, masa konstruksi <Tv v="in.horizon.lead">{`${c.horizon.construction_lead_years} th`}</Tv>, lookahead <Tv v="in.horizon.berth_lookahead">{`${c.horizon.berth_lookahead_years} th`}</Tv>) dan nilainya ada di layar 9.
           {res ? '' : ' API tidak aktif: semua angka 0.'}
         </Note>
       </Section>
@@ -232,14 +236,30 @@ export default function S08Terminal() {
                 {yardEq(r.forms).length + truckEq(r.forms).length === 0 ? '–' : null}
               </span>
             ) },
-            { key: 'c', head: 'Biaya', render: () => <Tv v="invest.storage" ctx={{ year }} className="no-underline"><PH>placeholder · Tahap 8b</PH></Tv> },
+            { key: 'c', head: 'Investasi Σ · tahun bangun', mono: true, render: (r) => {
+              if (!ires) return <PH>placeholder · API tidak aktif</PH>
+              const s = inv('invest.storage', r.id)
+              const ys = buildYears(ires, s)
+              const eqs = [...yardEq(r.forms), ...truckEq(r.forms)]
+              const eqSum = eqs.reduce((a, e) => a + (sum(inv('invest.yard_equipment', e.id)) ?? 0), 0)
+              const pipes = r.id === 'liquid' ? Object.keys(ires.values['invest.pipeline'] ?? {}) : []
+              const pipeSum = pipes.reduce((a, f) => a + (sum(inv('invest.pipeline', f)) ?? 0), 0)
+              return (
+                <span className="flex flex-col">
+                  <Tv v="invest.storage" ctx={{ flow: r.id, year: ys[0] ?? 0 }}>{s ? `${rp(sum(s))} · ${yrs(ys)}` : '–'}</Tv>
+                  {eqs.length > 0 && <Tv v="invest.yard_equipment" ctx={{ flow: eqs[0].id, year: buildYears(ires, inv('invest.yard_equipment', eqs[0].id))[0] ?? 0 }} className="text-[13px] text-abu">{`alat & truk ${rp(eqSum)}`}</Tv>}
+                  {pipes.length > 0 && <Tv v="invest.pipeline" ctx={{ flow: pipes[0], year: buildYears(ires, inv('invest.pipeline', pipes[0]))[0] ?? 0 }} className="text-[13px] text-abu">{`pipa ${rp(pipeSum)}`}</Tv>}
+                </span>
+              )
+            } },
           ]}
         />
         <Note>
           <Tv v="storage.dwell">Dwell time</Tv> = <Tv v="voyage.consumption">lama konsumsi</Tv> tahun itu (selang antar-pengapalan), sehingga stok = satu muatan per call: luas mengikuti ukuran kapal, bukan langsung demand (I1).
           Excel K15 merata-rata lama konsumsi 20 tahun termasuk tahun tanpa muatan (A18). <Tv v="storage.yard_equipment">Alat lapangan</Tv> = satu armada per bentuk muatan; Excel menghitung RTG per tenant dengan produktivitas berbeda (A19).
           Tangki memakai densitas komoditas, Excel 0,9 tetap (A20). Kapasitas terpasang tidak pernah turun.
-          {' '}<Tv v="storage.trucks">Truk dermaga–lapangan</Tv> = ⌈siklus ÷ waktu muat⌉ per alat B/M × alat B/M aktif, jarak = panjang trestle desain; Excel membagi produktivitas box/jam dengan 60 lalu memakainya sebagai menit (A25). Biaya menyusul di tahap 8b.
+          {' '}<Tv v="storage.trucks">Truk dermaga–lapangan</Tv> = ⌈siklus ÷ waktu muat⌉ per alat B/M × alat B/M aktif, jarak = panjang trestle desain; Excel membagi produktivitas box/jam dengan 60 lalu memakainya sebagai menit dan tidak menginvestasikannya (A25).
+          {' '}Investasi = penambahan kapasitas terjadwal × <Tv v="in.storage.price_keys">harga satuan fasilitas</Tv> (nominal, Σ 20 th); Excel memakai baris penambahan sebagai luas GC (A28) dan trestle opsi keruk untuk panjang <Tv v="storage.pipeline">pipa CC</Tv> (A30). Jadwal per tahun di layar 9.
         </Note>
       </Section>
 
@@ -334,7 +354,7 @@ export default function S08Terminal() {
         <div className="flex w-full border-y border-garis">
           {opts.map((o, i) => {
             const on = o.selected
-            const delta = wres && chosen && !on && chosen.cost > 0 ? o.cost / chosen.cost - 1 : undefined
+            const delta = wres && chosen && !on && pvOf(chosen) > 0 ? pvOf(o) / pvOf(chosen) - 1 : undefined
             return (
               <div key={o.mode} className={`flex grow basis-0 flex-col gap-1.5 py-4 ${i === 0 ? 'pr-4' : 'border-l border-garis pl-4'}`} style={on ? { boxShadow: 'inset 0 3px 0 var(--color-biru)' } : undefined}>
                 <span className="flex items-center gap-2">
@@ -365,8 +385,16 @@ export default function S08Terminal() {
                 <span className="flex items-center gap-2 pt-1">
                   {wres ? <span className="font-mono text-base">{rp(o.cost)}</span> : <PH>placeholder · API tidak aktif</PH>}
                   <span className="grow text-[13px] text-abu">biaya dasar</span>
-                  <Tv v="invest.waterside" className="no-underline"><PH>PV · Tahap 8b</PH></Tv>
                 </span>
+                {ires ? (
+                  <span className="flex flex-col gap-0.5 font-mono text-[13px]">
+                    <span className="flex items-center gap-2">
+                      <span className="text-base">{on ? <Tv v="invest.waterside" ctx={{ terminal: Object.keys(o.build_year)[0], year: Object.values(o.build_year)[0] ?? 0 }}>{rp(o.pv)}</Tv> : rp(o.pv)}</span>
+                      <span className="grow font-sans text-abu">PV th 0 · <Tv v="in.param.discount_rate">{`r ${num(c.params.discount_rate * 100, 1)} %`}</Tv></span>
+                    </span>
+                    <span className="text-abu">{`terjadwal ${rp(o.invest_total)} · trestle ${Object.entries(o.build_year).map(([t, y]) => `${t} th ${y}`).join(', ')}`}</span>
+                  </span>
+                ) : <PH>PV · API tidak aktif</PH>}
                 {!on && (
                   <span className="pt-1">
                     <Button size="sm" variant="garis" disabled={!o.feasible} onClick={() => setInput(['plans', 0, 'waterside_mode'], o.mode, `Mode perairan: ${OPTION_LABEL[o.mode]}`)}>Pakai di rencana</Button>
@@ -377,8 +405,9 @@ export default function S08Terminal() {
           })}
         </div>
         <Note>
-          Biaya dasar = luas trestle × harga trestle + volume keruk × harga keruk, harga tahun dasar tanpa eskalasi dan diskonto (jadwal bangun dan PV di tahap 8b). Persentase = selisih terhadap opsi rencana.
-          Setelah koreksi A24, trestle + keruk dan keruk penuh lebih murah daripada trestle penuh pada batimetri dummy, sedangkan Excel K15 memilih trestle penuh. Mengganti opsi rencana juga mengubah jarak truk dermaga–lapangan.
+          Biaya dasar = luas trestle × harga trestle + volume keruk × harga keruk (harga tahun dasar). <Tv v="invest.waterside">Terjadwal</Tv>: trestle per terminal dibangun penuh bersama tambatan pertamanya, kolam tambat dikeruk setiap tambatan ditambah (kedalaman desain akhir horizon){c.params.apply_escalation ? ', dengan eskalasi' : ''};
+          PV = didiskon ke th 0. Persentase dan <i>termurah</i> = PV terhadap opsi rencana. Excel menaruh seluruh trestle (juga jetty CC yang baru dipakai th-13) di th −1 dan membandingkan "Total PV" yang tidak didiskon (A29).
+          Setelah koreksi A24, trestle + keruk dan keruk penuh lebih murah daripada trestle penuh pada batimetri dummy, sedangkan Excel K15 memilih trestle penuh. Mengganti opsi rencana juga mengubah jarak truk dermaga–lapangan dan panjang pipa CC.
         </Note>
       </Section>
     </>

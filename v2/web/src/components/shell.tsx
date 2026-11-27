@@ -110,7 +110,7 @@ export function TopBar() {
           ) : calc.status === 'error' ? (
             <><span className="h-2 w-2 bg-merah" />engine menolak kasus · lihat laci</>
           ) : calc.result ? (
-            <><span className="h-2 w-2 bg-hijau" />{calc.status === 'loading' ? 'menghitung…' : 'demand, operasi, biaya pelayaran, terminal & perairan dihitung engine'} · investasi placeholder</>
+            <><span className="h-2 w-2 bg-hijau" />{calc.status === 'loading' ? 'menghitung…' : 'demand, operasi, biaya pelayaran, terminal, perairan & investasi dihitung engine'} · agregasi placeholder</>
           ) : (
             'menghubungi engine…'
           )}

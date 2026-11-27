@@ -1,7 +1,8 @@
 """Orkestrasi kalkulasi per modul. Hasil berkunci id variabel registry (SPEC §9.3).
 
 Modul: `demand` (§5.1) → `voyage` (§5.2–5.3) → `shipcost` (§5.4) · `terminal` (§5.5) · `storage` (§5.6) ·
-`waterside` (§5.7 + truk dermaga–lapangan, menarik `terminal`); modul menarik modul yang dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
+`waterside` (§5.7 + truk & pipa dermaga–lapangan, menarik `terminal`) → `invest` (§5.8, menarik terminal, storage,
+waterside); modul menarik modul yang dibutuhkannya. Variabel bergantung kapal/alat memakai rencana kasus
 (default plan pertama) + override dari UI.
 """
 
@@ -12,13 +13,14 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..domain.case import CargoFlow, Case, Plan, Ship, teu_forms
-from . import cargo, demand, shipcost, storage, terminal, vessel, voyage, waterside
+from . import cargo, demand, invest, shipcost, storage, terminal, vessel, voyage, waterside
 
-Module = Literal["demand", "voyage", "shipcost", "terminal", "storage", "waterside"]
-MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal", "storage", "waterside")
+Module = Literal["demand", "voyage", "shipcost", "terminal", "storage", "waterside", "invest"]
+MODULES: tuple[str, ...] = ("demand", "voyage", "shipcost", "terminal", "storage", "waterside", "invest")
 REQUIRES: dict[str, tuple[str, ...]] = {"voyage": ("demand",), "shipcost": ("demand", "voyage"),
                                         "terminal": ("demand", "voyage"), "storage": ("demand", "voyage"),
-                                        "waterside": ("demand", "voyage", "terminal")}
+                                        "waterside": ("demand", "voyage", "terminal"),
+                                        "invest": ("demand", "voyage", "terminal", "storage", "waterside")}
 
 #: modul → id variabel registry yang dihitungnya (dites terhadap registry)
 COMPUTES: dict[str, tuple[str, ...]] = {
@@ -40,8 +42,12 @@ COMPUTES: dict[str, tuple[str, ...]] = {
                   "waterside.stopping_distance", "waterside.turning_basin", "waterside.turning_area",
                   "waterside.anchorage_radius", "waterside.x_star", "waterside.trestle_len", "waterside.tip_depth",
                   "waterside.pocket_length", "waterside.pocket_width", "waterside.dredge_vol", "waterside.cost",
-                  "storage.trucks"),
+                  "storage.trucks", "storage.pipeline"),
+    "invest": ("invest.berth", "invest.handling", "invest.waterside", "invest.storage", "invest.pipeline",
+               "invest.yard_equipment", "invest.total"),
 }
+#: variabel investasi: seri per tahun bangun, indeks 0 = `CalcResult.invest_start_year`
+INVEST_VARS = set(COMPUTES["invest"])
 #: variabel berkunci id terminal KEK (bukan flow)
 TERMINAL_KEYED = {"terminal.n_berth", "terminal.bor", "terminal.berth_length", "terminal.n_equip"}
 #: variabel penyimpanan per fasilitas: kunci flow + `total` (kapasitas terpasang, tidak pernah turun)
@@ -87,6 +93,8 @@ class CalcResult(BaseModel):
                         "akhir horizon")
     channel_parts: dict[str, list[float]] = Field(
         {}, description="modul waterside: komponen lebar alur site (wm, wa_*, wa, wb, ws), seri tahunan m")
+    invest_start_year: int = Field(1, description="modul invest: tahun bangun indeks 0 seri invest.* (= 1 − masa "
+                                                  "konstruksi; K15: 0); seri lain mulai tahun ke-1")
     warnings: list[str] = []
 
 
@@ -105,6 +113,10 @@ class WatersideOption(BaseModel):
     cost_trestle: dict[str, float] = Field({}, description="terminal → biaya trestle, Rp")
     cost_dredge: dict[str, float] = Field({}, description="terminal → biaya keruk, Rp")
     cost: float = Field(0.0, description="Σ biaya dasar semua terminal, Rp")
+    build_year: dict[str, int] = Field({}, description="modul invest: terminal → tahun bangun trestle (tambatan pertama)")
+    invest_total: float = Field(0.0, description="modul invest: Σ investasi terjadwal (trestle + keruk bertahap, "
+                                                 "eskalasi bila diterapkan), Rp")
+    pv: float = Field(0.0, description="modul invest: PV investasi terjadwal ke th 0 dengan discount rate, Rp")
 
 
 class CandidateRow(BaseModel):
@@ -601,7 +613,130 @@ def truck_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]], te
     return out
 
 
-SHIP_KEYED = {"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
+def pipeline_chain(case: Case, chains: dict[str, tuple[Ship, dict[str, Value]]], term_vals: dict[str, dict[str, Value]],
+                   trestle_len: dict[str, Value]) -> dict[str, Value]:
+    """`storage.pipeline` per flow curah cair: trestle desain terminal + LOA kapal × jumlah jetty, sejak flow pertama
+    aktif; tidak pernah turun."""
+    flows = {f.id: f for f in case.flows}
+    out: dict[str, Value] = {}
+    for fid, (ship, ch) in chains.items():
+        if storage.FACILITY.get(flows[fid].cargo_form) != "liquid":
+            continue
+        tid = voyage.terminal_of(case, flows[fid]).id
+        tl = trestle_len.get(tid)
+        tr = max(tl) if isinstance(tl, list) and tl else 0.0
+        nb, freq = term_vals["terminal.n_berth"][tid], ch["voyage.freq"]
+        assert isinstance(nb, list) and isinstance(freq, list)
+        used = [any(f > 0 for f in freq[: y + 1]) for y in range(len(freq))]
+        out[fid] = terminal.never_decrease([invest.pipe_length(tr, ship.loa_m, b) if u else 0.0
+                                            for u, b in zip(used, nb, strict=True)])
+    return out
+
+
+def invest_chain(case: Case, values: dict[str, dict[str, Value]], plan: Plan | None, options: list[WatersideOption],
+                 equip_by_term: dict[str, str], warnings: list[str]) -> tuple[dict[str, dict[str, Value]], int]:
+    """§5.8 jadwal investasi dari kebutuhan terpasang per tahun (tambatan, alat, penyimpanan, alat lapangan, truk,
+    pipa) dan opsi perairan. Mengembalikan nilai `invest.*` (seri per tahun bangun) dan tahun indeks 0. Melengkapi
+    `options` dengan tahun bangun, investasi terjadwal dan PV per opsi."""
+    h, p = case.horizon, case.params
+    lead = h.construction_lead_years
+    start, length = 1 - lead, h.years + lead
+    mode = plan.staging if plan else "phase"
+    phases = [(ph.start_year, ph.end_year) for ph in h.phases]
+    sp = case.storage
+    out: dict[str, dict[str, Value]] = {k: {} for k in COMPUTES["invest"]}
+    total: dict[int, float] = {}
+
+    def need(var: str, key: str) -> list[float] | None:
+        v = values.get(var, {}).get(key)
+        return v if isinstance(v, list) else None
+
+    def sched(seq: list[float], look: int) -> dict[int, float]:
+        return invest.schedule(seq, mode, phases, lead, look)
+
+    def put(var: str, key: str, by_year: dict[int, float]) -> None:
+        out[var][key] = invest.series(by_year, start, length)
+        for y, v in by_year.items():
+            total[y] = total.get(y, 0.0) + v
+
+    def price(key: str | None, what: str) -> float | None:
+        if key is None:
+            warnings.append(f"{what}: kunci harga satuan kosong; tidak diinvestasikan")
+            return None
+        return _price(case, key, warnings)
+
+    e_inf, e_eq, apply = p.escalation_infra, p.escalation_equipment, p.apply_escalation
+    terms = {t.id: t for t in case.kek_site.terminals}
+    berth_adds: dict[str, dict[int, float]] = {}
+    for tid, t in terms.items():
+        nb = need("terminal.n_berth", tid)
+        if nb is None:
+            continue
+        adds = sched(nb, h.berth_lookahead_years)
+        berth_adds[tid] = adds
+        up = next((u for u in case.unit_prices if u.key == t.berth_price_key), None)
+        pr = price(t.berth_price_key, f"tambatan {tid}")
+        if pr is not None:
+            unit = up.unit if up else "unit"
+            put("invest.berth", tid, invest.costed({y: invest.berth_quantity(a, t, unit) for y, a in adds.items()}, pr,
+                                                   e_inf, apply))
+        ne = need("terminal.n_equip", tid)
+        crane = next((e for e in case.equipment if e.id == equip_by_term.get(tid, "")), None)
+        if ne is not None and crane is not None:
+            put("invest.handling", tid, invest.costed(sched(ne, h.berth_lookahead_years), crane.price_usd * p.usd_rate,
+                                                      e_eq, apply))
+
+    # perairan: trestle bersama tambatan pertama terminal, keruk kolam tambat per tambatan yang ditambahkan
+    p_tr = _price(case, case.kek_site.trestle.unit_price_key, warnings)
+    p_dr = _price(case, case.kek_site.trestle_dredge.unit_price_key, warnings)
+    for opt in options:
+        for tid, adds in berth_adds.items():
+            if tid not in opt.trestle_area or not adds:
+                continue
+            nb = need("terminal.n_berth", tid)
+            assert nb is not None
+            y0 = min(adds)
+            per_berth = opt.dredge_vol.get(tid, 0.0) / nb[-1] if nb[-1] else 0.0
+            by: dict[int, float] = {y0: opt.trestle_area[tid] * p_tr * invest.escalation(y0, e_inf, apply)}
+            for y, a in adds.items():
+                by[y] = by.get(y, 0.0) + a * per_berth * p_dr * invest.escalation(y, e_inf, apply)
+            opt.build_year[tid] = y0
+            opt.invest_total += sum(by.values())
+            opt.pv += invest.present_value(by, p.discount_rate)
+            if opt.selected:
+                put("invest.waterside", tid, by)
+
+    # penyimpanan (kapasitas terpasang total per fasilitas)
+    fac_price = {"cy": (("storage.cy",), sp.container_yard.unit_price_key),
+                 "gc": (("storage.gc",), sp.general_cargo.unit_price_key),
+                 "bulk": (("storage.silos",), sp.dry_bulk.unit_price_key),
+                 "liquid": (("storage.tanks",), sp.liquid.unit_price_key)}
+    for fac, (vars_, key) in fac_price.items():
+        seq = need(vars_[0], storage.TOTAL)
+        if seq is None or not any(seq):
+            continue
+        pr = price(key, f"penyimpanan {fac}")
+        if pr is not None:
+            put("invest.storage", fac, invest.costed(sched(seq, h.storage_lookahead_years), pr, e_inf, apply))
+    for fid, seq in values.get("storage.pipeline", {}).items():
+        if not isinstance(seq, list) or not any(seq):
+            continue
+        pr = price(sp.liquid.pipe_price_key, f"pipa {fid}")
+        if pr is not None:
+            put("invest.pipeline", fid, invest.costed(sched(seq, h.storage_lookahead_years), pr, e_inf, apply))
+    # alat lapangan & truk
+    for eq in sp.yard_equipment:
+        seq = need("storage.yard_equipment" if eq.role == "yard" else "storage.trucks", eq.id)
+        if seq is None or not any(seq):
+            continue
+        pr = price(eq.unit_price_key, f"alat lapangan {eq.id}")
+        if pr is not None:
+            put("invest.yard_equipment", eq.id, invest.costed(sched(seq, h.storage_lookahead_years), pr, e_eq, apply))
+    out["invest.total"][storage.TOTAL] = invest.series(total, start, length)
+    return out, start
+
+
+SHIP_KEYED ={"vessel.ballast_speed", "vessel.ae_kw", "vessel.sfoc_me", "vessel.sfoc_ae", "shipcost.tch_rate"}
 
 
 def _flow_unit(case: Case, flow: CargoFlow) -> ShipUnit:
@@ -680,12 +815,17 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     w_opts: list[WatersideOption] = []
     gov: dict[str, dict[str, str]] = {}
     ch_parts: dict[str, list[float]] = {}
+    plan = next((x for x in case.plans if x.id == pid), None)
     if "waterside" in mods:
-        plan = next((x for x in case.plans if x.id == pid), None)
         w_vals, w_opts, gov, ch_parts = waterside_chain(case, chains, values, plan, warnings)
         values.update(w_vals)
         values["storage.trucks"] = truck_chain(case, chains, values, w_vals["waterside.trestle_len"], equip_by_term,
                                                warnings)
+        values["storage.pipeline"] = pipeline_chain(case, chains, values, w_vals["waterside.trestle_len"])
+    inv_start = 1
+    if "invest" in mods:
+        i_vals, inv_start = invest_chain(case, values, plan, w_opts, equip_by_term, warnings)
+        values.update(i_vals)
 
     matrix: dict[str, dict[str, FeasCell]] = {}
     if "voyage" in mods:
@@ -700,7 +840,7 @@ def calculate(case: Case, modules: list[str] | None = None, plan_id: str | None 
     return CalcResult(modules=mods, plan_id=pid, ship_by_flow=ships_by_flow, equipment_by_terminal=equip_by_term,
                       computed=computed, values=values, units=units, reasons=reasons, feasibility=matrix,
                       port_breakdown=breakdown, waterside_options=w_opts, governing_ships=gov, channel_parts=ch_parts,
-                      warnings=warnings)
+                      invest_start_year=inv_start, warnings=warnings)
 
 
 def compare(case: Case, flow_id: str, plan_id: str | None = None, ship_by_flow: dict[str, str] | None = None,

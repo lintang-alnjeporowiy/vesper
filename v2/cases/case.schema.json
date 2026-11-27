@@ -557,6 +557,19 @@
           "minimum": 0,
           "title": "Empty Share",
           "type": "number"
+        },
+        "unit_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci harga lapangan penumpukan (Rp/m²) di unit_prices",
+          "title": "Unit Price Key"
         }
       },
       "required": [
@@ -644,19 +657,18 @@
           "title": "Silo Fill Ratio",
           "type": "number"
         },
-        "silo_price_usd": {
+        "unit_price_key": {
           "anyOf": [
             {
-              "exclusiveMinimum": 0,
-              "type": "number"
+              "type": "string"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "title": "Silo Price Usd",
-          "unit": "USD/unit"
+          "description": "kunci harga silo (Rp/unit) di unit_prices",
+          "title": "Unit Price Key"
         }
       },
       "required": [
@@ -1053,6 +1065,19 @@
           "minimum": 0,
           "title": "Sor Max",
           "type": "number"
+        },
+        "unit_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci harga gudang/lapangan GC (Rp/m²) di unit_prices",
+          "title": "Unit Price Key"
         }
       },
       "required": [
@@ -1231,6 +1256,12 @@
           "title": "Escalation Equipment",
           "type": "number",
           "unit": "/th"
+        },
+        "apply_escalation": {
+          "default": false,
+          "description": "terapkan eskalasi: harga tahun bangun t = harga dasar × (1 + e)^t, t = tahun bangun (th 0 = tahun harga satuan); Excel K15 tidak menerapkan (A27)",
+          "title": "Apply Escalation",
+          "type": "boolean"
         },
         "ballast_speed_ratio": {
           "default": 1.0,
@@ -1615,6 +1646,19 @@
           "title": "Trestle Width M",
           "type": "number",
           "unit": "m"
+        },
+        "berth_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci harga satuan tambatan di unit_prices: dermaga menerus = Rp/m panjang dermaga, jetty = Rp/unit jetty (kosong = tidak diinvestasikan)",
+          "title": "Berth Price Key"
         }
       },
       "required": [
@@ -1718,6 +1762,32 @@
           "title": "Tank Capacity M3",
           "type": "number",
           "unit": "m³"
+        },
+        "unit_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci harga tangki (Rp/unit) di unit_prices",
+          "title": "Unit Price Key"
+        },
+        "pipe_price_key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "kunci harga pipa dermaga–tangki (Rp/m) di unit_prices",
+          "title": "Pipe Price Key"
         }
       },
       "required": [
@@ -1992,6 +2062,16 @@
           "default": null,
           "description": "θ opsi mixed: panjang trestle = θ · x* per terminal (kosong = kek_site.trestle_dredge.trestle_length_m)",
           "title": "Trestle Fraction"
+        },
+        "staging": {
+          "default": "phase",
+          "description": "pola bangun investasi: phase = per tahap horizon.phases (dibangun awal tahap − masa konstruksi untuk kebutuhan maks tahap); incremental = saat kebutuhan melampaui kapasitas, untuk kebutuhan N tahun ke depan (lookahead), dibangun tahun itu − masa konstruksi",
+          "enum": [
+            "phase",
+            "incremental"
+          ],
+          "title": "Staging",
+          "type": "string"
         }
       },
       "required": [
@@ -3424,6 +3504,21 @@
           "exclusiveMinimum": 0,
           "title": "Depth Factor Of Draft",
           "type": "number"
+        },
+        "max_depth_m": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "batas kedalaman rencana KEK (kolam & alur); kapal dengan faktor × T > batas gugur kelayakan (kosong = tanpa batas)",
+          "title": "Max Depth M",
+          "unit": "m LWS"
         }
       },
       "required": [
