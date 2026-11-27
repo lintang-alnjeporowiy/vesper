@@ -1,0 +1,14 @@
+# graphify: jangan masukkan ke knowledge graph
+# Bahan milik orang lain, v1, arsip, aset
+referensi/
+apps/
+arsip/
+logo/
+# File hasil generate (sumbernya sudah ada di registry.py / model API)
+v2/web/src/api/openapi.json
+v2/web/src/mock/registry.json
+# Build / dependensi
+node_modules/
+.venv/
+dist/
+graphify-out/

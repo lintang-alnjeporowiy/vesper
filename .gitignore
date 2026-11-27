@@ -42,3 +42,6 @@ desktop.ini
 .directory
 .idea/
 .vscode/
+
+# ── graphify (knowledge graph, hasil generate) ──
+graphify-out/
